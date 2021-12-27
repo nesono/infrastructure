@@ -1,0 +1,4 @@
+- hosts: green
+  tasks:
+    - include_role:
+        name: common

@@ -1,4 +1,9 @@
 - hosts: green
-  tasks:
-    - include_role:
-        name: common
+  roles:
+    - role: microk8s_role
+      vars:
+        microk8s_plugins:
+          dns: "1.1.1.1"
+          istio: true
+          ingress: true
+    - role: common

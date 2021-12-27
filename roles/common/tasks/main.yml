@@ -8,11 +8,6 @@
   register: reboot_required_file
   stat: path=/var/run/reboot-required get_md5=no
 
-- name: Install snapd for microk8 installation
-  apt:
-    name: snapd
-    update_cache: no
-
 - name: Reboot if required
   reboot:
     msg: "Reboot initiated by Ansible due to apt changes"
@@ -22,11 +17,3 @@
     post_reboot_delay: 30
     test_command: uptime
   when: reboot_required_file.stat.exists
-
-- name: Install microk8s
-  snap:
-    name: microk8s
-    classic: yes
-
-- name: Wait for microk8s to come up
-  command: microk8s status --wait-ready

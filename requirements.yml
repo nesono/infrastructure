@@ -1,0 +1,3 @@
+- src: https://github.com/nesono/ansible_role_microk8s
+  version: 85ed570626608a550b64ecf95cad5284e7cde5da
+  name: microk8s_role

@@ -1,12 +1,3 @@
-# many ideas for this have been taken from https://www.feval.ca/posts/k8s-static/#ingress
 - hosts: green
   roles:
-    - role: microk8s_role
-      vars:
-        microk8s_plugins:
-          istio: true
-          ingress: true
-          fluentd: true
-          prometheus: true
-          helm3: true
     - role: common

@@ -2,15 +2,34 @@
 
 This repository is used to provision my personal servers
 
-# Prerequisites
+## Prerequisites
 
 Install ansible and ansible-lint (e.g. `sudo pacman -S ansible ansible-lint`).
-Install the ansible requirements using
+You can use ssh port forwarding for convenience.
 ```bash
-ansible-galaxy install -r requirements.yml
+ssh -N -L localhost:6443:localhost:6443 green
 ```
 
-# Deployment
+## Install MetalLB
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/namespace.yaml
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/metallb.yaml
+```
+
+## Install NGINX Ingress Controller
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.48.1/deploy/static/provider/baremetal/deploy.yaml
+```
+
+## Install Cert-Manager
+
+```bash
+kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.yaml
+```
+
+## Deployment
 
 Run the following command to deploy to production
 

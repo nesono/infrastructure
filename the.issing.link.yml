@@ -28,7 +28,7 @@ spec:
     - selector: {}
       http01:
         ingress:
-          class: nginx
+          class: traefik
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -46,7 +46,7 @@ spec:
     - selector: {}
       http01:
         ingress:
-          class: nginx
+          class: traefik
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -91,7 +91,7 @@ metadata:
   name: ingress-the-issing-link
   namespace: production
   annotations:
-    kubernetes.io/ingress.class: "nginx"
+    kubernetes.io/ingress.class: "traefik"
     cert-manager.io/cluster-issuer: "letsencrypt-staging"
 spec:
   defaultBackend:

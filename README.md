@@ -4,7 +4,8 @@ This repository is used to provision my personal servers
 
 ## Node Provisioning
 
-Run the following command to deploy to production
+Install ansible and ansible-lint (e.g. `sudo pacman -S ansible ansible-lint`).
+Run the following command to deploy to production (the only env for now)
 
 ```bash
 ansible-playbook -i production/hosts green_nesono.yml
@@ -13,7 +14,6 @@ ansible-playbook -i production/hosts green_nesono.yml
 
 ## K0s Prerequisites
 
-Install ansible and ansible-lint (e.g. `sudo pacman -S ansible ansible-lint`).
 You can use ssh port forwarding for convenience.
 ```bash
 ssh -N -L localhost:6443:localhost:6443 green
@@ -64,8 +64,10 @@ Edit the configuration file to contain the Traefik and MetalLB configuration fro
 ```bash
 nano /etc/k0s/k0s.yaml
 sudo k0s install controller --single -c /etc/k0s/k0s.yaml
-sudo k0s start
+sudo systemctl start k0scontroller
 ```
+
+After that, make sure that all pods are started and that traefik services have an external IP address set.
 
 ## Enable Remote Access
 

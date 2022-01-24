@@ -1,8 +1,10 @@
 - name: Update apt-get repo and cache
   apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+  tags: [ never, apt_update ]
 
 - name: Upgrade all apt packages
   apt: upgrade=dist force_apt_get=yes
+  tags: [ never, apt_update ]
 
 - name: Check if a reboot is needed
   register: reboot_required_file
@@ -17,3 +19,14 @@
     post_reboot_delay: 30
     test_command: uptime
   when: reboot_required_file.stat.exists
+
+- name: Install tools with APT
+  apt:
+    pkg:
+      - tmux
+      - neovim
+      - tmuxinator
+      - pip
+      - htop
+    state: latest
+    update_cache: true

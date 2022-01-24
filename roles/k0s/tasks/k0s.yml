@@ -1,0 +1,19 @@
+- name: Install tools with Pip3
+  pip:
+    name: yq
+    executable: pip3
+
+- name: Make sure k0s config dir exists
+  ansible.builtin.file:
+    path: /etc/k0s
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create default k0s config
+  ansible.builtin.shell: k0s config create > /etc/k0s/k0s.yaml
+  args:
+    creates: /etc/k0s/k0s.yaml
+
+- name: Patch k0s config
+  ansible.builtin.shell: patch_k0s_config.sh

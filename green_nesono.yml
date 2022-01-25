@@ -1,3 +1,4 @@
 - hosts: green
   roles:
-    - role: common
+    - common
+    - k0s

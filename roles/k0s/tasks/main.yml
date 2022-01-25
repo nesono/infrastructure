@@ -1,7 +1,6 @@
-- name: Install tools with Pip3
-  pip:
+- name: Install tools with Snap
+  community.general.snap:
     name: yq
-    executable: pip3
 
 - name: Make sure k0s config dir exists
   ansible.builtin.file:
@@ -10,10 +9,18 @@
     group: root
     mode: '0755'
 
+- name: Install k0s if executable does not exist
+  ansible.builtin.shell: curl -sSLf https://get.k0s.sh | sudo sh
+  args:
+    creates: '/usr/local/bin/k0s'
+
 - name: Create default k0s config
   ansible.builtin.shell: k0s config create > /etc/k0s/k0s.yaml
   args:
     creates: /etc/k0s/k0s.yaml
 
 - name: Patch k0s config
-  ansible.builtin.shell: patch_k0s_config.sh
+  ansible.builtin.script: 
+    cmd: patch_k0s_config.sh
+    chdir: '/etc/k0s/'
+  become: true

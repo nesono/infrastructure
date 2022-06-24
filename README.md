@@ -2,14 +2,49 @@
 
 This repository is used to provision my personal servers
 
+## Fresh installation (after FreeBSD Migration)
+
+Start the Hetzner Rescue system
+* Login into https://hetzner.your-server.de
+* Go to Rescue tab, select Linux 64-bit
+* Enable Rescue system
+* Rememeber Credentials
+* Go to Reset tab and send `Ctrl-Alt-Del` to server
+* Login with rescue credentials as `root@<your.ip.address>`
+
+Create a config file for installimage
+```bash
+cat <<-ENDOFFILE > installimage.conf
+DRIVE1 /dev/sda
+DRIVE2 /dev/sdb
+SWRAID 1
+SWRAIDLEVEL 1
+HOSTNAME green.nesono.com
+PART   btrfs.raid    btrfs    all
+SUBVOL btrfs.raid    @        /
+SUBVOL btrfs.raid    @var     /var
+SUBVOL btrfs.raid    @svc     /svc
+SUBVOL btrfs.raid    @tmp     /tmp
+IMAGE /root/.oldroot/nfs/install/../images/Ubuntu-2004-focal-64-minimal.tar.gz
+ENDOFFILE
+```
+
+Install the image 
+```bash
+installimage -a -c installimage.conf
+```
+
+
 ## Node Provisioning
 
-Install ansible and ansible-lint (e.g. `sudo pacman -S ansible ansible-lint`).
-Run the following command to deploy to production (the only env for now)
+Install ansible and ansible-lint on your host
+(e.g. `sudo pacman -S ansible ansible-lint` or `pip3 install ansible`).
 
+Then run the following command to provision the node:
 ```bash
-ansible-playbook -i production/hosts green_nesono.yml
+ansible-playbook --tags never -i production/hosts green_nesono.yml
 ```
+
 
 
 ## K0s Prerequisites

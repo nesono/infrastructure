@@ -42,7 +42,7 @@ Install ansible and ansible-lint on your host
 
 Then run the following command to provision the node:
 ```bash
-ansible-playbook --tags never -i production/hosts green_nesono.yml
+ansible-playbook --tags never,all -i production/hosts green_nesono.yml
 ```
 
 

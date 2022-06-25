@@ -1,3 +1,4 @@
 - hosts: green
   roles:
     - common
+    - compose

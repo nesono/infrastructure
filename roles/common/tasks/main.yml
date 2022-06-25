@@ -28,5 +28,6 @@
       - tmuxinator
       - pip
       - htop
+      - git
     state: latest
     update_cache: false

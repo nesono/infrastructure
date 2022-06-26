@@ -34,6 +34,17 @@ Install the image
 installimage -a -c installimage.conf
 ```
 
+## Create secret files
+
+The following secrets are neccessary during deployment and ansible will try to
+fill those based on the task in `roles/compose/tasks/main.yaml`. Make sure you
+create the files with the correct content - the files shall never be added to
+any revisions concrol of course!
+
+Examples of the used files (see the full listing in the file mentioned above):
+- `mail_postgres_root_password`
+- `mail_postgres_password`
+- `mail_postgres_user`
 
 ## Node Provisioning
 
@@ -45,7 +56,7 @@ Then run the following command to provision the node:
 ansible-playbook --tags never,all -i production/hosts green_nesono.yml
 ```
 
-
+DONE WITH DOCKER COMPOSE - EVERYTHING AFTER THIS LINE IS DEPRECATED
 
 ## K0s Prerequisites
 

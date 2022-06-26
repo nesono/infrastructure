@@ -38,6 +38,8 @@
 
 - name: Install jsondiff python package (required for deploy)
   ansible.builtin.pip:
-    name: jsondiff
+    name: 
+      - jsondiff
+      - pyyaml
 
 

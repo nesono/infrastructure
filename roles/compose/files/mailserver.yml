@@ -1,4 +1,4 @@
-version: "3.0"
+version: "3.1"
 services:
   dovecot:
     image: "dovecot/dovecot:2.3.19.1"
@@ -7,5 +7,29 @@ services:
       - "587:587"
   pgsql:
     image: "postgres:14.4"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+    volumes:
+      - /svc/volumes/mailserver/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_ROOT_PASSWORD_FILE: /run/secrets/mail_postgres_root_password
+      POSTGRES_PASSWORD_FILE: /run/secrets/mail_postgres_password
+      POSTGRES_USER_FILE: /run/secrets/mail_postgres_user
+      PGDATA: /var/lib/postgresql/data
+    secrets:
+      - mail_postgres_root_password
+      - mail_postgres_password
+      - mail_postgres_user
+
   postfixadmin:
     image: "postfixadmin:3.3.11"
+
+secrets:
+  mail_postgres_root_password:
+    external: true
+  mail_postgres_password:
+    external: true
+  mail_postgres_user:
+    external: true

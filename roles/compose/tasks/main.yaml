@@ -1,4 +1,15 @@
-- name: Create Docker Compose files directory
+- name: Create volumes for services
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /svc/volumes/mailserver/db
+    - /svc/volumes/mailserver/mail-data
+
+- name: Create Docker compose files directory
   ansible.builtin.file:
     path: /var/run/docker_compose_files
     state: directory
@@ -16,11 +27,22 @@
   loop:
     - mailserver.yml
 
+- name: Create Docker secrets
+  docker_secret:
+    name: "{{ item }}"
+    data: "{{ lookup('file', '{{ item }}.txt') | b64encode }}"
+    data_is_b64: true
+    state: present
+  loop:
+    - mail_postgres_root_password
+    - mail_postgres_password
+    - mail_postgres_user
+
 - name: Init a new swarm with default parameters
   docker_swarm:
     state: present
 
-- name: Deploy Mailserver
+- name: Deploy mailserver
   docker_stack:
     state: present
     name: mailserver

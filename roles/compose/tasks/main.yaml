@@ -30,7 +30,7 @@
 - name: Create Docker secrets
   docker_secret:
     name: "{{ item }}"
-    data: "{{ lookup('file', '{{ item }}.txt') | b64encode }}"
+    data: "{{ lookup('file', 'secret_{{ item }}.txt') | b64encode }}"
     data_is_b64: true
     state: present
   loop:

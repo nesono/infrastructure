@@ -1,4 +1,5 @@
 - hosts: green
   roles:
-    - common
-    - compose
+    - { role: 'common', tags: 'common' }
+    - { role: 'docker', tags: 'docker' }
+    - { role: 'compose', tags: 'compose' }

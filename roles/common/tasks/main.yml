@@ -31,3 +31,15 @@
       - git
     state: latest
     update_cache: false
+
+- name: Setting up BTRFS quotas
+  ansible.builtin.command: btrfs {{ item }}
+  loop:
+    - quota enable /
+    - qgroup limit -e 495G /
+    - quota enable /tmp
+    - qgroup limit -e 5G /tmp
+    - quota enable /var
+    - qgroup limit -e 200G /var
+    - quota enable /svc
+    - qgroup limit -e 2T /svc

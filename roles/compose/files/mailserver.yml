@@ -1,0 +1,11 @@
+version: "3.0"
+services:
+  dovecot:
+    image: "dovecot/dovecot:2.3.19.1"
+    ports: 
+      - "993:933"
+      - "587:587"
+  pgsql:
+    image: "postgres:14.4"
+  postfixadmin:
+    image: "postfixadmin:3.3.11"

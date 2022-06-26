@@ -1,0 +1,43 @@
+- name: Uninstall old Docker packages
+  apt:
+    pkg:
+      - remove
+      - docker
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
+    state: absent
+    update_cache: false
+  tags: [ never, docker_purge ]
+
+- name: Add Docker Apt signing key
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Get LSB release
+  shell: lsb_release -cs
+  register: lsb_release
+
+- name: Add Docker repository into sources list
+  ansible.builtin.apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu {{ lsb_release.stdout }} stable
+    state: present
+    filename: docker
+
+- name: Install Docker packages
+  apt:
+    pkg:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: latest
+    update_cache: true
+
+- name: Install jsondiff python package (required for deploy)
+  ansible.builtin.pip:
+    name: jsondiff
+
+

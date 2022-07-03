@@ -26,17 +26,19 @@
     mode: 0644
   loop:
     - mailserver.yml
+    - postfixadmin_config_local.php
 
 - name: Create Docker secrets
   docker_secret:
     name: "{{ item }}"
+    # pack the data to avoid potential interpretation of the contents by Ansible
     data: "{{ lookup('file', 'secret_{{ item }}.txt') | b64encode }}"
     data_is_b64: true
     state: present
   loop:
-    - mail_postgres_root_password
     - mail_postgres_password
     - mail_postgres_user
+    - mail_postfixadmin_setup_password
 
 - name: Init a new swarm with default parameters
   docker_swarm:

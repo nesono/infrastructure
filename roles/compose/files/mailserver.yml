@@ -1,5 +1,46 @@
 version: "3.1"
 services:
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy
+    deploy:
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "80:80"
+      #- "443:443"
+    #networks:
+      #- nginx-proxy
+    #labels:
+      #- "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      #- /var/run/docker_compose_files/nginx-conf:/etc/nginx/conf.d
+      #- /var/run/docker_compose_files/nginx-vhost:/etc/nginx/vhost.d
+      #- /var/run/docker_compose_files/html:/usr/share/nginx/html
+      #- /svc/volumes/webserver/certs:/etc/nginx/certs:ro
+  letsencrypt-nginx-proxy-companion:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    deploy:
+      restart_policy:
+        condition: on-failure
+    container_name: letsencrypt-nginx-proxy-companion
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      #- /var/run/docker_compose_files/nginx-conf:/etc/nginx/conf.d
+      #- /var/run/docker_compose_files/nginx-vhost:/etc/nginx/vhost.d
+      #- /var/run/docker_compose_files/html:/usr/share/nginx/html
+      #- /svc/volumes/webserver/certs:/etc/nginx/certs:rw
+    #depends_on:
+      #- nginx-proxy
+  whoami:
+    image: jwilder/whoami
+    expose:
+      - "8000"
+    #networks:
+      #- nginx-proxy
+    environment:
+      - VIRTUAL_HOST=green.nesono.com
+      - VIRTUAL_PORT=8000
   dovecot:
     image: "dovecot/dovecot:2.3.19.1"
     ports: 
@@ -10,26 +51,42 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-        delay: 5s
+    #ports: 
+      #- "5432:5432"
     volumes:
       - /svc/volumes/mailserver/db:/var/lib/postgresql/data
     environment:
-      POSTGRES_ROOT_PASSWORD_FILE: /run/secrets/mail_postgres_root_password
       POSTGRES_PASSWORD_FILE: /run/secrets/mail_postgres_password
       POSTGRES_USER_FILE: /run/secrets/mail_postgres_user
       PGDATA: /var/lib/postgresql/data
     secrets:
-      - mail_postgres_root_password
       - mail_postgres_password
       - mail_postgres_user
 
   postfixadmin:
-    image: "postfixadmin:3.3.11"
+    depends_on:
+      - pgsql
+    image: "postfixadmin:3.3.11-fpm-alpine"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - /var/run/docker_compose_files/postfixadmin_config_local.php:/var/www/html/config.local.php
+    environment:
+      POSTFIXADMIN_DB_TYPE: pgsql
+      POSTFIXADMIN_DB_HOST: pgsql
+      POSTFIXADMIN_DB_USER: test
+      POSTFIXADMIN_DB_PASSWORD: pass
+      POSTFIXADMIN_DB_NAME: postfixadmin
+    secrets:
+      - mail_postgres_password
+      - mail_postgres_user
+      - mail_postfixadmin_setup_password
 
 secrets:
-  mail_postgres_root_password:
-    external: true
   mail_postgres_password:
     external: true
   mail_postgres_user:
+    external: true
+  mail_postfixadmin_setup_password:
     external: true

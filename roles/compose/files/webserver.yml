@@ -1,0 +1,89 @@
+version: '2'
+services:
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - conf:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - certs:/etc/nginx/certs:ro
+    network_mode: bridge
+
+  docker-gen:
+    image: nginxproxy/docker-gen
+    container_name: nginx-proxy-gen
+    command: -notify-sighup nginx-proxy -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+    volumes_from:
+      - nginx-proxy
+    volumes:
+      - /svc/volumes/nginx/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen"
+    network_mode: bridge
+
+  letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: nginx-proxy-le
+    depends_on:
+      - nginx-proxy
+      - docker-gen
+    volumes_from:
+      - nginx-proxy
+    volumes:
+      - certs:/etc/nginx/certs:rw
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - NGINX_DOCKER_GEN_CONTAINER=nginx-proxy-gen
+      #- DEBUG=true
+    restart: always
+
+  whoami:
+    image: jwilder/whoami
+    environment:
+      VIRTUAL_HOST: green.nesono.com
+      VIRTUAL_PORT: 8000
+      LETSENCRYPT_HOST: green.nesono.com
+      LETSENCRYPT_EMAIL: c.333+letsencrypt@nesono.com
+    depends_on:
+      - nginx-proxy
+      - acme-companion
+      - docker-gen
+    network_mode: bridge
+
+volumes:
+  conf:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx/conf.d
+  vhost:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx/vhost.d
+  html:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx/html
+  certs:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx/certs
+  acme:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/acme-companion

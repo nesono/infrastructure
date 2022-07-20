@@ -8,6 +8,13 @@
   loop:
     - /svc/volumes/mailserver/db
     - /svc/volumes/mailserver/mail-data
+    - /svc/volumes/nginx
+    - /svc/volumes/nginx/certs
+    - /svc/volumes/nginx/conf.d
+    - /svc/volumes/nginx/vhost.d
+    - /svc/volumes/nginx/html
+    - /svc/volumes/acme-companion
+    - /svc/volumes/postfixadmin
 
 - name: Create Docker compose files directory
   ansible.builtin.file:
@@ -17,16 +24,49 @@
     group: root
     mode: '0755'
 
-- name: Copy compose YAML files to remote
+- name: Create Docker compose mailserver directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /var/run/docker_compose/webserver
+    - /var/run/docker_compose/mailserver
+
+
+- name: Copy nginx.tmpl
   ansible.builtin.copy:
-    src: "{{ item }}"
-    dest: /var/run/docker_compose_files/{{ item }}
+    src: nginx.tmpl
+    dest: /svc/volumes/nginx/nginx.tmpl
     owner: root
     group: root
     mode: 0644
-  loop:
-    - mailserver.yml
-    - postfixadmin_config_local.php
+
+- name: Copy webserver compose
+  ansible.builtin.copy:
+    src: webserver.yml
+    dest: /var/run/docker_compose/webserver/docker-compose.yaml
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy mailserver compose
+  ansible.builtin.copy:
+    src: mailserver.yml
+    dest: /var/run/docker_compose/mailserver/docker-compose.yaml
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy postfixadmin custom config
+  ansible.builtin.copy:
+    src: postfixadmin_config_local.php
+    dest: /svc/volumes/postfixadmin/postfixadmin_config_local.php
+    owner: root
+    group: root
+    mode: 0644
 
 - name: Create Docker secrets
   docker_secret:
@@ -44,9 +84,29 @@
   docker_swarm:
     state: present
 
+- name: Deploy webserver
+  ansible.builtin.command: 
+    cmd: docker compose up -d --remove-orphans
+    chdir: /var/run/docker_compose/webserver
+
 - name: Deploy mailserver
-  docker_stack:
+  community.docker.docker_stack:
     state: present
     name: mailserver
     compose:
-      - /var/run/docker_compose_files/mailserver.yml
+      - /var/run/docker_compose/mailserver/docker-compose.yaml
+
+#- name: Remove webserver
+  #ansible.builtin.command: 
+    #cmd: docker compose down --remove-orphans
+    #chdir: /var/run/docker_compose/webserver
+  #tags: [ never, docker_purge ]
+    
+#- name: Remove mailserver
+  #community.docker.docker_stack:
+    #state: absent
+    #prune: yes
+    #name: mailserver
+    #compose:
+      #- /var/run/docker_compose/mailserver/docker-compose.yaml
+  #tags: [ never, docker_purge ]

@@ -36,10 +36,10 @@
     state: latest
     update_cache: true
 
-- name: Install jsondiff python package (required for deploy)
+- name: Install pip python package dependencies
   ansible.builtin.pip:
     name: 
       - jsondiff
       - pyyaml
-
-
+      - requests
+      - docker

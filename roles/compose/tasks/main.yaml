@@ -24,7 +24,7 @@
     group: root
     mode: '0755'
 
-- name: Create Docker compose mailserver directory
+- name: Create Docker compose services directory
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -32,8 +32,7 @@
     group: root
     mode: '0755'
   loop:
-    - /var/run/docker_compose/webserver
-    - /var/run/docker_compose/mailserver
+    - /var/run/docker_compose/services
 
 
 - name: Copy nginx.tmpl
@@ -44,18 +43,10 @@
     group: root
     mode: 0644
 
-- name: Copy webserver compose
+- name: Copy services compose
   ansible.builtin.copy:
-    src: webserver.yml
-    dest: /var/run/docker_compose/webserver/docker-compose.yaml
-    owner: root
-    group: root
-    mode: 0644
-
-- name: Copy mailserver compose
-  ansible.builtin.copy:
-    src: mailserver.yml
-    dest: /var/run/docker_compose/mailserver/docker-compose.yaml
+    src: services.yml
+    dest: /var/run/docker_compose/services/docker-compose.yaml
     owner: root
     group: root
     mode: 0644
@@ -84,29 +75,18 @@
   docker_swarm:
     state: present
 
-- name: Deploy webserver
-  ansible.builtin.command: 
-    cmd: docker compose up -d --remove-orphans
-    chdir: /var/run/docker_compose/webserver
-
-- name: Deploy mailserver
+- name: Deploy services
   community.docker.docker_stack:
     state: present
-    name: mailserver
-    compose:
-      - /var/run/docker_compose/mailserver/docker-compose.yaml
+    name: services
+    compose: 
+      - /var/run/docker_compose/services/docker-compose.yaml
 
-- name: Remove webserver
-  ansible.builtin.command: 
-    cmd: docker compose down --remove-orphans
-    chdir: /var/run/docker_compose/webserver
-  tags: [ never, docker_purge ]
-    
-- name: Remove mailserver
-  community.docker.docker_stack:
-    state: absent
-    prune: yes
-    name: mailserver
-    compose:
-      - /var/run/docker_compose/mailserver/docker-compose.yaml
-  tags: [ never, docker_purge ]
+#- name: Remove mailserver
+  #community.docker.docker_stack:
+    #state: absent
+    #prune: yes
+    #name: mailserver
+    #compose:
+      #- /var/run/docker_compose/mailserver/docker-compose.yaml
+  #tags: [ never, docker_purge ]

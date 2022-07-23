@@ -6,42 +6,46 @@ services:
       - "993:933"
       - "587:587"
 
-  #pgsql:
-    #image: "postgres:14.4"
-    #deploy:
-      #restart_policy:
-        #condition: on-failure
-    ##ports: 
-      ##- "5432:5432"
-    #volumes:
-      #- /svc/volumes/mailserver/db:/var/lib/postgresql/data
-    #environment:
-      #POSTGRES_PASSWORD_FILE: /run/secrets/mail_postgres_password
-      #POSTGRES_USER_FILE: /run/secrets/mail_postgres_user
-      #PGDATA: /var/lib/postgresql/data
-    #secrets:
-      #- mail_postgres_password
-      #- mail_postgres_user
+  pgsql:
+    image: "postgres:14.4"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    #ports: 
+      #- "5432:5432"
+    volumes:
+      - /svc/volumes/mailserver/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/mail_postgres_password
+      POSTGRES_USER_FILE: /run/secrets/mail_postgres_user
+      PGDATA: /var/lib/postgresql/data
+    secrets:
+      - mail_postgres_password
+      - mail_postgres_user
 
-  #postfixadmin:
-    #depends_on:
-      #- pgsql
-    #image: "postfixadmin:3.3.11-fpm-alpine"
-    #deploy:
-      #restart_policy:
-        #condition: on-failure
-    #volumes:
-      #- postfixadmin-config:/var/www/html/config.local.php
-    #environment:
-      #POSTFIXADMIN_DB_TYPE: pgsql
-      #POSTFIXADMIN_DB_HOST: pgsql
-      #POSTFIXADMIN_DB_USER: test
-      #POSTFIXADMIN_DB_PASSWORD: pass
-      #POSTFIXADMIN_DB_NAME: postfixadmin
-    #secrets:
-      #- mail_postgres_password
-      #- mail_postgres_user
-      #- mail_postfixadmin_setup_password
+  postfixadmin:
+    depends_on:
+      - pgsql
+    image: "postfixadmin:3.3.11-apache"
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - postfixadmin-config:/var/www/html/config.local.php
+    environment:
+      POSTFIXADMIN_DB_TYPE: pgsql
+      POSTFIXADMIN_DB_HOST: pgsql
+      POSTFIXADMIN_DB_USER: test
+      POSTFIXADMIN_DB_PASSWORD: pass
+      POSTFIXADMIN_DB_NAME: postfixadmin
+      VIRTUAL_HOST: postfixgreen.nesono.com
+      VIRTUAL_PORT: 8000
+      LETSENCRYPT_HOST: postfixgreen.nesono.com
+      LETSENCRYPT_EMAIL: c.333+letsencrypt@nesono.com
+    secrets:
+      - mail_postgres_password
+      - mail_postgres_user
+      - mail_postfixadmin_setup_password
 
 #networks:
   #mailserver_network:

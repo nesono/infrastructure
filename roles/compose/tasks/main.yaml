@@ -96,17 +96,17 @@
     compose:
       - /var/run/docker_compose/mailserver/docker-compose.yaml
 
-#- name: Remove webserver
-  #ansible.builtin.command: 
-    #cmd: docker compose down --remove-orphans
-    #chdir: /var/run/docker_compose/webserver
-  #tags: [ never, docker_purge ]
+- name: Remove webserver
+  ansible.builtin.command: 
+    cmd: docker compose down --remove-orphans
+    chdir: /var/run/docker_compose/webserver
+  tags: [ never, docker_purge ]
     
-#- name: Remove mailserver
-  #community.docker.docker_stack:
-    #state: absent
-    #prune: yes
-    #name: mailserver
-    #compose:
-      #- /var/run/docker_compose/mailserver/docker-compose.yaml
-  #tags: [ never, docker_purge ]
+- name: Remove mailserver
+  community.docker.docker_stack:
+    state: absent
+    prune: yes
+    name: mailserver
+    compose:
+      - /var/run/docker_compose/mailserver/docker-compose.yaml
+  tags: [ never, docker_purge ]

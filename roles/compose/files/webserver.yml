@@ -12,6 +12,7 @@ services:
       - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:ro
     network_mode: bridge
+    restart: always
 
   docker-gen:
     image: nginxproxy/docker-gen
@@ -25,6 +26,7 @@ services:
     labels:
       - "com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen"
     network_mode: bridge
+    restart: always
 
   letsencrypt:
     image: jrcs/letsencrypt-nginx-proxy-companion
@@ -55,6 +57,7 @@ services:
       - acme-companion
       - docker-gen
     network_mode: bridge
+    restart: always
 
 volumes:
   conf:

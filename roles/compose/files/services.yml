@@ -1,7 +1,7 @@
 version: '3.1'
 services:
   nginx-proxy:
-    image: nginx:alpine
+    image: nginx:1.22-alpine
     ports:
       - "80:80"
       - "443:443"
@@ -17,7 +17,7 @@ services:
         condition: on-failure
 
   docker-gen:
-    image: nginxproxy/docker-gen
+    image: nginxproxy/docker-gen:0.9
     command: -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
     volumes:
       - conf:/etc/nginx/conf.d
@@ -32,45 +32,36 @@ services:
       restart_policy:
         condition: on-failure
 
-  letsencrypt:
-    image: jrcs/letsencrypt-nginx-proxy-companion
-    depends_on:
-      - nginx-proxy
-      - docker-gen
-    volumes:
-      - conf:/etc/nginx/conf.d
-      - vhost:/etc/nginx/vhost.d
-      - html:/usr/share/nginx/html
-      - certs:/etc/nginx/certs:rw
-      - acme:/etc/acme.sh
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    #environment:
-      #- DEBUG=true
-    deploy:
-      restart_policy:
-        condition: on-failure
-
-  whoami:
-    image: jwilder/whoami
-    environment:
-      VIRTUAL_HOST: green.nesono.com
-      VIRTUAL_PORT: 8000
-      LETSENCRYPT_HOST: green.nesono.com
-      LETSENCRYPT_EMAIL: c.333+letsencrypt@nesono.com
-    depends_on:
-      - letsencrypt
-    deploy:
-      restart_policy:
-        condition: on-failure
+  #letsencrypt:
+    #image: jrcs/letsencrypt-nginx-proxy-companion:2.2
+    #depends_on:
+      #- nginx-proxy
+      #- docker-gen
+    #volumes:
+      #- conf:/etc/nginx/conf.d
+      #- vhost:/etc/nginx/vhost.d
+      #- html:/usr/share/nginx/html
+      #- certs:/etc/nginx/certs:rw
+      #- acme:/etc/acme.sh
+      #- /var/run/docker.sock:/var/run/docker.sock:ro
+    ##environment:
+      ##DEBUG: true
+      ##ACME_CA_URI: https://acme-staging-v02.api.letsencrypt.org/directory
+    #deploy:
+      #restart_policy:
+        #condition: on-failure
 
   dovecot:
-    image: dovecot/dovecot:2.3.19.1
+    image: dovecot/dovecot:2.3.19
     ports: 
       - "993:933"
       - "587:587"
+    volumes:
+      - dovecot:/etc/dovecot
+      - mail:/srv/mail 
 
   pgsql:
-    image: "postgres:14.4"
+    image: postgres:14.4
     deploy:
       restart_policy:
         condition: on-failure
@@ -90,13 +81,18 @@ services:
     depends_on:
       - pgsql
       - letsencrypt
-    image: "postfixadmin:3.3.11"
+    image: postfixadmin:3.3.11
     deploy:
       restart_policy:
         condition: on-failure
-    volumes:
-      - /svc/volumes/postfixadmin/postfixadmin_config_local.php:/var/www/html/config.local.php:ro
     environment:
+      POSTFIXADMIN_DB_TYPE: pgsql
+      POSTFIXADMIN_DB_NAME: mailserver
+      POSTFIXADMIN_DB_USER_FILE: /run/secrets/mail_postgres_user
+      POSTFIXADMIN_DB_PASSWORD_FILE: /run/secrets/mail_postgres_password
+      POSTFIXADMIN_SETUP_PASSWORD_FILE: /run/secrets/mail_postfixadmin_setup_password
+      POSTFIXADMIN_SMTP_SERVER: postfix
+      POSTFIXADMIN_SMTP_PORT: 25
       VIRTUAL_HOST: postfixgreen.nesono.com
       VIRTUAL_PORT: 80
       LETSENCRYPT_HOST: postfixgreen.nesono.com
@@ -137,6 +133,18 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/acme-companion
+  dovecot:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/dovecot
+  mail:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mail
 
 secrets:
   mail_postgres_password:

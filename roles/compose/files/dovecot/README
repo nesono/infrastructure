@@ -1,0 +1,7 @@
+Documentation taken from
+https://github.com/postfixadmin/postfixadmin/blob/master/DOCUMENTS/DOVECOT.txt
+
+Modifications/Adaptations:
+
+* Using quota (as described in above document)
+* Using PostgreSQL (in dovecot.conf and dovecot-sql.conf)

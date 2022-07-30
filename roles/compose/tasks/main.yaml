@@ -14,6 +14,7 @@
     - /svc/volumes/nginx/vhost.d
     - /svc/volumes/nginx/html
     - /svc/volumes/acme-companion
+    - /svc/volumes/postgres_data
 
 - name: Create Docker compose files directory
   ansible.builtin.file:

@@ -32,24 +32,24 @@ services:
       restart_policy:
         condition: on-failure
 
-  #letsencrypt:
-    #image: jrcs/letsencrypt-nginx-proxy-companion:2.2
-    #depends_on:
-      #- nginx-proxy
-      #- docker-gen
-    #volumes:
-      #- conf:/etc/nginx/conf.d
-      #- vhost:/etc/nginx/vhost.d
-      #- html:/usr/share/nginx/html
-      #- certs:/etc/nginx/certs:rw
-      #- acme:/etc/acme.sh
-      #- /var/run/docker.sock:/var/run/docker.sock:ro
-    ##environment:
-      ##DEBUG: true
-      ##ACME_CA_URI: https://acme-staging-v02.api.letsencrypt.org/directory
-    #deploy:
-      #restart_policy:
-        #condition: on-failure
+  letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion:2.2
+    depends_on:
+      - nginx-proxy
+      - docker-gen
+    volumes:
+      - conf:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - certs:/etc/nginx/certs:rw
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    #environment:
+      #DEBUG: true
+      #ACME_CA_URI: https://acme-staging-v02.api.letsencrypt.org/directory
+    deploy:
+      restart_policy:
+        condition: on-failure
 
   dovecot:
     image: dovecot/dovecot:2.3.19
@@ -60,7 +60,7 @@ services:
       - dovecot:/etc/dovecot
       - mail:/srv/mail 
 
-  pgsql:
+  postgres:
     image: postgres:14.4
     deploy:
       restart_policy:
@@ -68,7 +68,7 @@ services:
     #ports: 
       #- "5432:5432"
     volumes:
-      - /svc/volumes/mailserver/db:/var/lib/postgresql/data
+      - /svc/volumes/postgres_data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD_FILE: /run/secrets/mail_postgres_password
       POSTGRES_USER_FILE: /run/secrets/mail_postgres_user
@@ -79,14 +79,14 @@ services:
 
   postfixadmin:
     depends_on:
-      - pgsql
-      - letsencrypt
+      - postgres
     image: postfixadmin:3.3.11
     deploy:
       restart_policy:
         condition: on-failure
     environment:
       POSTFIXADMIN_DB_TYPE: pgsql
+      POSTFIXADMIN_DB_HOST: postgres
       POSTFIXADMIN_DB_NAME: mailserver
       POSTFIXADMIN_DB_USER_FILE: /run/secrets/mail_postgres_user
       POSTFIXADMIN_DB_PASSWORD_FILE: /run/secrets/mail_postgres_password

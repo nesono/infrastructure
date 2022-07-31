@@ -61,86 +61,70 @@ Then run the following command to provision the node.
 ansible-playbook --tags never,all -i production/hosts green_nesono.yml
 ```
 
-DONE WITH DOCKER COMPOSE - EVERYTHING AFTER THIS LINE IS DEPRECATED
+## Setup Postfixadmin
 
-## K0s Prerequisites
+### From Scratch
 
-You can use ssh port forwarding for convenience.
+#### Generate Postfixadmin Setup Password
 
-```bash
-ssh -N -L localhost:6443:localhost:6443 green
-```
+1. Visit postfixadmin.nesono.com
+2. Fill in the new password in `Generate setup_password` (twice)
+3. Press `Generate setup_password hash`
+4. Copy the password hash
+5. Paste the password hash into the setup password secret file
+   `roles/compose/files/secret_mail_postfixadmin_setup_password.txt`
+6. Take down the swarm with `docker stack rm services`
+7. Run ansible again `ansible-playbook --tags compose -i production/hosts green_nesono.yml`
 
-## Traefik Ingress Controller and MetalLB configuration
+#### Log in With Setup Password
 
-Make sure you have the following snippet in your clipboad to modify your
-`k0s.yaml` to include the following information:
+1. Visit postfixadmin.nesono.com
+2. Enter Setup Password
+3. Check if hosting environment is ok
+4. Setup Superadmin Account
 
-```yaml
-  extensions:
-    helm:
-      repositories:
-      - name: traefik
-        url: https://helm.traefik.io/traefik
-      - name: bitnami
-        url: https://charts.bitnami.com/bitnami
-      charts:
-      - name: traefik
-        chartname: traefik/traefik
-        version: "10.3.2"
-        namespace: default
-      - name: metallb
-        chartname: bitnami/metallb
-        version: "2.5.4"
-        namespace: default
-        values: |2
-          configInline:
-            address-pools:
-            - name: generic-cluster-pool
-              protocol: layer2
-              addresses:
-              - 5.9.198.112/29
-```
+### Restore from Backup
 
-## Install k0s
-
-The installation routine has been taken from the manual install here:
-[install|<https://docs.k0sproject.io/v1.23.1+k0s.1/install/>]
+#### Install Tools
 
 ```bash
-curl -sSLf https://get.k0s.sh | sudo sh
-sudo mkdir -p /etc/k0s
-sudo k0s config create > /etc/k0s/k0s.yaml
+apt install postgresql-client
+apt install mysql-client
+apt install pgloader
 ```
 
-Edit the configuration file to contain the Traefik and MetalLB configuration
-from below.
+Establish port forwarding with ssh
 
 ```bash
-nano /etc/k0s/k0s.yaml
-sudo k0s install controller --single -c /etc/k0s/k0s.yaml
-sudo systemctl start k0scontroller
+ssh -L 3306:10.1.1.3:3306 blue
 ```
 
-After that, make sure that all pods are started and that traefik services have
-an external IP address set.
+Migrate data
 
-## Enable Remote Access
-
-Copy the configuration from the server:
+with mysqldump
 
 ```bash
-scp green:/var/lib/k0s/pki/admin.conf ~/admin.conf
-export KUBECONFIG=~/admin.conf
+jexec db_delado_co mysqldump \
+    --compatible=postgresql \
+    --all-databases \
+    --single-transaction > mysqldump.sql
+gzip mysqldump.sql
 ```
 
-## Install Cert-Manager
+Copy mysqldump.gz to target machine
 
 ```bash
-kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.6.1/cert-manager.yaml
+scp blue:mysqldump.sql.gz .
 ```
 
-Apply the nesono kubernetes configuration with `kubectl apply -f the.issing.link.yml`
+```bash
+psql --host=localhost --port=5432 --user=mailserver mailserver
+\i mysqldump.sql
+```
+
+```bash
+pgloader mysql://mailuser@localhost:3306/mailserver postgresql://mailserver@localhost:5432/mailserver
+```
 
 ## Useful Commands
 

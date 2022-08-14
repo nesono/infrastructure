@@ -74,10 +74,6 @@ volumes:
       device: /svc/volumes/mysql_mail_data
 
 secrets:
-  #mail_postgres_password:
-    #external: true
-  #mail_postgres_user:
-    #external: true
   postfixadmin_setup_password:
     external: true
   mysql_mail_password:

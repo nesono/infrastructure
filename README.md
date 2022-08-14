@@ -46,9 +46,10 @@ any revisions concrol of course!
 
 Examples of the used files (see the full listing in the file mentioned above):
 
-* `mail_postgres_root_password`
-* `mail_postgres_password`
-* `mail_postgres_user`
+* `secret_mysql_mail_root_password`
+* `secret_mysql_mail_password`
+* `secret_mysql_mail_user`
+* `secret_postfixadmin_setup_password`
 
 ## Node Provisioning
 

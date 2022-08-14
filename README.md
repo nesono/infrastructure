@@ -133,3 +133,9 @@ Test the HTTP service
 ```bash
 curl -kivL -H 'Host: the.issing.link' 'http://5.9.198.114'
 ```
+
+Reset docker
+
+```bash
+systemctl restart docker.socket docker.service
+```

@@ -51,57 +51,6 @@ services:
       restart_policy:
         condition: on-failure
 
-  dovecot:
-    image: dovecot/dovecot:2.3.19
-    ports: 
-      - "993:933"
-      - "587:587"
-    volumes:
-      - dovecot:/etc/dovecot
-      - mail:/srv/mail 
-
-  postgres:
-    image: postgres:14.4
-    deploy:
-      restart_policy:
-        condition: on-failure
-    #ports: 
-      #- "5432:5432"
-    volumes:
-      - /svc/volumes/postgres_data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD_FILE: /run/secrets/mail_postgres_password
-      POSTGRES_USER_FILE: /run/secrets/mail_postgres_user
-      PGDATA: /var/lib/postgresql/data
-    secrets:
-      - mail_postgres_password
-      - mail_postgres_user
-
-  postfixadmin:
-    depends_on:
-      - postgres
-    image: postfixadmin:3.3.11
-    deploy:
-      restart_policy:
-        condition: on-failure
-    environment:
-      POSTFIXADMIN_DB_TYPE: pgsql
-      POSTFIXADMIN_DB_HOST: postgres
-      POSTFIXADMIN_DB_NAME: mailserver
-      POSTFIXADMIN_DB_USER_FILE: /run/secrets/mail_postgres_user
-      POSTFIXADMIN_DB_PASSWORD_FILE: /run/secrets/mail_postgres_password
-      POSTFIXADMIN_SETUP_PASSWORD_FILE: /run/secrets/mail_postfixadmin_setup_password
-      POSTFIXADMIN_SMTP_SERVER: postfix
-      POSTFIXADMIN_SMTP_PORT: 25
-      VIRTUAL_HOST: postfixgreen.nesono.com
-      VIRTUAL_PORT: 80
-      LETSENCRYPT_HOST: postfixgreen.nesono.com
-      LETSENCRYPT_EMAIL: c.333+letsencrypt@nesono.com
-    secrets:
-      - mail_postgres_password
-      - mail_postgres_user
-      - mail_postfixadmin_setup_password
-
 volumes:
   conf:
     driver: local
@@ -133,23 +82,3 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/acme-companion
-  dovecot:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/dovecot
-  mail:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/mail
-
-secrets:
-  mail_postgres_password:
-    external: true
-  mail_postgres_user:
-    external: true
-  mail_postfixadmin_setup_password:
-    external: true

@@ -6,15 +6,15 @@
     group: root
     mode: '0755'
   loop:
-    - /svc/volumes/mail
-    - /svc/volumes/dovecot
     - /svc/volumes/nginx
     - /svc/volumes/nginx/certs
     - /svc/volumes/nginx/conf.d
     - /svc/volumes/nginx/vhost.d
     - /svc/volumes/nginx/html
     - /svc/volumes/acme-companion
-    - /svc/volumes/postgres_data
+    - /svc/volumes/mail
+    - /svc/volumes/dovecot
+    - /svc/volumes/mysql_mail_data
 
 - name: Create Docker compose files directory
   ansible.builtin.file:
@@ -24,15 +24,16 @@
     group: root
     mode: '0755'
 
-- name: Create Docker compose services directory
+- name: Create Docker compose directories
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "/var/run/docker_compose/services/{{ item }}"
     state: directory
     owner: root
     group: root
     mode: '0755'
   loop:
-    - /var/run/docker_compose/services
+    - base
+    - mail
 
 - name: Copy nginx.tmpl
   ansible.builtin.copy:
@@ -44,11 +45,14 @@
 
 - name: Copy services compose
   ansible.builtin.copy:
-    src: services.yml
-    dest: /var/run/docker_compose/services/docker-compose.yaml
+    src: "{{ item }}.yml"
+    dest: "/var/run/docker_compose/services/{{ item }}/docker_compose.yml"
     owner: root
     group: root
     mode: 0644
+  loop:
+    - base
+    - mail
 
 - name: Copy dovecot configuration
   ansible.builtin.copy:
@@ -66,9 +70,10 @@
     data_is_b64: true
     state: present
   loop:
-    - mail_postgres_password
-    - mail_postgres_user
-    - mail_postfixadmin_setup_password
+    - mysql_mail_password
+    - mysql_mail_user
+    - mysql_mail_root_password
+    - postfixadmin_setup_password
 
 - name: Init a new swarm with default parameters
   docker_swarm:
@@ -77,10 +82,13 @@
 - name: Deploy services
   community.docker.docker_stack:
     state: present
-    name: services
+    name: "{{ item }}"
     prune: yes
     compose: 
-      - /var/run/docker_compose/services/docker-compose.yaml
+      - "/var/run/docker_compose/services/{{ item }}/docker_compose.yml"
+  loop:
+    - base
+    - mail
 
 #- name: Remove mailserver
   #community.docker.docker_stack:

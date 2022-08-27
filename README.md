@@ -2,6 +2,15 @@
 
 This repository is used to provision my personal servers
 
+## Backing up Nesono Data
+
+Get the MySQL backup
+
+```bash
+jexec db_delado_co mysqldump mailserver --single-transaction > mysqldump.sql
+gzip mysqldump.sql
+```
+
 ## Fresh installation (after FreeBSD Migration)
 
 Start the Hetzner Rescue system

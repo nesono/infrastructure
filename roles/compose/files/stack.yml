@@ -1,0 +1,215 @@
+version: '3.1'
+services:
+  # Base services
+  nginx-proxy:
+    image: nginx:1.22-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - conf:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - certs:/etc/nginx/certs:ro
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+    networks:
+      - http
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  docker-gen:
+    image: nginxproxy/docker-gen:0.9
+    command: -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+    volumes:
+      - conf:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - certs:/etc/nginx/certs:ro
+      - /svc/volumes/nginx/nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen"
+    networks:
+      - http
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion:2.2
+    depends_on:
+      - nginx-proxy
+      - docker-gen
+    volumes:
+      - conf:/etc/nginx/conf.d
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - certs:/etc/nginx/certs:rw
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    #environment:
+      #DEBUG: true
+      #ACME_CA_URI: https://acme-staging-v02.api.letsencrypt.org/directory
+    networks:
+      - http
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+    # Mail services
+  dovecot:
+    depends_on:
+      - mysql_mail
+    image: dovecot/dovecot:2.3.19
+    ports: 
+      - "993:933"
+      - "587:587"
+    volumes:
+      - dovecot:/etc/dovecot
+      - mail:/srv/mail 
+    networks:
+      - mail
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  mysql_mail:
+    image: mysql:5.7
+    volumes:
+      - mysql_mail_data:/var/lib/mysql
+      - mysql_mail_init_db:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
+      MYSQL_USER_FILE: /run/secrets/mysql_mail_user
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_mail_root_password
+      MYSQL_DATABASE: mailserver
+    secrets:
+      - mysql_mail_password
+      - mysql_mail_user
+      - mysql_mail_root_password
+    networks:
+      - mail
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  postfixadmin:
+    depends_on:
+      - mysql_mail
+    image: postfixadmin:3.3.11
+    environment:
+      POSTFIXADMIN_DB_TYPE: mysqli
+      POSTFIXADMIN_DB_HOST: mysql_mail
+      POSTFIXADMIN_DB_NAME: mailserver
+      POSTFIXADMIN_DB_USER_FILE: /run/secrets/mysql_mail_user
+      POSTFIXADMIN_DB_PASSWORD_FILE: /run/secrets/mysql_mail_password
+      POSTFIXADMIN_SETUP_PASSWORD_FILE: /run/secrets/postfixadmin_setup_password
+      POSTFIXADMIN_SMTP_SERVER: postfix
+      POSTFIXADMIN_SMTP_PORT: 25
+      VIRTUAL_HOST: postfixgreen.nesono.com
+      VIRTUAL_PORT: 80
+      LETSENCRYPT_HOST: postfixgreen.nesono.com
+      LETSENCRYPT_EMAIL: c.333+letsencrypt@nesono.com
+    secrets:
+      - mysql_mail_password
+      - mysql_mail_user
+      - postfixadmin_setup_password
+    networks:
+      - http
+      - mail
+    deploy:
+      restart_policy:
+        condition: on-failure
+  # Website services
+  the-issing-link:
+    image: nesono/the.issing.link
+    depends_on:
+      - nginx-proxy
+      - docker-gen
+    environment:
+      VIRTUAL_HOST: green.issing.link
+      VIRTUAL_PORT: 80
+      LETSENCRYPT_HOST: green.issing.link
+      LETSENCRYPT_EMAIL: c.333+letsencrypt@nesono.com
+    networks:
+      - http
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+
+networks:
+  http:
+    driver: overlay
+  mail:
+    driver: overlay
+
+volumes:
+  # Base services
+  conf:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx/conf.d
+  vhost:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx/vhost.d
+  html:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx/html
+  certs:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx/certs
+  acme:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/acme-companion
+  # Mail services
+  dovecot:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/dovecot
+  mail:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mail
+  mysql_mail_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mysql_mail_data
+  mysql_mail_init_db:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mysql_mail_init_db
+
+secrets:
+  postfixadmin_setup_password:
+    external: true
+  mysql_mail_password:
+    external: true
+  mysql_mail_user:
+    external: true
+  mysql_mail_root_password:
+    external: true

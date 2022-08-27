@@ -15,6 +15,7 @@
     - /svc/volumes/mail
     - /svc/volumes/dovecot
     - /svc/volumes/mysql_mail_data
+    - /svc/volumes/mysql_mail_init_db
 
 - name: Create Docker compose files directory
   ansible.builtin.file:
@@ -26,14 +27,11 @@
 
 - name: Create Docker compose directories
   ansible.builtin.file:
-    path: "/var/run/docker_compose/services/{{ item }}"
+    path: /var/run/docker_compose/services/stack
     state: directory
     owner: root
     group: root
     mode: '0755'
-  loop:
-    - base
-    - mail
 
 - name: Copy nginx.tmpl
   ansible.builtin.copy:
@@ -45,14 +43,11 @@
 
 - name: Copy services compose
   ansible.builtin.copy:
-    src: "{{ item }}.yml"
-    dest: "/var/run/docker_compose/services/{{ item }}/docker_compose.yml"
+    src: stack.yml
+    dest: /var/run/docker_compose/services/stack/docker_compose.yml
     owner: root
     group: root
     mode: 0644
-  loop:
-    - base
-    - mail
 
 - name: Copy dovecot configuration
   ansible.builtin.copy:
@@ -82,13 +77,10 @@
 - name: Deploy services
   community.docker.docker_stack:
     state: present
-    name: "{{ item }}"
+    name: stack
     prune: yes
     compose: 
-      - "/var/run/docker_compose/services/{{ item }}/docker_compose.yml"
-  loop:
-    - base
-    - mail
+      - /var/run/docker_compose/services/stack/docker_compose.yml
 
 #- name: Remove mailserver
   #community.docker.docker_stack:

@@ -58,7 +58,7 @@ services:
       restart_policy:
         condition: on-failure
 
-    # Mail services
+  # Mail services
   dovecot:
     depends_on:
       - mysql_mail

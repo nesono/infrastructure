@@ -2,15 +2,6 @@
 
 This repository is used to provision my personal servers
 
-## Backing up Nesono Data
-
-Get the MySQL backup
-
-```bash
-jexec db_delado_co mysqldump mailserver --single-transaction > mysqldump.sql
-gzip mysqldump.sql
-```
-
 ## Fresh installation (after FreeBSD Migration)
 
 Start the Hetzner Rescue system
@@ -73,7 +64,23 @@ ansible-playbook --tags never,all -i production/hosts green_nesono.yml
 
 ## Setup Postfixadmin
 
-### From Scratch
+### Restore from Backup
+
+Get the MySQL backup
+
+```bash
+jexec db_delado_co mysqldump mailserver --single-transaction > mysqldump.sql
+gzip mysqldump.sql
+```
+
+You can put this file into the directory `/svc/volumes/mysql_mail_init_db` on
+the server. We are mounting this directory into the MySQL Docker container for
+automatic initialization.
+
+In our case, we had to fix some of the data base table definitions /
+configurations, mostly the default values for timestamps.
+
+### Install Postfixadmin
 
 #### Generate Postfixadmin Setup Password
 
@@ -93,8 +100,6 @@ ansible-playbook --tags never,all -i production/hosts green_nesono.yml
 3. Check if hosting environment is ok
 4. Setup Superadmin Account
 
-### Restore from Backup
-
 #### Install Tools
 
 ```bash
@@ -110,31 +115,6 @@ ssh -L 3306:10.1.1.3:3306 blue
 ```
 
 Migrate data
-
-with mysqldump
-
-```bash
-jexec db_delado_co mysqldump \
-    --compatible=postgresql \
-    --all-databases \
-    --single-transaction > mysqldump.sql
-gzip mysqldump.sql
-```
-
-Copy mysqldump.gz to target machine
-
-```bash
-scp blue:mysqldump.sql.gz .
-```
-
-```bash
-psql --host=localhost --port=5432 --user=mailserver mailserver
-\i mysqldump.sql
-```
-
-```bash
-pgloader mysql://mailuser@localhost:3306/mailserver postgresql://mailserver@localhost:5432/mailserver
-```
 
 ## Useful Commands
 

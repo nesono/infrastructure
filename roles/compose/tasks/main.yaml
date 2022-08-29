@@ -70,7 +70,31 @@
     - mysql_mail_root_password
     - postfixadmin_setup_password
 
-- name: Init a new swarm with default parameters
+- name: Template Dovecot SQL config
+  ansible.builtin.template:
+    src: dovecot/dovecot-sql.conf.ext.j2
+    dest: /svc/volumes/dovecot/dovecot-sql.conf.ext
+    owner: root
+    group: root
+    # this file contains a password. make it secure
+    mode: u=r,g=,o=
+  vars:
+    mysql_mail_password: "{{ lookup('file', 'secret_mysql_mail_password.txt') }}"
+    mysql_mail_user: "{{ lookup('file', 'secret_mysql_mail_user.txt') }}"
+
+- name: Template Dovecot Quota config
+  ansible.builtin.template:
+    src: dovecot/dovecot-dict-quota.conf.ext.j2
+    dest: /svc/volumes/dovecot/dovecot-dict-quota.conf.ext
+    owner: root
+    group: root
+    # this file contains a password. make it secure
+    mode: u=r,g=,o=
+  vars:
+    mysql_mail_password: "{{ lookup('file', 'secret_mysql_mail_password.txt') }}"
+    mysql_mail_user: "{{ lookup('file', 'secret_mysql_mail_user.txt') }}"
+
+- name: Init swarm with default parameters
   docker_swarm:
     state: present
 

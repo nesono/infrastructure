@@ -1,8 +1,5 @@
-connect = host=localhost dbname=postfix user=postfix password=postfix
-# Use either 
-# driver = mysql
-# Or 
-driver = pgsql
+connect = host=mysql_mail dbname=mailserver user={{mysql_mail_user}} password={{mysql_mail_password}}
+driver = mysql
 
 # Default password scheme - change to match your Postfixadmin setting.
 # depends on your $CONF['encrypt'] setting:

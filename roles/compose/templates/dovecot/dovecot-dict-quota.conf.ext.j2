@@ -1,4 +1,4 @@
-connect = host=localhost dbname=postfix user=postfix password=postfix
+connect = host=mysql_mail dbname=mailserver user={{mysql_mail_user}} password={{mysql_mail_password}}
 map {
   pattern = priv/quota/storage
   table = quota2

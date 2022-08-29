@@ -8,9 +8,8 @@ driver = mysql
 # cleartext -> PLAIN
 default_pass_scheme = MD5-CRYPT
 
-# Query to retrieve password. user can be used to retrieve username in other
+# Query to retrieve password. User can be used to retrieve username in other
 # formats also.
-
 password_query = SELECT username AS user,password FROM mailbox WHERE username = '%u' AND active='1'
 
 # Query to retrieve user information, note uid matches dovecot.conf AND Postfix virtual_uid_maps parameter.
@@ -23,5 +22,5 @@ user_query = SELECT CONCAT('/var/mail/vmail/', maildir) AS home, 1001 AS uid, 10
 # see: https://doc.dovecot.org/configuration_manual/authentication/sql/#id6
 iterate_query = SELECT username as user FROM mailbox WHERE active = '1'
 
-user_query = SELECT maildir, 1001 AS uid, 1001 AS gid, 'dict:storage=' || floor(quota/1000) || '::proxy::quota' as quota FROM mailbox WHERE username = '%u' AND active='1'
+#user_query = SELECT maildir, 1001 AS uid, 1001 AS gid, 'dict:storage=' || floor(quota/1000) || '::proxy::quota' as quota FROM mailbox WHERE username = '%u' AND active='1'
 

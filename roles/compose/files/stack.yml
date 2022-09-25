@@ -65,7 +65,6 @@ services:
     image: dovecot/dovecot:2.3.19
     ports: 
       - "993:933"
-      - "587:587"
     volumes:
       - dovecot:/etc/dovecot
       - mail:/srv/mail 

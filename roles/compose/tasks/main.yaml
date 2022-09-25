@@ -106,11 +106,11 @@
     compose: 
       - /var/run/docker_compose/services/stack/docker_compose.yml
 
-#- name: Remove mailserver
-  #community.docker.docker_stack:
-    #state: absent
-    #prune: yes
-    #name: mailserver
-    #compose:
-      #- /var/run/docker_compose/mailserver/docker-compose.yaml
-  #tags: [ never, docker_purge ]
+- name: Remove services
+  community.docker.docker_stack:
+    state: absent
+    prune: yes
+    name: mailserver
+    compose:
+      - /var/run/docker_compose/mailserver/docker-compose.yaml
+  tags: [ never, docker_purge ]

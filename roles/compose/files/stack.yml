@@ -62,7 +62,7 @@ services:
   #dovecot:
     #depends_on:
       #- mysql_mail
-    #image: dovecot/dovecot:2.3.19
+    #image: dovecot/dovecot:2.3.19.1
     #ports: 
       #- "993:933"
     #volumes:
@@ -121,6 +121,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+
   # Website services
   the-issing-link:
     image: nesono/the.issing.link:2022-08-14
@@ -138,7 +139,7 @@ services:
       restart_policy:
         condition: on-failure
   katja-issing-link:
-    image: nesono/katja.issing.link:2022-10-03
+    image: nesono/katja.issing.link:2022-10-22
     depends_on:
       - nginx-proxy
       - docker-gen
@@ -152,7 +153,6 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-
 
 networks:
   http:

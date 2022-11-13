@@ -59,20 +59,23 @@ services:
         condition: on-failure
 
   # Mail services
-  #dovecot:
-    #depends_on:
-      #- mysql_mail
-    #image: dovecot/dovecot:2.3.19.1
-    #ports: 
-      #- "993:933"
-    #volumes:
-      #- dovecot:/etc/dovecot
-      #- mail:/srv/mail 
-    #networks:
-      #- mail
-    #deploy:
-      #restart_policy:
-        #condition: on-failure
+  dovecot:
+    depends_on:
+      - mysql_mail
+    image: dovecot/dovecot:2.3.19.1
+    ports:
+      - "993:993"
+      - "587:587"
+      - "24:24"
+      - "4190:4190"
+    volumes:
+      - dovecot:/etc/dovecot
+      - mail:/srv/mail
+    networks:
+      - mail
+    deploy:
+      restart_policy:
+        condition: on-failure
 
   mysql_mail:
     image: mysql:5.7

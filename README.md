@@ -9,7 +9,7 @@ Start the Hetzner Rescue system
 * Login into [hetzner your server|<https://hetzner.your-server.de>]
 * Go to Rescue tab, select Linux 64-bit
 * Enable Rescue system
-* Rememeber Credentials
+* Remember Credentials
 * Go to Reset tab and send `Ctrl-Alt-Del` to server
 * Login with rescue credentials as `root@<your.ip.address>`
 
@@ -41,15 +41,17 @@ installimage -a -c installimage.conf
 
 The following secrets are neccessary during deployment and ansible will try to
 fill those based on the task in `roles/compose/tasks/main.yaml`. Make sure you
-create the files with the correct content - the files shall never be added to
-any revisions concrol of course!
+create the files with the correct content - **the files shall never be added to
+any revision control of course!**
 
 Examples of the used files (see the full listing in the file mentioned above):
 
-* `secret_mysql_mail_root_password`
-* `secret_mysql_mail_password`
-* `secret_mysql_mail_user`
-* `secret_postfixadmin_setup_password`
+* `secret_mysql_mail_root_password.txt`
+* `secret_mysql_mail_password.txt`
+* `secret_mysql_mail_user.txt`
+* `secret_postfixadmin_setup_password.txt`
+
+The files contents can be found in 1Password with the prefix `green:...`.
 
 ## Node Provisioning
 
@@ -77,7 +79,7 @@ You can put this file into the directory `/svc/volumes/mysql_mail_init_db` on
 the server. We are mounting this directory into the MySQL Docker container for
 automatic initialization.
 
-In our case, we had to fix some of the data base table definitions /
+In our case, we had to fix some database table definitions /
 configurations, mostly the default values for timestamps.
 
 ### Install Postfixadmin
@@ -118,6 +120,12 @@ Migrate data
 
 ## Useful Commands
 
+Activating edited Docker compose changes
+
+```bash
+ansible-playbook --tags compose -i production/hosts green_nesono.yml
+```
+
 Test the HTTP service
 
 ```bash
@@ -128,4 +136,10 @@ Reset docker
 
 ```bash
 systemctl restart docker.socket docker.service
+```
+
+Check what ports are open in the container (no need for ss to be installed in the container)
+
+```bash
+sudo nsenter -t $(docker inspect -f '{{.State.Pid}}' <container_name_or_id>) -n ss -tunap
 ```

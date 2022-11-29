@@ -29,6 +29,7 @@
       - pip
       - htop
       - git
+      - unattended-upgrades
     state: latest
     update_cache: false
 

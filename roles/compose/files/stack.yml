@@ -37,8 +37,8 @@ services:
       restart_policy:
         condition: on-failure
 
-  letsencrypt:
-    image: jrcs/letsencrypt-nginx-proxy-companion:2.2
+  nginx-proxy-acme:
+    image: nginxproxy/acme-companion:2.2
     depends_on:
       - nginx-proxy
       - docker-gen
@@ -49,7 +49,8 @@ services:
       - certs:/etc/nginx/certs:rw
       - acme:/etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    #environment:
+    environment:
+      DEFAULT_EMAIL: c.333+letsencrypt@nesono.com
       #DEBUG: true
       #ACME_CA_URI: https://acme-staging-v02.api.letsencrypt.org/directory
     networks:
@@ -113,7 +114,6 @@ services:
       VIRTUAL_HOST: postfixgreen.nesono.com
       VIRTUAL_PORT: 80
       LETSENCRYPT_HOST: postfixgreen.nesono.com
-      LETSENCRYPT_EMAIL: c.333+letsencrypt@nesono.com
     secrets:
       - mysql_mail_password
       - mysql_mail_user
@@ -121,6 +121,21 @@ services:
     networks:
       - http
       - mail
+    deploy:
+      restart_policy:
+        condition: on-failure
+  # mailserver http service for cert creation and docs entry point
+  mail2-nesono-com:
+    image: nesono/mail.nesono.com:2022-11-28
+    depends_on:
+      - nginx-proxy
+      - docker-gen
+    environment:
+      VIRTUAL_HOST: mail2.nesono.com
+      VIRTUAL_PORT: 80
+      LETSENCRYPT_HOST: mail2.nesono.com
+    networks:
+      - http
     deploy:
       restart_policy:
         condition: on-failure
@@ -132,10 +147,9 @@ services:
       - nginx-proxy
       - docker-gen
     environment:
-      VIRTUAL_HOST: green.issing.link
+      VIRTUAL_HOST: the.issing.link
       VIRTUAL_PORT: 80
-      LETSENCRYPT_HOST: green.issing.link
-      LETSENCRYPT_EMAIL: c.333+letsencrypt@nesono.com
+      LETSENCRYPT_HOST: the.issing.link
     networks:
       - http
     deploy:
@@ -150,7 +164,6 @@ services:
       VIRTUAL_HOST: katja.issing.link
       VIRTUAL_PORT: 80
       LETSENCRYPT_HOST: katja.issing.link
-      LETSENCRYPT_EMAIL: c.333+letsencrypt@nesono.com
     networks:
       - http
     deploy:

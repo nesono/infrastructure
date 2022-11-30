@@ -29,6 +29,7 @@
       - pip
       - htop
       - git
+      - ranger
       - unattended-upgrades
     state: latest
     update_cache: false

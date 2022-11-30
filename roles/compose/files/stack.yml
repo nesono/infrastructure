@@ -11,8 +11,6 @@ services:
       - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:ro
-    labels:
-      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
     networks:
       - http
     deploy:
@@ -63,15 +61,19 @@ services:
   dovecot:
     depends_on:
       - mysql_mail
+      - nginx-proxy-acme # for getting certs in place first
+      - mail2-nesono-com # for getting certs in place first
     image: dovecot/dovecot:2.3.19.1
     ports:
       - "993:993"
+      - "143:143"
       - "587:587"
       - "24:24"
       - "4190:4190"
     volumes:
       - dovecot:/etc/dovecot
       - mail:/srv/mail
+      - certs:/etc/dovecot_certs:ro
     networks:
       - mail
     deploy:

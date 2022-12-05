@@ -17,6 +17,16 @@
     - /svc/volumes/mysql_mail_data
     - /svc/volumes/mysql_mail_init_db
 
+- name: Create volume for Mail service (different uid/gid)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: 1000
+    group: 8
+    mode: '0755'
+  loop:
+    - /svc/volumes/mail
+
 - name: Create Docker compose files directory
   ansible.builtin.file:
     path: /var/run/docker_compose_files
@@ -81,6 +91,8 @@
   vars:
     mysql_mail_password: "{{ lookup('file', 'secret_mysql_mail_password.txt') }}"
     mysql_mail_user: "{{ lookup('file', 'secret_mysql_mail_user.txt') }}"
+    vmail_user_id: "1000"
+    mail_group_id: "8"
 
 - name: Template Dovecot Quota config
   ansible.builtin.template:

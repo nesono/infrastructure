@@ -1,6 +1,20 @@
 # Nesono Infrastructure Readme
 
-This repository is used to provision my personal servers
+This repository is used to provision my personal servers.
+I am using a docker compose setup, since Kubernetes hasn't worked for me out of the box
+and Docker compose seemed like a simple alternative that still provides infra
+as code (IaC) for my server setup.
+
+All services are defined in one yaml, which is addressed as the `stack` in
+Docker compose on the server host.
+
+For http, I am using the `nginx-proxy` setup, in combination with a `docker-gen`
+container and the `nginx-proxy-acme` container that handles the letsencrypt certificates.
+
+Note, that I am using a documentation http container for the email setup, that
+also has the side effect of fetching the TLS certs, that are then used by the
+email server (dovecot and postfix). Hence, the email containers depend on the http
+container.
 
 ## Fresh installation (after FreeBSD Migration)
 
@@ -84,6 +98,8 @@ configurations, mostly the default values for timestamps.
 
 ### Install Postfixadmin
 
+After running Ansible, you will need os go through the installation process as follows.
+
 #### Generate Postfixadmin Setup Password
 
 1. Visit postfixadmin.nesono.com
@@ -102,21 +118,31 @@ configurations, mostly the default values for timestamps.
 3. Check if hosting environment is ok
 4. Setup Superadmin Account
 
-#### Install Tools
+### Copy the Mail data
+
+First rsync of the old mails to the new instance.
 
 ```bash
-apt install postgresql-client
-apt install mysql-client
-apt install pgloader
+rsync -avz --delete blue:/usr/jails/mail.nesono.com/var/spool/postfix/virtual/ /svc/volumes/mail
 ```
 
-Establish port forwarding with ssh
+Once the new mail server works, you can run a final rsync as above.
+Keep the old instance disabled and switch DNS entries to the new instance.
+
+Make sure all mail data has the right permissions
 
 ```bash
-ssh -L 3306:10.1.1.3:3306 blue
+chown -R 1000:8 /svc/volumes/mail
+chmod -R u+w /svc/volumes/mail
 ```
 
-Migrate data
+Convenience command to run them all together
+
+```bash
+rsync -avz --delete blue:/usr/jails/mail.nesono.com/var/spool/postfix/virtual/ /svc/volumes/mail && \
+  chown -R 1000:8 /svc/volumes/mail && \
+  chmod -R u+w /svc/volumes/mail
+```
 
 ## Useful Commands
 

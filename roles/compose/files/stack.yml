@@ -73,7 +73,7 @@ services:
     volumes:
       - dovecot:/etc/dovecot
       - mail:/srv/mail
-      - certs:/etc/dovecot_certs:ro
+      - certs:/etc/dovecot_certs:ro # TODO: do not share all the certs, but only the mail server one
     networks:
       - mail
     deploy:
@@ -103,7 +103,8 @@ services:
   postfixadmin:
     depends_on:
       - mysql_mail
-    image: postfixadmin:3.3.11
+    # Image 3.3.10 Linux AMD64
+    image: postfixadmin@sha256:e1285da81a5d46a73af6e010972005c6dfbc311b126f23411b031e2aaa8038ee
     environment:
       POSTFIXADMIN_DB_TYPE: mysqli
       POSTFIXADMIN_DB_HOST: mysql_mail
@@ -120,6 +121,8 @@ services:
       - mysql_mail_password
       - mysql_mail_user
       - postfixadmin_setup_password
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
     networks:
       - http
       - mail

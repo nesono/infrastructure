@@ -103,8 +103,8 @@ services:
   postfixadmin:
     depends_on:
       - mysql_mail
-    # Image 3.3.10 Linux AMD64
-    image: postfixadmin@sha256:e1285da81a5d46a73af6e010972005c6dfbc311b126f23411b031e2aaa8038ee
+    # Image 3.3.13 Linux AMD64
+    image: postfixadmin:3.3.13
     environment:
       POSTFIXADMIN_DB_TYPE: mysqli
       POSTFIXADMIN_DB_HOST: mysql_mail

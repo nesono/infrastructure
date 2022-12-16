@@ -61,19 +61,42 @@ services:
   dovecot:
     depends_on:
       - mysql_mail
-      - nginx-proxy-acme # for getting certs in place first
-      - mail2-nesono-com # for getting certs in place first
+      - mail2_nesono_com # for getting certs in place first
     image: dovecot/dovecot:2.3.19.1
     ports:
       - "993:993"
       - "143:143"
-      - "587:587"
-      - "24:24"
-      - "4190:4190"
     volumes:
-      - dovecot:/etc/dovecot
+      - dovecot:/etc/dovecot:ro
       - mail:/srv/mail
       - certs:/etc/dovecot_certs:ro # TODO: do not share all the certs, but only the mail server one
+    networks:
+      - mail
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  postfix:
+    depends_on:
+      - mysql_mail
+      - mail2_nesono_com
+    image: nesono/postfix-for-postfixadmin:2022-12-16
+    environment:
+      SQL_USER_FILE: /run/secrets/mysql_mail_user
+      SQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
+      SQL_HOST: mysql_mail
+      SQL_DB_NAME: mailserver
+      TLS_CERT: /etc/postfix/certs/mail2.nesono.com/cert.pem
+      TLS_KEY: /etc/postfix/certs/mail2.nesono.com/key.pem
+    secrets:
+      - mysql_mail_password
+      - mysql_mail_user
+    ports:
+      - "25:25"
+      - "587:587"
+    volumes:
+      - mail:/var/mail
+      - certs:/etc/postfix/certs:ro # TODO: do not share all the certs, but only the mail server one
     networks:
       - mail
     deploy:
@@ -103,6 +126,7 @@ services:
   postfixadmin:
     depends_on:
       - mysql_mail
+      - nginx-proxy-acme
     # Image 3.3.13 Linux AMD64
     image: postfixadmin:3.3.13
     environment:
@@ -130,11 +154,10 @@ services:
       restart_policy:
         condition: on-failure
   # mailserver http service for cert creation and docs entry point
-  mail2-nesono-com:
+  mail2_nesono_com:
     image: nesono/mail.nesono.com:2022-11-28
     depends_on:
-      - nginx-proxy
-      - docker-gen
+      - nginx-proxy-acme
     environment:
       VIRTUAL_HOST: mail2.nesono.com
       VIRTUAL_PORT: 80
@@ -149,8 +172,7 @@ services:
   the-issing-link:
     image: nesono/the.issing.link:2022-08-14
     depends_on:
-      - nginx-proxy
-      - docker-gen
+      - nginx-proxy-acme
     environment:
       VIRTUAL_HOST: the.issing.link
       VIRTUAL_PORT: 80
@@ -163,8 +185,7 @@ services:
   katja-issing-link:
     image: nesono/katja.issing.link:2022-10-22
     depends_on:
-      - nginx-proxy
-      - docker-gen
+      - nginx-proxy-acme
     environment:
       VIRTUAL_HOST: katja.issing.link
       VIRTUAL_PORT: 80

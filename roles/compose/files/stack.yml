@@ -70,6 +70,7 @@ services:
       - dovecot:/etc/dovecot:ro
       - mail:/srv/mail
       - certs:/etc/dovecot_certs:ro # TODO: do not share all the certs, but only the mail server one
+      - mail_spool:/var/spool/mail
     networks:
       - mail
     deploy:
@@ -80,7 +81,8 @@ services:
     depends_on:
       - mysql_mail
       - mail2_nesono_com
-    image: nesono/postfix-for-postfixadmin:2022-12-16
+      - dovecot # SASL authentication
+    image: nesono/postfix-for-postfixadmin:2022-12-20
     environment:
       SQL_USER_FILE: /run/secrets/mysql_mail_user
       SQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
@@ -97,6 +99,7 @@ services:
     volumes:
       - mail:/var/mail
       - certs:/etc/postfix/certs:ro # TODO: do not share all the certs, but only the mail server one
+      - mail_spool:/var/spool/postfix
     networks:
       - mail
     deploy:
@@ -127,7 +130,6 @@ services:
     depends_on:
       - mysql_mail
       - nginx-proxy-acme
-    # Image 3.3.13 Linux AMD64
     image: postfixadmin:3.3.13
     environment:
       POSTFIXADMIN_DB_TYPE: mysqli
@@ -247,6 +249,12 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/mail
+  mail_spool:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mail_spool
   mysql_mail_data:
     driver: local
     driver_opts:

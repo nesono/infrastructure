@@ -88,7 +88,7 @@ services:
       SQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
       SQL_HOST: mysql_mail
       SQL_DB_NAME: mailserver
-      TLS_CERT: /etc/postfix/certs/mail2.nesono.com/cert.pem
+      TLS_CERT: /etc/postfix/certs/mail2.nesono.com/fullchain.pem
       TLS_KEY: /etc/postfix/certs/mail2.nesono.com/key.pem
     secrets:
       - mysql_mail_password
@@ -169,6 +169,53 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+  # webmail
+  roundcube:
+    image: roundcube/roundcubemail:1.6.x-apache
+    volumes:
+      - certs:/etc/roundcube_certs:ro
+    depends_on:
+      - nginx-proxy-acme
+      - pgsql_roundcube
+    environment:
+      ROUNDCUBEMAIL_DEFAULT_HOST: tls://mail2.nesono.com
+      ROUNDCUBEMAIL_SMTP_SERVER: tls://mail2.nesono.com
+      ROUNDCUBEMAIL_PLUGINS: archive,zipdownload,managesieve
+      ROUNDCUBEMAIL_SKIN: elastic
+      ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: 100M
+      ROUNDCUBEMAIL_DB_TYPE: pgsql
+      ROUNDCUBEMAIL_DB_HOST: pgsql_roundcube
+      ROUNDCUBEMAIL_DB_NAME: roundcube
+      VIRTUAL_HOST: roundcube2.nesono.com
+      VIRTUAL_PORT: 80
+      LETSENCRYPT_HOST: roundcube2.nesono.com
+    secrets:
+      - roundcube_db_user
+      - roundcube_db_password
+    networks:
+      - roundcube
+      - http
+    deploy:
+      restart_policy:
+        condition: on-failure
+  pgsql_roundcube:
+    image: postgres:15.1-alpine
+    volumes:
+      - postgres_roundcube_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=roundcube
+      - POSTGRES_USER_FILE=/run/secrets/roundcube_db_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/roundcube_db_password
+    secrets:
+      - roundcube_db_user
+      - roundcube_db_password
+    networks:
+      - roundcube
+    deploy:
+      restart_policy:
+        condition: on-failure
 
   # Website services
   the-issing-link:
@@ -202,6 +249,8 @@ networks:
   http:
     driver: overlay
   mail:
+    driver: overlay
+  roundcube:
     driver: overlay
 
 volumes:
@@ -267,6 +316,18 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/mysql_mail_init_db
+  roundcube_docroot:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/roundcube_docroot
+  postgres_roundcube_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/postgres_roundcube_data
 
 secrets:
   postfixadmin_setup_password:
@@ -276,4 +337,8 @@ secrets:
   mysql_mail_user:
     external: true
   mysql_mail_root_password:
+    external: true
+  roundcube_db_user:
+    external: true
+  roundcube_db_password:
     external: true

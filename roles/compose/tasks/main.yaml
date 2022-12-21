@@ -16,6 +16,8 @@
     - /svc/volumes/mysql_mail_data
     - /svc/volumes/mysql_mail_init_db
     - /svc/volumes/mail_spool
+    - /svc/volumes/roundcube_docroot
+    - /svc/volumes/postgres_roundcube_data
 
 - name: Create volume for Mail service (different uid/gid)
   ansible.builtin.file:
@@ -79,6 +81,8 @@
     - mysql_mail_user
     - mysql_mail_root_password
     - postfixadmin_setup_password
+    - roundcube_db_user
+    - roundcube_db_password
 
 - name: Template Dovecot SQL config
   ansible.builtin.template:

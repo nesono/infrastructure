@@ -66,6 +66,7 @@ services:
     ports:
       - "993:993"
       - "143:143"
+      - "4190:4190"
     volumes:
       - dovecot:/etc/dovecot:ro
       - mail:/srv/mail

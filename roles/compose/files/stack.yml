@@ -82,7 +82,7 @@ services:
       - mysql_mail
       - mail2_nesono_com
       - dovecot # SASL authentication
-    image: nesono/postfix-for-postfixadmin:2022-12-20
+    image: nesono/postfix-for-postfixadmin:2022-12-23.2
     environment:
       SQL_USER_FILE: /run/secrets/mysql_mail_user
       SQL_PASSWORD_FILE: /run/secrets/mysql_mail_password

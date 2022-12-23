@@ -128,6 +128,7 @@
     prune: yes
     compose: 
       - /var/run/docker_compose/services/stack/docker_compose.yml
+  notify: Refresh nginx-proxy
 
 - name: Remove services
   community.docker.docker_stack:

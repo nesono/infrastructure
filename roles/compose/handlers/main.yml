@@ -4,3 +4,6 @@
 - name: Refresh nginx-proxy
   ansible.builtin.shell:
     cmd: docker ps --filter 'name=_nginx-proxy\.' --format "{{ '{{.ID}}' }}" | xargs -L 1 docker kill -s HUP
+- name: Refresh Roundcube
+  ansible.builtin.shell:
+    cmd: docker ps --filter 'name=_nginx-proxy\.' --format "{{ '{{.ID}}' }}" | xargs -L 1 docker kill

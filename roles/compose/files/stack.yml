@@ -83,7 +83,7 @@ services:
       - mysql_mail
       - mail2_nesono_com
       - dovecot # SASL authentication
-    image: nesono/postfix-for-postfixadmin:2022-12-23.2
+    image: nesono/postfix-for-postfixadmin:2022-12-26.1
     environment:
       SQL_USER_FILE: /run/secrets/mysql_mail_user
       SQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
@@ -91,6 +91,8 @@ services:
       SQL_DB_NAME: mailserver
       TLS_CERT: /etc/postfix/certs/mail2.nesono.com/fullchain.pem
       TLS_KEY: /etc/postfix/certs/mail2.nesono.com/key.pem
+      DOVECOT_SASL_SOCKET_PATH: "private/auth"
+      DOVECOT_LMTP_PATH: "private/dovecot-lmtp"
     secrets:
       - mysql_mail_password
       - mysql_mail_user
@@ -158,7 +160,7 @@ services:
         condition: on-failure
   # mailserver http service for cert creation and docs entry point
   mail2_nesono_com:
-    image: nesono/mail.nesono.com:2022-11-28
+    image: nesono/mail.nesono.com:2022-12-26
     depends_on:
       - nginx-proxy-acme
     environment:
@@ -175,13 +177,14 @@ services:
     image: roundcube/roundcubemail:1.6.x-apache
     volumes:
       - certs:/etc/roundcube_certs:ro
+      - roundcube_custom_config:/var/roundcube/config:ro
     depends_on:
       - nginx-proxy-acme
       - pgsql_roundcube
     environment:
       ROUNDCUBEMAIL_DEFAULT_HOST: tls://mail2.nesono.com
       ROUNDCUBEMAIL_SMTP_SERVER: tls://mail2.nesono.com
-      ROUNDCUBEMAIL_PLUGINS: archive,zipdownload,managesieve
+      ROUNDCUBEMAIL_PLUGINS: archive,zipdownload,managesieve,attachment_reminder,emoticons
       ROUNDCUBEMAIL_SKIN: elastic
       ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: 100M
       ROUNDCUBEMAIL_DB_TYPE: pgsql
@@ -317,12 +320,12 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/mysql_mail_init_db
-  roundcube_docroot:
+  roundcube_custom_config:
     driver: local
     driver_opts:
       o: bind
       type: none
-      device: /svc/volumes/roundcube_docroot
+      device: /svc/volumes/roundcube_custom_config
   postgres_roundcube_data:
     driver: local
     driver_opts:

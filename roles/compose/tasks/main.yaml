@@ -18,6 +18,7 @@
     - /svc/volumes/mail_spool
     - /svc/volumes/roundcube_custom_config
     - /svc/volumes/postgres_roundcube_data
+    - /svc/volumes/spamass_vhome
 
 - name: Create volume for Mail service (different uid/gid)
   ansible.builtin.file:

@@ -97,7 +97,7 @@ services:
       DOVECOT_SASL_SOCKET_PATH: "private/auth"
       DOVECOT_LMTP_PATH: "private/dovecot-lmtp"
       POSTGREY_SOCKET_PATH: "private/postgrey"
-      #SPAMASS_SOCKET_PATH: "private/spamass"
+      SPAMASS_SOCKET_PATH: "private/spamass"
       #DKIM_SOCKET_PATH: "private/dkim"
     secrets:
       - mysql_mail_password

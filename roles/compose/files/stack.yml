@@ -201,8 +201,8 @@ services:
       - nginx-proxy-acme
       - pgsql_roundcube
     environment:
-      ROUNDCUBEMAIL_DEFAULT_HOST: tls://mail2.nesono.com
-      ROUNDCUBEMAIL_SMTP_SERVER: tls://mail2.nesono.com
+      ROUNDCUBEMAIL_DEFAULT_HOST: tls://imap.nesono.com
+      ROUNDCUBEMAIL_SMTP_SERVER: tls://smtp.nesono.com
       ROUNDCUBEMAIL_PLUGINS: archive,zipdownload,managesieve,attachment_reminder,emoticons
       ROUNDCUBEMAIL_SKIN: elastic
       ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: 100M

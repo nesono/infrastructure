@@ -152,6 +152,12 @@ rsync -avz --delete blue:/usr/jails/mail.nesono.com/var/spool/postfix/virtual/ /
 ansible-playbook --tags compose -i production/hosts green_nesono.yml
 ```
 
+### Forcing a Docker Compose Refresh (on the server)
+
+```bash
+cd /var/run/docker_compose/services/stack
+docker stack deploy --compose-file docker_compose.yml stack
+```
 ### Test the HTTP service
 
 ```bash

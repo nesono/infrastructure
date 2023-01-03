@@ -15,12 +15,11 @@
     - /svc/volumes/dovecot
     - /svc/volumes/mysql_mail_data
     - /svc/volumes/mysql_mail_init_db
-    - /svc/volumes/mail_spool
     - /svc/volumes/roundcube_custom_config
     - /svc/volumes/postgres_roundcube_data
     - /svc/volumes/spamass_vhome
 
-- name: Create volume for Mail service (different uid/gid)
+- name: Create volume for mail service (different uid/gid)
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -29,6 +28,16 @@
     mode: '0755'
   loop:
     - /svc/volumes/mail
+
+- name: Create volume for mail spool (differend uid/gid)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: 101
+    group: 101
+    mode: '0755'
+  loop:
+    - /svc/volumes/mail_spool
 
 - name: Create Docker compose files directory
   ansible.builtin.file:
@@ -140,7 +149,9 @@
     prune: yes
     compose: 
       - /var/run/docker_compose/services/stack/docker_compose.yml
-  notify: Refresh nginx-proxy
+  notify:
+    - Refresh nginx-proxy
+    - Reload Postfix
 
 - name: Remove services
   community.docker.docker_stack:

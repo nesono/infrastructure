@@ -84,10 +84,11 @@ services:
       - mail2_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix-for-postfixadmin:2023-01-02
+    image: nesono/postfix-for-postfixadmin:2023-01-03.1
     healthcheck:
       disable: false
     environment:
+      MYHOSTNAME: "smtp.nesono.com"
       SQL_USER_FILE: /run/secrets/mysql_mail_user
       SQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
       SQL_HOST: mysql_mail
@@ -116,7 +117,7 @@ services:
         condition: on-failure
 
   postfix_milters:
-    image: nesono/postfix-milters:2023-01-03.1
+    image: nesono/postfix-milters:2023-01-03.3
     environment:
       POSTGREY_SOCKET_PATH: "private/postgrey"
       SPAMASS_SOCKET_PATH: "private/spamass"
@@ -180,7 +181,7 @@ services:
         condition: on-failure
   # mailserver http service for cert creation and docs entry point
   mail2_nesono_com:
-    image: nesono/mail.nesono.com:2023-01-01
+    image: nesono/mail.nesono.com:2023-01-03.1
     depends_on:
       - nginx-proxy-acme
     environment:

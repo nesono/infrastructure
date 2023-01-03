@@ -7,3 +7,6 @@
 - name: Refresh Roundcube
   ansible.builtin.shell:
     cmd: docker ps --filter 'name=_nginx-proxy\.' --format "{{ '{{.ID}}' }}" | xargs -L 1 docker kill
+- name: Reload Postfix
+  ansible.builtin.shell:
+    cmd: docker ps --filter 'name=_postfix\.' --format "{{ '{{.ID}}' }}" | xargs -I {} docker exec {} postfix reload

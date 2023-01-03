@@ -86,7 +86,7 @@ services:
       - postfix_milters
     image: nesono/postfix-for-postfixadmin:2023-01-02
     healthcheck:
-      disable: true
+      disable: false
     environment:
       SQL_USER_FILE: /run/secrets/mysql_mail_user
       SQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
@@ -116,12 +116,13 @@ services:
         condition: on-failure
 
   postfix_milters:
-    image: nesono/postfix-milters:2023-01-02.2
+    image: nesono/postfix-milters:2023-01-03.1
     environment:
       POSTGREY_SOCKET_PATH: "private/postgrey"
       SPAMASS_SOCKET_PATH: "private/spamass"
       DKIM_SOCKET_PATH: "private/dkim"
     volumes:
+      - mail:/var/mail
       - mail_spool:/var/spool/postfix
       - spamass_vhome:/vhome/users
     deploy:

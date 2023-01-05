@@ -173,17 +173,40 @@ The file `2023-01-04.txt` contains the DNS TXT record. Here is my example:
 ```
 
 You will need to create a TXT record for your domain (`nesono.com` in my example) that points to the host
-`2023-01-04._domainkey` and has the value: 
+`2023-01-04._domainkey` and has the value (change the multi-string to a single string - Cloudflare 
+will handle the rest): 
 ```
-( "v=DKIM1; h=sha256; k=rsa; t=y; "
-"p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxW3loYuv7Owf9CSurIKRgtNw0GYQg7RGH41mOgb9VP5vpQNL/V3dtgo8qjkZ7afY81RFyZ48ZSKspGOfBzumJTAECsxeCjmdvpcMTWxwyNZ3uxjkb6JYwfLxh7IYbcu/+Cdcpfdxl2nQ4jx8P6zQZUbLvDKHp2DWic4KJhVdMcWXARYzwRxVZMT4PBB3OJq3aa5h4yUIOqJ+1s"
-"Vx8Co5N6f6OnVG89zAxTBTx568VVEzhPtpG8TU6JLiCJj1K/0xLmmOu7jJFicdw56dZiZc9vUJ9QiC/Q9m5yclMQAvEeGVQok1Sig1+gqkO18x6f6TJrN2jXzPJHliI1PHR/8ulQIDAQAB" )
+v=DKIM1; h=sha256; k=rsa; t=y; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxW3loYuv7Owf9CSurIKRgtNw0GYQg7RGH41mOgb9VP5vpQNL/V3dtgo8qjkZ7afY81RFyZ48ZSKspGOfBzumJTAECsxeCjmdvpcMTWxwyNZ3uxjkb6JYwfLxh7IYbcu/+Cdcpfdxl2nQ4jx8P6zQZUbLvDKHp2DWic4KJhVdMcWXARYzwRxVZMT4PBB3OJq3aa5h4yUIOqJ+1sVx8Co5N6f6OnVG89zAxTBTx568VVEzhPtpG8TU6JLiCJj1K/0xLmmOu7jJFicdw56dZiZc9vUJ9QiC/Q9m5yclMQAvEeGVQok1Sig1+gqkO18x6f6TJrN2jXzPJHliI1PHR/8ulQIDAQAB
 ```
 
 **Note**: I had to move the DNS handling from [Hover](https://www.hover.com) to [Cloudflare](https://www.cloudflare.com),
 since Hover did not support the long (>255 characters) TXT record values.  
 
+## Adding SPF Record
+
+Add the following DNS record to your DNS configuration.
+
+* Type: `TXT`
+* Name: `@`
+* Content: `v=spf1 mx ~all`
+
 ## Useful Commands
+
+### Making ss Available in Container
+
+Install the `iproute2` package:
+
+```bash
+apt install iproute2
+```
+
+### Make lsof Available in Container
+
+Install the `lsof` package
+
+```bash
+apt install lsof
+```
 
 ### Activating edited Docker compose changes
 
@@ -201,6 +224,12 @@ docker stack deploy --compose-file docker_compose.yml stack
 
 ```bash
 curl -kivL -H 'Host: the.issing.link' 'http://5.9.198.114'
+```
+
+### Testing opendkim entry
+
+```bash
+opendkim-testkey -d nesono.com -s 2023-01-04 -vvv
 ```
 
 ### Reset docker

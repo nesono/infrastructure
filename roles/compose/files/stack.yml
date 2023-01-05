@@ -84,7 +84,7 @@ services:
       - mail2_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix-for-postfixadmin:2023-01-03.1
+    image: nesono/postfix-for-postfixadmin:2023-01-05.1
     healthcheck:
       disable: false
     environment:
@@ -99,7 +99,8 @@ services:
       DOVECOT_LMTP_PATH: "private/dovecot-lmtp"
       POSTGREY_SOCKET_PATH: "private/postgrey"
       SPAMASS_SOCKET_PATH: "private/spamass"
-      #DKIM_SOCKET_PATH: "private/dkim"
+      DKIM_SOCKET_PATH: "private/dkim"
+      SPF_ENABLE: "1"
     secrets:
       - mysql_mail_password
       - mysql_mail_user

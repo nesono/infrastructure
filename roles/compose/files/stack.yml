@@ -117,15 +117,20 @@ services:
         condition: on-failure
 
   postfix_milters:
-    image: nesono/postfix-milters:2023-01-03.3
+    image: nesono/postfix-milters:2023-01-04.1
     environment:
       POSTGREY_SOCKET_PATH: "private/postgrey"
       SPAMASS_SOCKET_PATH: "private/spamass"
       DKIM_SOCKET_PATH: "private/dkim"
+      DKIM_DOMAINS: "nesono.com,issing.link,noerpel.net,frankfriedbert.de,byorkesterbaritone.com"
+      DKIM_SELECTOR: "2023-01-04"
+      DKIM_KEY_PATH: "/run/secrets/opendkim_key"
     volumes:
       - mail:/var/mail
       - mail_spool:/var/spool/postfix
       - spamass_vhome:/vhome/users
+    secrets:
+      - opendkim_key
     deploy:
       restart_policy:
         condition: on-failure
@@ -372,4 +377,6 @@ secrets:
   roundcube_db_user:
     external: true
   roundcube_db_password:
+    external: true
+  opendkim_key:
     external: true

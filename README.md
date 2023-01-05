@@ -64,6 +64,9 @@ Examples of the used files (see the full listing in the file mentioned above):
 * `secret_mysql_mail_password.txt`
 * `secret_mysql_mail_user.txt`
 * `secret_postfixadmin_setup_password.txt`
+* `secret_opendkim_key.txt`
+* `roundcube_db_password.txt`
+* `roundcube_db_user.txt`
 
 The files contents can be found in 1Password with the prefix `green:...`.
 
@@ -144,6 +147,42 @@ rsync -avz --delete blue:/usr/jails/mail.nesono.com/var/spool/postfix/virtual/ /
   chmod -R u+w /svc/volumes/mail
 ```
 
+## Create DKIM Selector and Key
+
+Create a DKIM txt and key file using the following command.
+
+```bash
+opendkim-genkey -t -s 2023-01-04 -d nesono.com,issing.link,...
+```
+
+The command above will create two files:
+1. `2023-01-04.private` with the private key
+2. `2023-01-04.txt` containing the DNS record
+
+You will need to add a DNS record for every domain, using the data in `2023-01-04.txt`. In our example these are
+1. `2023-01-04._domainkey.nesono.com`
+2. `2023-01-04._domainkey.issing.link`
+3. `...`
+
+The file `2023-01-04.txt` contains the DNS TXT record. Here is my example:
+
+```
+2023-01-04._domainkey	IN	TXT	( "v=DKIM1; h=sha256; k=rsa; t=y; "
+	  "p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxW3loYuv7Owf9CSurIKRgtNw0GYQg7RGH41mOgb9VP5vpQNL/V3dtgo8qjkZ7afY81RFyZ48ZSKspGOfBzumJTAECsxeCjmdvpcMTWxwyNZ3uxjkb6JYwfLxh7IYbcu/+Cdcpfdxl2nQ4jx8P6zQZUbLvDKHp2DWic4KJhVdMcWXARYzwRxVZMT4PBB3OJq3aa5h4yUIOqJ+1s"
+	  "Vx8Co5N6f6OnVG89zAxTBTx568VVEzhPtpG8TU6JLiCJj1K/0xLmmOu7jJFicdw56dZiZc9vUJ9QiC/Q9m5yclMQAvEeGVQok1Sig1+gqkO18x6f6TJrN2jXzPJHliI1PHR/8ulQIDAQAB" )  ; ----- DKIM key 2023-01-04 for nesono.com
+```
+
+You will need to create a TXT record for your domain (`nesono.com` in my example) that points to the host
+`2023-01-04._domainkey` and has the value: 
+```
+( "v=DKIM1; h=sha256; k=rsa; t=y; "
+"p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxW3loYuv7Owf9CSurIKRgtNw0GYQg7RGH41mOgb9VP5vpQNL/V3dtgo8qjkZ7afY81RFyZ48ZSKspGOfBzumJTAECsxeCjmdvpcMTWxwyNZ3uxjkb6JYwfLxh7IYbcu/+Cdcpfdxl2nQ4jx8P6zQZUbLvDKHp2DWic4KJhVdMcWXARYzwRxVZMT4PBB3OJq3aa5h4yUIOqJ+1s"
+"Vx8Co5N6f6OnVG89zAxTBTx568VVEzhPtpG8TU6JLiCJj1K/0xLmmOu7jJFicdw56dZiZc9vUJ9QiC/Q9m5yclMQAvEeGVQok1Sig1+gqkO18x6f6TJrN2jXzPJHliI1PHR/8ulQIDAQAB" )
+```
+
+**Note**: I had to move the DNS handling from [Hover](https://www.hover.com) to [Cloudflare](https://www.cloudflare.com),
+since Hover did not support the long (>255 characters) TXT record values.  
+
 ## Useful Commands
 
 ### Activating edited Docker compose changes
@@ -170,6 +209,19 @@ curl -kivL -H 'Host: the.issing.link' 'http://5.9.198.114'
 systemctl restart docker.socket docker.service
 ```
 
+### Accessing MySql via Terminal
+
+For instance the mail MySQL server.
+
+```bash
+docker exec -ti stack_mysql_mail.1.frfbmnx9pefgfyc2c8n62b43h mysql -p
+```
+
+Getting the list of all virtual accounts from the mail server.
+
+```bash
+docker exec -ti <container_id> mysql -p -N -B mailserver -e "SELECT username FROM mailbox;"
+```
 ### Check what ports are open in the container (no need for ss to be installed in the container)
 
 ```bash

@@ -31,6 +31,7 @@
       - git
       - ranger
       - unattended-upgrades
+      - opendkim-tools
     state: latest
     update_cache: false
 

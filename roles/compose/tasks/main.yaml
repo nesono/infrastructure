@@ -107,6 +107,7 @@
     - postfixadmin_setup_password
     - roundcube_db_user
     - roundcube_db_password
+    - opendkim_key
 
 - name: Template Dovecot SQL config
   ansible.builtin.template:

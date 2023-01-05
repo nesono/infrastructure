@@ -84,7 +84,7 @@ services:
       - mail2_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix-for-postfixadmin:2023-01-05.1
+    image: nesono/postfix-for-postfixadmin:2023-01-05.2
     healthcheck:
       disable: false
     environment:
@@ -101,6 +101,7 @@ services:
       SPAMASS_SOCKET_PATH: "private/spamass"
       DKIM_SOCKET_PATH: "private/dkim"
       SPF_ENABLE: "1"
+      DMARC_SOCKET_PATH: "private/dmarc"
     secrets:
       - mysql_mail_password
       - mysql_mail_user
@@ -118,7 +119,7 @@ services:
         condition: on-failure
 
   postfix_milters:
-    image: nesono/postfix-milters:2023-01-04.1
+    image: nesono/postfix-milters:2023-01-05
     environment:
       POSTGREY_SOCKET_PATH: "private/postgrey"
       SPAMASS_SOCKET_PATH: "private/spamass"
@@ -126,6 +127,8 @@ services:
       DKIM_DOMAINS: "nesono.com,issing.link,noerpel.net,frankfriedbert.de,byorkesterbaritone.com"
       DKIM_SELECTOR: "2023-01-04"
       DKIM_KEY_PATH: "/run/secrets/opendkim_key"
+      DMARC_SOCKET_PATH: "private/dmarc"
+      MAIL_HOSTNAME: "smtp.nesono.com"
     volumes:
       - mail:/var/mail
       - mail_spool:/var/spool/postfix

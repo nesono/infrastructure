@@ -226,10 +226,16 @@ docker stack deploy --compose-file docker_compose.yml stack
 curl -kivL -H 'Host: the.issing.link' 'http://5.9.198.114'
 ```
 
-### Testing opendkim entry
+### Testing opendkim DNS entry
 
 ```bash
 opendkim-testkey -d nesono.com -s 2023-01-04 -vvv
+```
+
+### Testing dmarc DNS entry
+
+```bash
+opendmarc-check nesono.com
 ```
 
 ### Reset docker

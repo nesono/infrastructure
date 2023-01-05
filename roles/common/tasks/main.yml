@@ -29,9 +29,10 @@
       - pip
       - htop
       - git
-      - ranger
-      - unattended-upgrades
-      - opendkim-tools
+      - ranger # file manager
+      - unattended-upgrades # automatically upgrading the server
+      - opendkim-tools # installing opendkim-genkey
+      - bind9-dnsutils # installing dig
     state: latest
     update_cache: false
 

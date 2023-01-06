@@ -190,6 +190,19 @@ Add the following DNS record to your DNS configuration.
 * Name: `@`
 * Content: `v=spf1 mx ~all`
 
+## Testing your mails
+
+Open [Mail-Tester](https://www.mail-tester.com) and check your score. It will show you any issues with 
+SPF, DKIM, DMARC, SPAMASSASSIN, Pyzor, etc. 
+
+## Adding a New Mail Domain
+
+1. Add DNS records
+   1. TXT `selector._domainkey` `...`
+   2. TXT `@` `v=spf1 mx ip4:5.9.123.102 ~all`
+   3. TXT `_dmarc` `v=DMARC1;p=reject;pct=100;rua=mailto:dmarc@nesono.com`
+2. Add to Postfixadmin (tba)
+
 ## Useful Commands
 
 ### Making ss Available in Container

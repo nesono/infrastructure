@@ -84,7 +84,7 @@ services:
       - mail2_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix-for-postfixadmin:2023-01-05.2
+    image: nesono/postfix-for-postfixadmin:2023-01-06
     healthcheck:
       disable: false
     environment:
@@ -134,7 +134,11 @@ services:
       - mail_spool:/var/spool/postfix
       - spamass_vhome:/vhome/users
     secrets:
-      - opendkim_key
+      - source: opendkim_key
+        uid: "101"
+        gid: "101"
+        mode: 0400
+
     deploy:
       restart_policy:
         condition: on-failure

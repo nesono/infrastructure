@@ -245,6 +245,9 @@ curl -kivL -H 'Host: the.issing.link' 'http://5.9.198.114'
 opendkim-testkey -d nesono.com -s 2023-01-04 -vvv
 ```
 
+### Testing DNS entries broadly
+
+Using the webservice [DnsViz](https://dnsviz.net)
 ### Testing dmarc DNS entry
 
 ```bash

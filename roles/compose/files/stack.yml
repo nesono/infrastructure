@@ -84,11 +84,12 @@ services:
       - mail2_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix-for-postfixadmin:2023-01-06
+    image: nesono/postfix-for-postfixadmin:2023-01-08.1
     healthcheck:
       disable: false
     environment:
       MYHOSTNAME: "smtp.nesono.com"
+      MYNETWORKS: "10.0.0.0/8 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128"
       SQL_USER_FILE: /run/secrets/mysql_mail_user
       SQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
       SQL_HOST: mysql_mail

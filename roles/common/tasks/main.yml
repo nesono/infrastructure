@@ -32,6 +32,7 @@
       - ranger # file manager
       - unattended-upgrades # automatically upgrading the server
       - opendkim-tools # installing opendkim-genkey
+      - opendkim # for getting /etc/opendkim.conf - to test key security with DNSSEC
       - opendmarc # installing opendmarc-check
       - bind9-dnsutils # installing dig
     state: latest

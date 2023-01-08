@@ -129,7 +129,7 @@
   ansible.builtin.template:
     src: dovecot/dovecot-dict-quota.conf.ext.j2
     dest: /svc/volumes/dovecot/dovecot-dict-quota.conf.ext
-    owner: root
+    owner: 101
     group: root
     # this file contains a password. make it secure
     mode: u=r,g=,o=

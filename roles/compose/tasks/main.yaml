@@ -1,3 +1,13 @@
+- name: Copy Docker daemon.json
+  ansible.builtin.copy:
+    src: docker/daemon.json
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - Restart Docker service
+
 - name: Create volumes for services
   ansible.builtin.file:
     path: "{{ item }}"

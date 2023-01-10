@@ -10,3 +10,8 @@
 - name: Reload Postfix
   ansible.builtin.shell:
     cmd: docker ps --filter 'name=_postfix\.' --format "{{ '{{.ID}}' }}" | xargs -I {} docker exec {} postfix reload
+- name: Restart Docker service
+  ansible.builtin.systemd:
+    state: restarted
+    daemon_reload: yes
+    name: docker

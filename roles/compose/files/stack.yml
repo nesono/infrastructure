@@ -84,7 +84,7 @@ services:
       - mail2_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix-for-postfixadmin:2023-01-08.1
+    image: nesono/postfix-for-postfixadmin:2023-01-10.1
     healthcheck:
       disable: false
     environment:
@@ -103,12 +103,14 @@ services:
       DKIM_SOCKET_PATH: "private/dkim"
       SPF_ENABLE: "1"
       DMARC_SOCKET_PATH: "private/dmarc"
+      SMTPS_ENABLE: "1"
     secrets:
       - mysql_mail_password
       - mysql_mail_user
     ports:
       - "25:25"
       - "587:587"
+      - "465:465"
     volumes:
       - mail:/var/mail
       - certs:/etc/postfix/certs:ro # TODO: do not share all the certs, but only the mail server one

@@ -190,7 +190,7 @@ Add the following DNS record to your DNS configuration.
 * Name: `@`
 * Content: `v=spf1 mx ~all`
 
-## Testing your mails
+## Testing Your Mail Server Spam Tools
 
 Open [Mail-Tester](https://www.mail-tester.com) and check your score. It will show you any issues with 
 SPF, DKIM, DMARC, SPAMASSASSIN, Pyzor, etc. 
@@ -204,6 +204,30 @@ SPF, DKIM, DMARC, SPAMASSASSIN, Pyzor, etc.
 2. Add to Postfixadmin (tba)
 
 ## Useful Commands
+
+### Testing SMTP Connection w/ STARTTLS
+
+```bash
+openssl s_client -starttls smtp -connect smtp.nesono.com:25
+```
+
+### Testing SMTP Connection w/o STARTTLS
+
+```bash
+openssl s_client -connect smtp.nesono.com:465
+```
+
+### Testing IMAP Connection w/o STARTTLS
+
+```bash
+openssl s_client -connect imap.nesono.com:993
+```
+
+### Testing IMAP Connection w/ STARTTLS
+
+```bash
+openssl s_client -starttls imap -connect imap.nesono.com:143
+```
 
 ### Making ss Available in Container
 

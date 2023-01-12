@@ -10,24 +10,24 @@
 
 - name: Create volumes for services
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "/svc/volumes/{{ item }}"
     state: directory
     owner: root
     group: root
     mode: '0755'
   loop:
-    - /svc/volumes/nginx
-    - /svc/volumes/nginx/certs
-    - /svc/volumes/nginx/conf.d
-    - /svc/volumes/nginx/vhost.d
-    - /svc/volumes/nginx/html
-    - /svc/volumes/acme-companion
-    - /svc/volumes/dovecot
-    - /svc/volumes/mysql_mail_data
-    - /svc/volumes/mysql_mail_init_db
-    - /svc/volumes/roundcube_custom_config
-    - /svc/volumes/postgres_roundcube_data
-    - /svc/volumes/spamass_vhome
+    - nginx
+    - nginx/certs
+    - nginx/conf.d
+    - nginx/vhost.d
+    - nginx/html
+    - acme-companion
+    - dovecot
+    - mysql_mail_data
+    - mysql_mail_init_db
+    - roundcube_custom_config
+    - postgres_roundcube_data
+    - spamass_vhome
 
 - name: Create volume for mail service (different uid/gid)
   ansible.builtin.file:

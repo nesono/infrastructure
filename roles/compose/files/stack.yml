@@ -255,6 +255,65 @@ services:
       restart_policy:
         condition: on-failure
 
+  gitea:
+    image: gitea/gitea:1.18.0
+    environment:
+      USER_UID: "1000"
+      USER_GID: "1000"
+      GITEA__database__DB_TYPE: "postgres"
+      GITEA__database__HOST: "pgsql_gitea:5432"
+      GITEA__database__NAME: "gitea"
+      GITEA__database__USER_FILE: /run/secrets/gitea_db_user
+      GITEA__database__PASSWD_FILE: /run/secrets/gitea_db_password
+      GITEA__mailer__ENABLED: "true"
+      GITEA__mailer__MAILER_TYPE: smtp
+      GITEA__mailer__HOST: smtp.nesono.com:465
+      GITEA__mailer__IS_TLS_ENABLED: "true"
+      GITEA__mailer__USER_FILE: /run/secrets/gitea_mailer_user
+      GITEA__mailer__PASSWD_FILE: /run/secrets/gitea_mailer_password
+      GITEA__mailer__FROM: "gitea@nesono.com"
+      GITEA__server__DOMAIN: "gitea.nesono.com"
+      GITEA__server__SSH_DOMAIN: "gitea.nesono.com"
+      GITEA__server__ROOT_URL: "https://gitea.nesono.com"
+      VIRTUAL_HOST: gitea.nesono.com
+      VIRTUAL_PORT: 3000
+      LETSENCRYPT_HOST: gitea.nesono.com
+    secrets:
+      - gitea_db_user
+      - gitea_db_password
+      - gitea_mailer_user
+      - gitea_mailer_password
+    networks:
+      - gitea
+      - http
+    volumes:
+      - gitea_data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /svc/volumes/gitea_entrypoint/entrypoint:/usr/bin/entrypoint:ro
+    ports:
+      - "222:22" # only ssh forwarding - HTTP will go through the rev proxy
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  pgsql_gitea:
+    image: postgres:15.1-alpine
+    environment:
+      - POSTGRES_DB=gitea
+      - POSTGRES_USER_FILE=/run/secrets/gitea_db_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/gitea_db_password
+    secrets:
+      - gitea_db_user
+      - gitea_db_password
+    networks:
+      - gitea
+    volumes:
+      - postgres_gitea_data:/var/lib/postgresql/data
+    deploy:
+      restart_policy:
+        condition: on-failure
+        
   # Website services
   the-issing-link:
     image: nesono/the.issing.link:2022-08-14
@@ -289,6 +348,8 @@ networks:
   mail:
     driver: overlay
   roundcube:
+    driver: overlay
+  gitea:
     driver: overlay
 
 volumes:
@@ -372,6 +433,19 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/spamass_vhome
+  # Gitea
+  gitea_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/gitea_data
+  postgres_gitea_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/postgres_gitea_data
 
 secrets:
   postfixadmin_setup_password:
@@ -387,4 +461,12 @@ secrets:
   roundcube_db_password:
     external: true
   opendkim_key:
+    external: true
+  gitea_db_user:
+    external: true
+  gitea_db_password:
+    external: true
+  gitea_mailer_user:
+    external: true
+  gitea_mailer_password:
     external: true

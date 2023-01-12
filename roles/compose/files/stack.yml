@@ -141,7 +141,6 @@ services:
         uid: "101"
         gid: "101"
         mode: 0400
-
     deploy:
       restart_policy:
         condition: on-failure
@@ -243,12 +242,10 @@ services:
     image: postgres:15.1-alpine
     volumes:
       - postgres_roundcube_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     environment:
-      - POSTGRES_DB=roundcube
-      - POSTGRES_USER_FILE=/run/secrets/roundcube_db_user
-      - POSTGRES_PASSWORD_FILE=/run/secrets/roundcube_db_password
+      POSTGRES_DB: roundcube
+      POSTGRES_USER_FILE: /run/secrets/roundcube_db_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/roundcube_db_password
     secrets:
       - roundcube_db_user
       - roundcube_db_password

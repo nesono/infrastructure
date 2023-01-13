@@ -278,6 +278,35 @@ Using the webservice [DnsViz](https://dnsviz.net)
 opendmarc-check nesono.com
 ```
 
+### Testing Sending Mails With and Without Authentication
+
+Without Auth
+
+```bash
+smtp-cli/smtp-cli --server=smtp.nesono.com:25 --verbose --mail-from=jochen@issing.link --to=jochen.issing@issing.link --subject="Invalid $(date)" --body-plain="Invalid $(date), not authenticated!"
+```
+
+With Auth
+
+```bash
+smtp-cli/smtp-cli --server=smtp.nesono.com:25 --user=jochen@issing.link --verbose --mail-from=jochen@issing.link --to=jochen.issing@issing.link --subject="Valid $(date)" --body-plain="Valid $(date), not authenticated!"
+```
+
+### Postfix Mail Queue Commands
+
+Print the queue
+
+```bash
+postqueue -p
+```
+
+Delete all messages in the queue
+
+```bash
+postsuper -d ALL
+```
+
+
 ### Reset docker
 
 ```bash
@@ -382,3 +411,4 @@ Which takes your username and password encoded with base64, using [this tool](ht
 * [Set up Managesieve with Dovecot](https://wiki.dovecot.org/Pigeonhole/ManageSieve/Troubleshooting)
 * [Part 4: How to Set up SPF and DKIM with Postfix on Ubuntu Server](https://www.linuxbabe.com/mail-server/setting-up-dkim-and-spf)
 * [Set Up OpenDMARC with Postfix on Ubuntu to Block Spam/Email Spoofing](https://www.linuxbabe.com/mail-server/opendmarc-postfix-ubuntu)
+* [Postfix Relay and Access Control](https://www.postfix.org/SMTPD_ACCESS_README.html)

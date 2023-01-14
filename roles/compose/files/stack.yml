@@ -84,12 +84,12 @@ services:
       - mail2_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix-for-postfixadmin:2023-01-10.1
+    image: nesono/postfix-for-postfixadmin:2023-01-14.4
     healthcheck:
       disable: false
     environment:
       MYHOSTNAME: "smtp.nesono.com"
-      MYNETWORKS: "10.0.0.0/8 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128"
+      MYNETWORKS: "5.9.123.102"
       SQL_USER_FILE: /run/secrets/mysql_mail_user
       SQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
       SQL_HOST: mysql_mail
@@ -99,7 +99,7 @@ services:
       DOVECOT_SASL_SOCKET_PATH: "private/auth"
       DOVECOT_LMTP_PATH: "private/dovecot-lmtp"
       POSTGREY_SOCKET_PATH: "private/postgrey"
-      SPAMASS_SOCKET_PATH: "private/spamass"
+#      SPAMASS_SOCKET_PATH: "private/spamass" # TODO make it work
       DKIM_SOCKET_PATH: "private/dkim"
       SPF_ENABLE: "1"
       DMARC_SOCKET_PATH: "private/dmarc"
@@ -122,10 +122,10 @@ services:
         condition: on-failure
 
   postfix_milters:
-    image: nesono/postfix-milters:2023-01-05
+    image: nesono/postfix-milters:2023-01-13
     environment:
       POSTGREY_SOCKET_PATH: "private/postgrey"
-      SPAMASS_SOCKET_PATH: "private/spamass"
+#      SPAMASS_SOCKET_PATH: "private/spamass"
       DKIM_SOCKET_PATH: "private/dkim"
       DKIM_DOMAINS: "nesono.com,issing.link,noerpel.net,frankfriedbert.de,byorkesterbaritone.com"
       DKIM_SELECTOR: "2023-01-04"

@@ -412,3 +412,5 @@ Which takes your username and password encoded with base64, using [this tool](ht
 * [Part 4: How to Set up SPF and DKIM with Postfix on Ubuntu Server](https://www.linuxbabe.com/mail-server/setting-up-dkim-and-spf)
 * [Set Up OpenDMARC with Postfix on Ubuntu to Block Spam/Email Spoofing](https://www.linuxbabe.com/mail-server/opendmarc-postfix-ubuntu)
 * [Postfix Relay and Access Control](https://www.postfix.org/SMTPD_ACCESS_README.html)
+* [Understanding Postfix Percentile Reports](https://logreporters.sourceforge.net/faq.html#percentiles)
+* [Mail Blacklist Archive as used by iCloud](https://mxtoolbox.com)

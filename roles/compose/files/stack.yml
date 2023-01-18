@@ -97,7 +97,7 @@ services:
       - mail2_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix-for-postfixadmin:2023-01-18.1
+    image: nesono/postfix-for-postfixadmin:2023-01-18.2
     healthcheck:
       disable: false
     environment:
@@ -114,7 +114,7 @@ services:
       POSTGREY_SOCKET_PATH: "private/postgrey"
 #      SPAMASS_SOCKET_PATH: "private/spamass" # TODO make it work
       DKIM_SOCKET_PATH: "private/dkim"
-#      SPF_ENABLE: "1" # TODO re-enable once client IPs are available
+      SPF_ENABLE: "1"
       DMARC_SOCKET_PATH: "private/dmarc"
       SMTPS_ENABLE: "1"
     secrets:

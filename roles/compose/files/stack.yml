@@ -311,9 +311,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /svc/volumes/gitea_entrypoint/entrypoint:/usr/bin/entrypoint:ro
     ports:
-      - target: 222 # only ssh forwarding - HTTP will go through the rev proxy
-        published: 22
-        mode: host
+      - "222:22" # only ssh forwarding - HTTP will go through the rev proxy
     deploy:
       restart_policy:
         condition: on-failure

@@ -23,12 +23,16 @@
 - name: Install tools with APT
   apt:
     pkg:
+      - man-db
+      - manpages
       - tmux
       - neovim
       - tmuxinator
       - pip
       - htop
       - git
+      - ripgrep
+      - jq
       - ranger # file manager
       - unattended-upgrades # automatically upgrading the server
       - opendkim-tools # installing opendkim-genkey

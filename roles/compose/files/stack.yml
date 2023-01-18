@@ -1,4 +1,4 @@
-version: '3.1'
+version: '3.8'
 services:
   # Base services
   nginx-proxy:
@@ -11,6 +11,8 @@ services:
       - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:ro
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
     networks:
       - http
     deploy:
@@ -186,14 +188,13 @@ services:
       - mysql_mail_password
       - mysql_mail_user
       - postfixadmin_setup_password
-    labels:
-      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
     networks:
       - http
       - mail
     deploy:
       restart_policy:
         condition: on-failure
+
   # mailserver http service for cert creation and docs entry point
   mail2_nesono_com:
     image: nesono/mail.nesono.com:2023-01-08
@@ -328,6 +329,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+
   katja-issing-link:
     image: nesono/katja.issing.link:2022-10-22
     depends_on:

@@ -20,7 +20,7 @@ container.
 
 Start the Hetzner Rescue system
 
-* Login into [hetzner your server|<https://hetzner.your-server.de>]
+* Login into [hetzner your server](https://hetzner.your-server.de)
 * Go to Rescue tab, select Linux 64-bit
 * Enable Rescue system
 * Remember Credentials

@@ -35,7 +35,7 @@ DRIVE1 /dev/sda
 DRIVE2 /dev/sdb
 SWRAID 1
 SWRAIDLEVEL 1
-HOSTNAME green.nesono.com
+HOSTNAME green.example.com
 PART   btrfs.raid    btrfs    all
 SUBVOL btrfs.raid    @        /
 SUBVOL btrfs.raid    @var     /var
@@ -105,7 +105,7 @@ After running Ansible, you will need os go through the installation process as f
 
 #### Generate Postfixadmin Setup Password
 
-1. Visit postfixadmin.nesono.com
+1. Visit postfixadmin.example.com
 2. Fill in the new password in `Generate setup_password` (twice)
 3. Press `Generate setup_password hash`
 4. Copy the password hash
@@ -116,7 +116,7 @@ After running Ansible, you will need os go through the installation process as f
 
 #### Log in With Setup Password
 
-1. Visit postfixadmin.nesono.com
+1. Visit postfixadmin.example.com
 2. Enter Setup Password
 3. Check if hosting environment is ok
 4. Setup Superadmin Account
@@ -126,7 +126,7 @@ After running Ansible, you will need os go through the installation process as f
 First rsync of the old mails to the new instance.
 
 ```bash
-rsync -avz --delete blue:/usr/jails/mail.nesono.com/var/spool/postfix/virtual/ /svc/volumes/mail
+rsync -avz --delete blue:/usr/jails/mail.example.com/var/spool/postfix/virtual/ /svc/volumes/mail
 ```
 
 Once the new mail server works, you can run a final rsync as above.
@@ -142,7 +142,7 @@ chmod -R u+w /svc/volumes/mail
 Convenience command to run them all together
 
 ```bash
-rsync -avz --delete blue:/usr/jails/mail.nesono.com/var/spool/postfix/virtual/ /svc/volumes/mail && \
+rsync -avz --delete blue:/usr/jails/mail.example.com/var/spool/postfix/virtual/ /svc/volumes/mail && \
   chown -R 1000:8 /svc/volumes/mail && \
   chmod -R u+w /svc/volumes/mail
 ```
@@ -152,7 +152,7 @@ rsync -avz --delete blue:/usr/jails/mail.nesono.com/var/spool/postfix/virtual/ /
 Create a DKIM txt and key file using the following command.
 
 ```bash
-opendkim-genkey -t -s 2023-01-04 -d nesono.com,issing.link,...
+opendkim-genkey -t -s 2023-01-04 -d example.com,example.link,...
 ```
 
 The command above will create two files:
@@ -160,8 +160,8 @@ The command above will create two files:
 2. `2023-01-04.txt` containing the DNS record
 
 You will need to add a DNS record for every domain, using the data in `2023-01-04.txt`. In our example these are
-1. `2023-01-04._domainkey.nesono.com`
-2. `2023-01-04._domainkey.issing.link`
+1. `2023-01-04._domainkey.example.com`
+2. `2023-01-04._domainkey.example.link`
 3. `...`
 
 The file `2023-01-04.txt` contains the DNS TXT record. Here is my example:
@@ -169,10 +169,10 @@ The file `2023-01-04.txt` contains the DNS TXT record. Here is my example:
 ```
 2023-01-04._domainkey	IN	TXT	( "v=DKIM1; h=sha256; k=rsa; t=y; "
 	  "p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxW3loYuv7Owf9CSurIKRgtNw0GYQg7RGH41mOgb9VP5vpQNL/V3dtgo8qjkZ7afY81RFyZ48ZSKspGOfBzumJTAECsxeCjmdvpcMTWxwyNZ3uxjkb6JYwfLxh7IYbcu/+Cdcpfdxl2nQ4jx8P6zQZUbLvDKHp2DWic4KJhVdMcWXARYzwRxVZMT4PBB3OJq3aa5h4yUIOqJ+1s"
-	  "Vx8Co5N6f6OnVG89zAxTBTx568VVEzhPtpG8TU6JLiCJj1K/0xLmmOu7jJFicdw56dZiZc9vUJ9QiC/Q9m5yclMQAvEeGVQok1Sig1+gqkO18x6f6TJrN2jXzPJHliI1PHR/8ulQIDAQAB" )  ; ----- DKIM key 2023-01-04 for nesono.com
+	  "Vx8Co5N6f6OnVG89zAxTBTx568VVEzhPtpG8TU6JLiCJj1K/0xLmmOu7jJFicdw56dZiZc9vUJ9QiC/Q9m5yclMQAvEeGVQok1Sig1+gqkO18x6f6TJrN2jXzPJHliI1PHR/8ulQIDAQAB" )  ; ----- DKIM key 2023-01-04 for example.com
 ```
 
-You will need to create a TXT record for your domain (`nesono.com` in my example) that points to the host
+You will need to create a TXT record for your domain (`example.com` in my example) that points to the host
 `2023-01-04._domainkey` and has the value (change the multi-string to a single string - Cloudflare 
 will handle the rest): 
 ```
@@ -200,7 +200,7 @@ SPF, DKIM, DMARC, SPAMASSASSIN, Pyzor, etc.
 1. Add DNS records
    1. TXT `selector._domainkey` `...`
    2. TXT `@` `v=spf1 mx ip4:5.9.123.102 ~all`
-   3. TXT `_dmarc` `v=DMARC1;p=reject;pct=100;rua=mailto:dmarc@nesono.com`
+   3. TXT `_dmarc` `v=DMARC1;p=reject;pct=100;rua=mailto:dmarc@example.com`
 2. Add to Postfixadmin (tba)
 
 ## Useful Commands
@@ -208,25 +208,25 @@ SPF, DKIM, DMARC, SPAMASSASSIN, Pyzor, etc.
 ### Testing SMTP Connection w/ STARTTLS
 
 ```bash
-openssl s_client -starttls smtp -connect smtp.nesono.com:25
+openssl s_client -starttls smtp -connect smtp.example.com:25
 ```
 
 ### Testing SMTP Connection w/o STARTTLS
 
 ```bash
-openssl s_client -connect smtp.nesono.com:465
+openssl s_client -connect smtp.example.com:465
 ```
 
 ### Testing IMAP Connection w/o STARTTLS
 
 ```bash
-openssl s_client -connect imap.nesono.com:993
+openssl s_client -connect imap.example.com:993
 ```
 
 ### Testing IMAP Connection w/ STARTTLS
 
 ```bash
-openssl s_client -starttls imap -connect imap.nesono.com:143
+openssl s_client -starttls imap -connect imap.example.com:143
 ```
 
 ### Making ss Available in Container
@@ -260,13 +260,13 @@ docker stack deploy --compose-file docker_compose.yml stack
 ### Test the HTTP service
 
 ```bash
-curl -kivL -H 'Host: the.issing.link' 'http://5.9.198.114'
+curl -kivL -H 'Host: the.example.link' 'http://5.9.198.114'
 ```
 
 ### Testing opendkim DNS entry
 
 ```bash
-opendkim-testkey -d nesono.com -s 2023-01-04 -vvv
+opendkim-testkey -d example.com -s 2023-01-04 -vvv
 ```
 
 ### Testing DNS entries broadly
@@ -275,7 +275,7 @@ Using the webservice [DnsViz](https://dnsviz.net)
 ### Testing dmarc DNS entry
 
 ```bash
-opendmarc-check nesono.com
+opendmarc-check example.com
 ```
 
 ### Testing Sending Mails With and Without Authentication
@@ -283,13 +283,13 @@ opendmarc-check nesono.com
 Without Auth
 
 ```bash
-smtp-cli/smtp-cli --server=smtp.nesono.com:25 --verbose --mail-from=jochen@issing.link --to=jochen.issing@issing.link --subject="Invalid $(date)" --body-plain="Invalid $(date), not authenticated!"
+smtp-cli/smtp-cli --server=smtp.example.com:25 --verbose --mail-from=user@example.com --to=recipient@example.com --subject="Invalid $(date)" --body-plain="Invalid $(date), not authenticated!"
 ```
 
 With Auth
 
 ```bash
-smtp-cli/smtp-cli --server=smtp.nesono.com:25 --user=jochen@issing.link --verbose --mail-from=jochen@issing.link --to=jochen.issing@issing.link --subject="Valid $(date)" --body-plain="Valid $(date), not authenticated!"
+smtp-cli/smtp-cli --server=smtp.example.com:25 --user=user@example.com --verbose --mail-from=user@example.com --to=recipient@example.com --subject="Valid $(date)" --body-plain="Valid $(date), not authenticated!"
 ```
 
 ### Postfix Mail Queue Commands
@@ -338,14 +338,14 @@ Note: you can run pretty much any host command within the namespace of the conta
 
 First, start the connection to the mailserver
 ```bash
-gnutls-cli --starttls -p 4190 mail2.nesono.com
+gnutls-cli --starttls -p 4190 mail.example.com
 ```
 
 This should give you something similar to this output:
 
 ```bash
 Processed 127 CA certificate(s).
-Resolving 'mail2.nesono.com:4190'...
+Resolving 'mail.example.com:4190'...
 Connecting to '5.9.123.102:4190'...
 
 - Simple Client Mode:
@@ -374,7 +374,7 @@ This should give you something similar to this
 - Certificate type: X.509
 - Got a certificate list of 3 certificates.
 - Certificate[0] info:
- - subject `CN=mail2.nesono.com', issuer `CN=R3,O=Let's Encrypt,C=US', serial 0x0415dd4a6e6a2ce9a7931fa2113ed8db9f1b, RSA key 4096 bits, signed using RSA-SHA256, activated `2022-11-29 18:56:08 UTC', expires `2023-02-27 18:56:07 UTC', pin-sha256="2uuU14K+QM4SIUb+oUUSTNCeBVuS8Vb6zmhymbWyxfA="
+ - subject `CN=mail.example.com', issuer `CN=R3,O=Let's Encrypt,C=US', serial 0x0415dd4a6e6a2ce9a7931fa2113ed8db9f1b, RSA key 4096 bits, signed using RSA-SHA256, activated `2022-11-29 18:56:08 UTC', expires `2023-02-27 18:56:07 UTC', pin-sha256="2uuU14K+QM4SIUb+oUUSTNCeBVuS8Vb6zmhymbWyxfA="
 	Public Key ID:
 		sha1:2f592ea0a8bfa8b9f7da21106730c1f68e0398ed
 		sha256:daeb94d782be40ce122146fea145124cd09e055b92f156face687299b5b2c5f0

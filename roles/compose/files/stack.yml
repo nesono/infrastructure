@@ -82,7 +82,7 @@ services:
     volumes:
       - dovecot:/etc/dovecot:ro
       - mail:/srv/mail
-      - certs:/etc/dovecot_certs:ro # TODO: do not share all the certs, but only the mail server one
+      - /svc/volumes/nginx/certs/mail2.nesono.com:/etc/dovecot_certs:ro
       - mail_spool:/var/spool/mail
     networks:
       - mail_external
@@ -107,8 +107,8 @@ services:
       SQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
       SQL_HOST: mysql_mail
       SQL_DB_NAME: mailserver
-      TLS_CERT: /etc/postfix/certs/mail2.nesono.com/fullchain.pem
-      TLS_KEY: /etc/postfix/certs/mail2.nesono.com/key.pem
+      TLS_CERT: /etc/postfix/certs/fullchain.pem
+      TLS_KEY: /etc/postfix/certs/key.pem
       DOVECOT_SASL_SOCKET_PATH: "private/auth"
       DOVECOT_LMTP_PATH: "private/dovecot-lmtp"
 #      POSTGREY_SOCKET_PATH: "private/postgrey" # not really useful imho
@@ -132,8 +132,8 @@ services:
         mode: host
     volumes:
       - mail:/var/mail
-      - certs:/etc/postfix/certs:ro # TODO: do not share all the certs, but only the mail server one
       - mail_spool:/var/spool/postfix
+      - /svc/volumes/nginx/certs/mail2.nesono.com:/etc/postfix/certs:ro
     networks:
       - mail_external
       - mail_internal

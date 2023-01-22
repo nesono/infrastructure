@@ -60,20 +60,24 @@ any revision control of course!**
 
 Examples of the used files (see the full listing in the file mentioned above):
 
-* `secret_mysql_mail_root_password.txt`
+* `secret_gitea_db_password.txt`
+* `secret_gitea_db_user.txt`
+* `secret_gitea_mailer_password.txt`
+* `secret_gitea_mailer_user.txt`
 * `secret_mysql_mail_password.txt`
+* `secret_mysql_mail_root_password.txt`
 * `secret_mysql_mail_user.txt`
-* `secret_postfixadmin_setup_password.txt`
 * `secret_opendkim_key.txt`
-* `roundcube_db_password.txt`
-* `roundcube_db_user.txt`
+* `secret_postfixadmin_setup_password.txt`
+* `secret_roundcube_db_password.txt`
+* `secret_roundcube_db_user.txt`
 
-The files contents can be found in 1Password with the prefix `green:...`.
+The files contents can be stored in 1Password with a specific prefix, e.g. `green:...`
 
 ## Node Provisioning
 
 Install ansible and ansible-lint on your host
-(e.g. `sudo pacman -S ansible ansible-lint` or `pip3 install ansible`).
+(e.g. `pip3 install ansible`).
 
 Then run the following command to provision the node.
 
@@ -85,7 +89,7 @@ ansible-playbook --tags never,all -i production/hosts green_nesono.yml
 
 ### Restore from Backup
 
-Get the MySQL backup
+Get the MySQL backup (if you have a FreeBSD installation with jails)
 
 ```bash
 jexec db_delado_co mysqldump mailserver --single-transaction > mysqldump.sql
@@ -101,7 +105,7 @@ configurations, mostly the default values for timestamps.
 
 ### Install Postfixadmin
 
-After running Ansible, you will need os go through the installation process as follows.
+After running Ansible, you will need to go through the installation process as follows.
 
 #### Generate Postfixadmin Setup Password
 
@@ -123,7 +127,7 @@ After running Ansible, you will need os go through the installation process as f
 
 ### Copy the Mail data
 
-First rsync of the old mails to the new instance.
+First rsync of the old mails to the new instance. In my example, that was as follows.
 
 ```bash
 rsync -avz --delete blue:/usr/jails/mail.example.com/var/spool/postfix/virtual/ /svc/volumes/mail
@@ -132,7 +136,7 @@ rsync -avz --delete blue:/usr/jails/mail.example.com/var/spool/postfix/virtual/ 
 Once the new mail server works, you can run a final rsync as above.
 Keep the old instance disabled and switch DNS entries to the new instance.
 
-Make sure all mail data has the right permissions
+Make sure all mail data has the right permissions (the UID 1000 is defined in the postfix image)
 
 ```bash
 chown -R 1000:8 /svc/volumes/mail

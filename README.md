@@ -215,6 +215,96 @@ SPF, DKIM, DMARC, SPAMASSASSIN, Pyzor, etc.
    3. TXT `_dmarc` `v=DMARC1;p=reject;pct=100;rua=mailto:dmarc@<example.com>`
 2. Add to Postfixadmin (`Menu -> Domain List -> New Domain`)
 
+## Migrating cgitrc Git Repostitories to Gitea
+
+Get the `cgitrc` file from the server, on FreeBSD it's located under `/usr/jails/git.nesono.com/usr/local/etc/cgitrc`.
+
+Then convert it to a file where each line contains the repo and description separated by tab.
+
+```bash
+cat cgitrc | grep -e '\(repo.url\|repo.desc\)' | \
+  sed -E 's/(repo.url|repo.desc)=/\1 /' | \
+  awk '{if ($1 == "repo.url") { printf $2"\t"; } else { for (i=2; i<NF; i++) printf $i " "; print $NF }}' \
+  > repolist.csv
+```
+
+Make sure you have the ssh key and fingerprint accepted on the host where you run the migration.
+For instance,
+
+1. Create a new repo
+2. Create an SSH key if you need one (`ssh-keygen`)
+3. Upload the key to Gitea
+4. Verify the key with Gitea
+
+Then, create repositories in Gitea for each line in `repolist.csv` using the following script.
+
+```bash
+#!/usr/bin/env bash
+set -o errexit -o pipefail -o nounset
+
+mkdir -p tmp_repo_migration
+
+readonly REPOLIST="$1"
+readonly TOKEN="$2"
+readonly OWNER="$3"
+
+delete_gitea_repository() {
+    local owner="$1"
+    local name="$2"
+    curl -X 'DELETE' \
+  "https://gitea.nesono.com/api/v1/repos/${owner}/${name%.git}?token=${TOKEN}" \
+  -H 'accept: application/json'
+}
+
+create_gitea_repository() {
+    local name="$1"
+    local description="$2"
+    curl -X 'POST' \
+  "https://gitea.nesono.com/api/v1/user/repos?token=${TOKEN}" \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d "{
+  \"default_branch\": \"master\",
+  \"auto_init\": true,
+  \"description\": \"${description}\",
+  \"name\": \"${name%.git}\", 
+  \"private\": false
+}"
+}
+
+while IFS=$'\t' read -r url description; do
+    echo "Processing $url"
+    pushd tmp_repo_migration
+    if [[ ! -d "${url%.git}" ]]; then 
+        echo "Clone repo"
+        git clone ssh://git@nesono.com:2222/${url}
+    fi
+
+    echo "Change into repo"
+    pushd ${url%.git}
+
+    new_name=$(echo "${url%.git}.git" | tr "[:upper:]" "[:lower:]")
+
+    echo "Delete old repo on Gitea"
+    delete_gitea_repository ${OWNER} ${new_name}
+    sleep 2
+
+    echo "Create new repo at Gitea"
+    create_gitea_repository "${new_name}" "${description}"
+
+    if [[ -z "$(git remote get-url gitea)" ]]; then
+        echo "Add Gitea as remote"
+        git remote add gitea ssh://git@gitea.nesono.com:2222/iss/${new_name}
+    fi
+
+    echo "Push all refs to Gitea"
+    git push --all --force gitea
+    echo "Go back directories"
+    popd # ${url%.git}
+    popd # tmp_repo_migration
+done < "${REPOLIST}"
+```
+
 ## Useful Commands
 
 ### Testing SMTP Connection w/ STARTTLS
@@ -322,7 +412,6 @@ Delete all messages in the queue
 ```bash
 postsuper -d ALL
 ```
-
 
 ### Reset docker
 

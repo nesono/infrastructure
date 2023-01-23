@@ -16,6 +16,14 @@ also has the side effect of fetching the TLS certs, that are then used by the
 email server (dovecot and postfix). Hence, the email containers depend on the http
 container.
 
+## Placeholders
+
+We use the following placeholders in this README:
+
+* `<ip.address>` for the IP address of your server
+* `<example.com>` for the main domain of your server
+* `<example.link` an alternative domain to your server
+
 ## Fresh installation (after FreeBSD Migration)
 
 Start the Hetzner Rescue system
@@ -25,7 +33,7 @@ Start the Hetzner Rescue system
 * Enable Rescue system
 * Remember Credentials
 * Go to Reset tab and send `Ctrl-Alt-Del` to server
-* Login with rescue credentials as `root@<your.ip.address>`
+* Login with rescue credentials as `root@<ip.address>`
 
 Create a config file for installimage
 
@@ -35,7 +43,7 @@ DRIVE1 /dev/sda
 DRIVE2 /dev/sdb
 SWRAID 1
 SWRAIDLEVEL 1
-HOSTNAME green.example.com
+HOSTNAME green.<example.com>
 PART   btrfs.raid    btrfs    all
 SUBVOL btrfs.raid    @        /
 SUBVOL btrfs.raid    @var     /var
@@ -109,7 +117,7 @@ After running Ansible, you will need to go through the installation process as f
 
 #### Generate Postfixadmin Setup Password
 
-1. Visit postfixadmin.example.com
+1. Visit `postfixadmin.<example.com>`
 2. Fill in the new password in `Generate setup_password` (twice)
 3. Press `Generate setup_password hash`
 4. Copy the password hash
@@ -120,7 +128,7 @@ After running Ansible, you will need to go through the installation process as f
 
 #### Log in With Setup Password
 
-1. Visit postfixadmin.example.com
+1. Visit `postfixadmin.<example.com>`
 2. Enter Setup Password
 3. Check if hosting environment is ok
 4. Setup Superadmin Account
@@ -130,7 +138,7 @@ After running Ansible, you will need to go through the installation process as f
 First rsync of the old mails to the new instance. In my example, that was as follows.
 
 ```bash
-rsync -avz --delete blue:/usr/jails/mail.example.com/var/spool/postfix/virtual/ /svc/volumes/mail
+rsync -avz --delete blue:/usr/jails/mail.<example.com>/var/spool/postfix/virtual/ /svc/volumes/mail
 ```
 
 Once the new mail server works, you can run a final rsync as above.
@@ -146,7 +154,7 @@ chmod -R u+w /svc/volumes/mail
 Convenience command to run them all together
 
 ```bash
-rsync -avz --delete blue:/usr/jails/mail.example.com/var/spool/postfix/virtual/ /svc/volumes/mail && \
+rsync -avz --delete blue:/usr/jails/mail.<example.com>/var/spool/postfix/virtual/ /svc/volumes/mail && \
   chown -R 1000:8 /svc/volumes/mail && \
   chmod -R u+w /svc/volumes/mail
 ```
@@ -156,7 +164,7 @@ rsync -avz --delete blue:/usr/jails/mail.example.com/var/spool/postfix/virtual/ 
 Create a DKIM txt and key file using the following command.
 
 ```bash
-opendkim-genkey -t -s 2023-01-04 -d example.com,example.link,...
+opendkim-genkey -t -s 2023-01-04 -d <example.com>,<example.link>,...
 ```
 
 The command above will create two files:
@@ -164,8 +172,8 @@ The command above will create two files:
 2. `2023-01-04.txt` containing the DNS record
 
 You will need to add a DNS record for every domain, using the data in `2023-01-04.txt`. In our example these are
-1. `2023-01-04._domainkey.example.com`
-2. `2023-01-04._domainkey.example.link`
+1. `2023-01-04._domainkey.<example.com>`
+2. `2023-01-04._domainkey.<example.link>`
 3. `...`
 
 The file `2023-01-04.txt` contains the DNS TXT record. Here is my example:
@@ -173,10 +181,10 @@ The file `2023-01-04.txt` contains the DNS TXT record. Here is my example:
 ```
 2023-01-04._domainkey	IN	TXT	( "v=DKIM1; h=sha256; k=rsa; t=y; "
 	  "p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxW3loYuv7Owf9CSurIKRgtNw0GYQg7RGH41mOgb9VP5vpQNL/V3dtgo8qjkZ7afY81RFyZ48ZSKspGOfBzumJTAECsxeCjmdvpcMTWxwyNZ3uxjkb6JYwfLxh7IYbcu/+Cdcpfdxl2nQ4jx8P6zQZUbLvDKHp2DWic4KJhVdMcWXARYzwRxVZMT4PBB3OJq3aa5h4yUIOqJ+1s"
-	  "Vx8Co5N6f6OnVG89zAxTBTx568VVEzhPtpG8TU6JLiCJj1K/0xLmmOu7jJFicdw56dZiZc9vUJ9QiC/Q9m5yclMQAvEeGVQok1Sig1+gqkO18x6f6TJrN2jXzPJHliI1PHR/8ulQIDAQAB" )  ; ----- DKIM key 2023-01-04 for example.com
+	  "Vx8Co5N6f6OnVG89zAxTBTx568VVEzhPtpG8TU6JLiCJj1K/0xLmmOu7jJFicdw56dZiZc9vUJ9QiC/Q9m5yclMQAvEeGVQok1Sig1+gqkO18x6f6TJrN2jXzPJHliI1PHR/8ulQIDAQAB" )  ; ----- DKIM key 2023-01-04 for <example.com>
 ```
 
-You will need to create a TXT record for your domain (`example.com` in my example) that points to the host
+You will need to create a TXT record for your domain (`<example.com>` in my example) that points to the host
 `2023-01-04._domainkey` and has the value (change the multi-string to a single string - Cloudflare 
 will handle the rest): 
 ```
@@ -192,7 +200,7 @@ Add the following DNS record to your DNS configuration.
 
 * Type: `TXT`
 * Name: `@`
-* Content: `v=spf1 mx ~all`
+* Content: `v=spf1 mx ~all` or `v=spf1 mx ip4:<ip.address> ~all` to add a second server that does not resolve backwards to `smtp.<example.com>`
 
 ## Testing Your Mail Server Spam Tools
 
@@ -203,59 +211,59 @@ SPF, DKIM, DMARC, SPAMASSASSIN, Pyzor, etc.
 
 1. Add DNS records
    1. TXT `selector._domainkey` `...`
-   2. TXT `@` `v=spf1 mx ip4:5.9.123.102 ~all`
-   3. TXT `_dmarc` `v=DMARC1;p=reject;pct=100;rua=mailto:dmarc@example.com`
-2. Add to Postfixadmin (tba)
+   2. TXT `@` `v=spf1 mx ip4:<ip.address> ~all`
+   3. TXT `_dmarc` `v=DMARC1;p=reject;pct=100;rua=mailto:dmarc@<example.com>`
+2. Add to Postfixadmin (`Menu -> Domain List -> New Domain`)
 
 ## Useful Commands
 
 ### Testing SMTP Connection w/ STARTTLS
 
 ```bash
-openssl s_client -starttls smtp -connect smtp.example.com:25
+openssl s_client -starttls smtp -connect smtp.<example.com>:25
 ```
 
 ### Testing SMTP Connection w/o STARTTLS
 
 ```bash
-openssl s_client -connect smtp.example.com:465
+openssl s_client -connect smtp.<example.com>:465
 ```
 
 ### Testing IMAP Connection w/o STARTTLS
 
 ```bash
-openssl s_client -connect imap.example.com:993
+openssl s_client -connect imap.<example.com>:993
 ```
 
 ### Testing IMAP Connection w/ STARTTLS
 
 ```bash
-openssl s_client -starttls imap -connect imap.example.com:143
+openssl s_client -starttls imap -connect imap.<example.com>:143
 ```
 
-### Making ss Available in Container
+### Making ss Available in Debian-Based Container
 
 Install the `iproute2` package:
 
 ```bash
-apt install iproute2
+apt update && apt install iproute2
 ```
 
-### Make lsof Available in Container
+### Make lsof Available in Debian-Based Container
 
 Install the `lsof` package
 
 ```bash
-apt install lsof
+apt update && apt install lsof
 ```
 
-### Activating edited Docker compose changes
+### Applying Docker compose changes
 
 ```bash
 ansible-playbook --tags compose -i production/hosts green_nesono.yml
 ```
 
-### Forcing a Docker Compose Refresh (on the server)
+### Forcing a Docker Compose Refresh (on the Server)
 
 ```bash
 cd /var/run/docker_compose/services/stack
@@ -264,36 +272,41 @@ docker stack deploy --compose-file docker_compose.yml stack
 ### Test the HTTP service
 
 ```bash
-curl -kivL -H 'Host: the.example.link' 'http://5.9.198.114'
+curl -kivL -H 'Host: the.<example.link>' 'http://<ip.address>'
 ```
 
 ### Testing opendkim DNS entry
 
 ```bash
-opendkim-testkey -d example.com -s 2023-01-04 -vvv
+opendkim-testkey -d <example.com> -s 2023-01-04 -vvv
 ```
 
 ### Testing DNS entries broadly
 
 Using the webservice [DnsViz](https://dnsviz.net)
+
 ### Testing dmarc DNS entry
 
+This needs the package `opendmarc-tools` installed.
+
 ```bash
-opendmarc-check example.com
+opendmarc-check <example.com>
 ```
 
 ### Testing Sending Mails With and Without Authentication
 
-Without Auth
+Get [smtp-cli](https://github.com/mludvig/smtp-cli) first, and make sure you have the required perl packages installed.
+
+Example without Auth:
 
 ```bash
-smtp-cli/smtp-cli --server=smtp.example.com:25 --verbose --mail-from=user@example.com --to=recipient@example.com --subject="Invalid $(date)" --body-plain="Invalid $(date), not authenticated!"
+smtp-cli/smtp-cli --server=smtp.<example.com>:25 --verbose --mail-from=user@<example.com> --to=recipient@<example.com> --subject="Invalid $(date)" --body-plain="Invalid $(date), not authenticated!"
 ```
 
-With Auth
+Example with Auth:
 
 ```bash
-smtp-cli/smtp-cli --server=smtp.example.com:25 --user=user@example.com --verbose --mail-from=user@example.com --to=recipient@example.com --subject="Valid $(date)" --body-plain="Valid $(date), not authenticated!"
+smtp-cli/smtp-cli --server=smtp.<example.com>:25 --user=user@<example.com> --verbose --mail-from=user@<example.com> --to=recipient@<example.com> --subject="Valid $(date)" --body-plain="Valid $(date), not authenticated!"
 ```
 
 ### Postfix Mail Queue Commands
@@ -342,16 +355,16 @@ Note: you can run pretty much any host command within the namespace of the conta
 
 First, start the connection to the mailserver
 ```bash
-gnutls-cli --starttls -p 4190 mail.example.com
+gnutls-cli --starttls -p 4190 mail.<example.com>
 ```
 
 This should give you something similar to this output:
 
 ```bash
 Processed 127 CA certificate(s).
-Resolving 'mail.example.com:4190'...
-Connecting to '5.9.123.102:4190'...
-
+Resolving 'mail.<example.com>:4190'...
+Connecting to '<ip.address>:4190'...
+<ip.address>
 - Simple Client Mode:
 
 "IMPLEMENTATION" "Dovecot Pigeonhole"
@@ -378,7 +391,7 @@ This should give you something similar to this
 - Certificate type: X.509
 - Got a certificate list of 3 certificates.
 - Certificate[0] info:
- - subject `CN=mail.example.com', issuer `CN=R3,O=Let's Encrypt,C=US', serial 0x0415dd4a6e6a2ce9a7931fa2113ed8db9f1b, RSA key 4096 bits, signed using RSA-SHA256, activated `2022-11-29 18:56:08 UTC', expires `2023-02-27 18:56:07 UTC', pin-sha256="2uuU14K+QM4SIUb+oUUSTNCeBVuS8Vb6zmhymbWyxfA="
+ - subject `CN=mail.<example.com>', issuer `CN=R3,O=Let's Encrypt,C=US', serial 0x0415dd4a6e6a2ce9a7931fa2113ed8db9f1b, RSA key 4096 bits, signed using RSA-SHA256, activated `2022-11-29 18:56:08 UTC', expires `2023-02-27 18:56:07 UTC', pin-sha256="2uuU14K+QM4SIUb+oUUSTNCeBVuS8Vb6zmhymbWyxfA="
 	Public Key ID:
 		sha1:2f592ea0a8bfa8b9f7da21106730c1f68e0398ed
 		sha256:daeb94d782be40ce122146fea145124cd09e055b92f156face687299b5b2c5f0

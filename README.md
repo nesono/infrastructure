@@ -371,6 +371,10 @@ curl -kivL -H 'Host: the.<example.link>' 'http://<ip.address>'
 opendkim-testkey -d <example.com> -s 2023-01-04 -vvv
 ```
 
+### Testing if the Mailserver is Safe
+
+Try the SMTP test on [mxtoolbox](https://mxtoolbox.com)
+
 ### Testing DNS entries broadly
 
 Using the webservice [DnsViz](https://dnsviz.net)

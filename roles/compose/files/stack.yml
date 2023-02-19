@@ -67,7 +67,7 @@ services:
   dovecot:
     depends_on:
       - mysql_mail
-      - mail2_nesono_com # for getting certs in place first
+      - mail_nesono_com # for getting certs in place first
     image: dovecot/dovecot:2.3.19.1
     ports:
       - target: 993
@@ -82,7 +82,7 @@ services:
     volumes:
       - dovecot:/etc/dovecot:ro
       - mail:/srv/mail
-      - /svc/volumes/nginx/certs/mail2.nesono.com:/etc/dovecot_certs:ro
+      - /svc/volumes/nginx/certs/mail.nesono.com:/etc/dovecot_certs:ro
       - mail_spool:/var/spool/mail
     networks:
       - mail_external
@@ -94,7 +94,7 @@ services:
   postfix:
     depends_on:
       - mysql_mail
-      - mail2_nesono_com
+      - mail_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
     image: nesono/postfix-for-postfixadmin:2023-01-22
@@ -133,7 +133,7 @@ services:
     volumes:
       - mail:/var/mail
       - mail_spool:/var/spool/postfix
-      - /svc/volumes/nginx/certs/mail2.nesono.com:/etc/postfix/certs:ro
+      - /svc/volumes/nginx/certs/mail.nesono.com:/etc/postfix/certs:ro
     networks:
       - mail_external
       - mail_internal
@@ -216,14 +216,14 @@ services:
         condition: on-failure
 
   # mailserver http service for cert creation and docs entry point
-  mail2_nesono_com:
-    image: nesono/mail.nesono.com:2023-01-08
+  mail_nesono_com:
+    image: nesono/mail.nesono.com:2023-02-18
     depends_on:
       - nginx-proxy-acme
     environment:
-      VIRTUAL_HOST: mail2.nesono.com,smtp.nesono.com,imap.nesono.com,sieve.nesono.com
+      VIRTUAL_HOST: mail.nesono.com,smtp.nesono.com,imap.nesono.com,sieve.nesono.com
       VIRTUAL_PORT: 80
-      LETSENCRYPT_HOST: mail2.nesono.com,smtp.nesono.com,imap.nesono.com,sieve.nesono.com
+      LETSENCRYPT_HOST: mail.nesono.com,smtp.nesono.com,imap.nesono.com,sieve.nesono.com
     networks:
       - http_external
     deploy:

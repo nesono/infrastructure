@@ -369,19 +369,51 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+        
+  # WordPress sites
+  mysql_wordpress_noerpel:
+    image: mysql:5.7
+    volumes:
+      - mysql_wordpress_noerpel_data:/var/lib/mysql
+    environment:
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_wordpress_noerpel_password
+      MYSQL_USER_FILE: /run/secrets/mysql_wordpress_noerpel_user
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_wordpress_noerpel_root_password
+      MYSQL_DATABASE: wordpress_noerpel
+    secrets:
+      - mysql_wordpress_noerpel_password
+      - mysql_wordpress_noerpel_user
+      - mysql_wordpress_noerpel_root_password
+    networks:
+      - wordpress_noerpel_internal
+    deploy:
+      restart_policy:
+        condition: on-failure
 
-#  test-nginx:
-#    image: hashicorp/http-echo
-#    command: -text="Hello World!"
-#    networks:
-#      - echo_ingress
-#    ports:
-#      - target: 5678
-#        published: 8080
-#        mode: host
-#    deploy:
-#      restart_policy:
-#        condition: on-failure
+  wordpress_noerpel:
+    image: wordpress:6.2
+    environment:
+      VIRTUAL_HOST: wordpress.noerpel.net
+      VIRTUAL_PORT: 80
+      LETSENCRYPT_HOST: wordpress.noerpel.net
+      WORDPRESS_DB_HOST: mysql_wordpress_noerpel
+      WORDPRESS_DB_USER_FILE: /run/secrets/mysql_wordpress_noerpel_user
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/mysql_wordpress_noerpel_password
+      WORDPRESS_DB_NAME: wordpress_noerpel
+    secrets:
+      - mysql_wordpress_noerpel_password
+      - mysql_wordpress_noerpel_user
+    networks:
+      - http_external
+      - wordpress_noerpel_internal
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - wordpress_noerpel_data:/var/www/html
+    depends_on:
+      - mysql_wordpress_noerpel
+
 
 networks:
   http_external:
@@ -398,6 +430,9 @@ networks:
     driver: overlay
     internal: true
   gitea_internal:
+    driver: overlay
+    internal: true
+  wordpress_noerpel_internal:
     driver: overlay
     internal: true
 
@@ -495,6 +530,18 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/postgres_gitea_data
+  mysql_wordpress_noerpel_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mysql_wordpress_noerpel_data
+  wordpress_noerpel_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/wordpress_noerpel_data
 
 secrets:
   postfixadmin_setup_password:
@@ -518,4 +565,10 @@ secrets:
   gitea_mailer_user:
     external: true
   gitea_mailer_password:
+    external: true
+  mysql_wordpress_noerpel_password:
+    external: true
+  mysql_wordpress_noerpel_user:
+    external: true
+  mysql_wordpress_noerpel_root_password:
     external: true

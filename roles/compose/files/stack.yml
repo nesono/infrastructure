@@ -357,7 +357,7 @@ services:
         condition: on-failure
 
   katja-issing-link:
-    image: nesono/katja.issing.link:2022-10-22
+    image: nesono/katja.issing.link:2023-03-19.1
     depends_on:
       - nginx-proxy-acme
     environment:

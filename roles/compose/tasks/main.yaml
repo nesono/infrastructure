@@ -8,7 +8,7 @@
   notify:
     - Restart Docker service
 
-- name: Create volumes for services
+- name: Create root owned volumes for services
   ansible.builtin.file:
     path: "/svc/volumes/{{ item }}"
     state: directory
@@ -23,16 +23,27 @@
     - nginx/html
     - acme-companion
     - dovecot
-    - mysql_mail_data
-    - mysql_mail_init_db
     - roundcube_custom_config
     - postgres_roundcube_data
     - spamass_vhome
     - gitea_data
     - gitea_entrypoint
     - postgres_gitea_data
+    - wordpress_noerpel_data
 
-- name: Create volume for mail service (different uid/gid)
+- name: Create volume for mysql services (uid 999, gid 999)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: 999
+    group: 999
+    mode: '0755'
+  loop:
+    - mysql_mail_data
+    - mysql_mail_init_db
+    - mysql_wordpress_noerpel_data
+
+- name: Create volume for mail service (uid 1000, gid 8)
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -42,7 +53,7 @@
   loop:
     - /svc/volumes/mail
 
-- name: Create volume for mail spool (different uid/gid)
+- name: Create volume for mail spool (uid 101, gid 101)
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -133,6 +144,9 @@
     - gitea_db_password
     - gitea_mailer_user
     - gitea_mailer_password
+    - mysql_wordpress_noerpel_password
+    - mysql_wordpress_noerpel_user
+    - mysql_wordpress_noerpel_root_password
 
 - name: Template Dovecot SQL config
   ansible.builtin.template:

@@ -393,9 +393,9 @@ services:
   wordpress_noerpel:
     image: wordpress:6.2
     environment:
-      VIRTUAL_HOST: wordpress.noerpel.net
+      VIRTUAL_HOST: wordpress.noerpel.net,www.noerpel.net
       VIRTUAL_PORT: 80
-      LETSENCRYPT_HOST: wordpress.noerpel.net
+      LETSENCRYPT_HOST: wordpress.noerpel.net,www.noerpel.net
       WORDPRESS_DB_HOST: mysql_wordpress_noerpel
       WORDPRESS_DB_USER_FILE: /run/secrets/mysql_wordpress_noerpel_user
       WORDPRESS_DB_PASSWORD_FILE: /run/secrets/mysql_wordpress_noerpel_password

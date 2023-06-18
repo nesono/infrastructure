@@ -1,0 +1,35 @@
+location:
+  source_directories:
+    - /mnt/source
+  repositories:
+    - ssh://u147627@u147627.your-backup.de:23/home/green
+  one_file_system: true
+
+storage:
+  #   Passphrase is set in variable $BORG_PASSPHRASE
+  #   encryption_passphrase: "DoNotMissToChangeYourPassphrase"
+  compression: lz4
+  archive_name_format: 'backup-{now}'
+
+retention:
+  keep_hourly: 24
+  keep_daily: 7
+  keep_weekly: 4
+  keep_monthly: 12
+  keep_yearly: 10
+  prefix: 'backup-'
+
+consistency:
+  checks:
+    - repository
+    - archives
+  check_last: 3
+  prefix: 'backup-'
+
+hooks:
+  before_backup:
+    - echo "Starting a backup job."
+  after_backup:
+    - echo "Backup created."
+  on_error:
+    - echo "Error while creating a backup."

@@ -7,6 +7,7 @@
     mode: 0644
   notify:
     - Restart Docker service
+  tags: [ provision ]
 
 - name: Create root owned volumes for services
   ansible.builtin.file:
@@ -30,10 +31,15 @@
     - gitea_entrypoint
     - postgres_gitea_data
     - wordpress_noerpel_data
+    - borgmatic/config
+    - borgmatic/state
+    - borgmatic/borg_config
+    - borgmatic/cache
+  tags: [ provision ]
 
 - name: Create volume for mysql services (uid 999, gid 999)
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "/svc/volumes/{{ item }}"
     state: directory
     owner: 999
     group: 999
@@ -42,34 +48,40 @@
     - mysql_mail_data
     - mysql_mail_init_db
     - mysql_wordpress_noerpel_data
+  tags: [ provision ]
 
 - name: Create volume for mail service (uid 1000, gid 8)
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "/svc/volumes/{{ item }}"
     state: directory
     owner: 1000
     group: 8
     mode: '0755'
   loop:
-    - /svc/volumes/mail
+    - mail
+  tags: [ provision ]
 
 - name: Create volume for mail spool (uid 101, gid 101)
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "/svc/volumes/{{ item }}"
     state: directory
     owner: 101
     group: 101
     mode: '0755'
   loop:
-    - /svc/volumes/mail_spool
+    - mail_spool
+  tags: [ provision ]
 
-- name: Create Docker compose files directory
+- name: Create volume for borgmatic keys (mode 0600)
   ansible.builtin.file:
-    path: /var/run/docker_compose_files
+    path: "/svc/volumes/{{ item }}"
     state: directory
     owner: root
     group: root
-    mode: '0755'
+    mode: '0600'
+  loop:
+    - borgmatic/keys
+  tags: [ provision ]
 
 - name: Create Docker compose directories
   ansible.builtin.file:
@@ -78,19 +90,21 @@
     owner: root
     group: root
     mode: '0755'
-
-- name: Copy nginx.tmpl
-  ansible.builtin.copy:
-    src: nginx.tmpl
-    dest: /svc/volumes/nginx/nginx.tmpl
-    owner: root
-    group: root
-    mode: 0644
+  tags: [ hot_compose ]
 
 - name: Copy services compose
   ansible.builtin.copy:
     src: stack.yml
     dest: /var/run/docker_compose/services/stack/docker_compose.yml
+    owner: root
+    group: root
+    mode: 0644
+  tags: [ hot_compose ]
+
+- name: Copy nginx.tmpl
+  ansible.builtin.copy:
+    src: nginx.tmpl
+    dest: /svc/volumes/nginx/nginx.tmpl
     owner: root
     group: root
     mode: 0644
@@ -147,6 +161,25 @@
     - mysql_wordpress_noerpel_password
     - mysql_wordpress_noerpel_user
     - mysql_wordpress_noerpel_root_password
+    - borgmatic_passphrase
+    - robot_mail_user
+    - robot_mail_password
+
+- name: Generate OpenSSH keypair for Borgmatic
+  community.crypto.openssh_keypair:
+    path: /svc/volumes/borgmatic/keys/id_ssh_rsa
+
+- name: Copy Borgmatic config files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /svc/volumes/borgmatic/config
+    owner: root
+    group: root
+    mode: 0755
+  loop:
+    - borgmatic/config.yaml
+    - borgmatic/crontab.txt
+    - borgmatic/msmtp.env
 
 - name: Template Dovecot SQL config
   ansible.builtin.template:
@@ -192,6 +225,7 @@
   notify:
     - Refresh nginx-proxy
     - Reload Postfix
+  tags: [ hot_compose ]
 
 - name: Remove services
   community.docker.docker_stack:

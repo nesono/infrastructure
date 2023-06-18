@@ -59,6 +59,40 @@ Install the image
 installimage -a -c installimage.conf
 ```
 
+## Set Up Backups
+
+Run the ansible playbook the first time to create the provisioning:
+
+```bash
+ansible-playbook --tags provision -i production/hosts green_nesono.yml
+```
+
+Upload the public ssh keys to the storage box by logging into your server and running the following command
+
+```bash
+cat /svc/volumes/borgmatic/keys/id_ssh_rsa.pub | ssh -p23 uXXXXXX@uXXXXXX.your-backup.de install-ssh-key
+```
+
+You will need to enter te password of your backup server.
+Upon sucessful execution, you should see the following output:
+
+```bash
+Key No. 1 (ssh-rsa ) was installed in RFC4716 format
+Key No. 1 (ssh-rsa ) was installed in OpenSSH format
+```
+
+You can verify a successful setup by logging in (and running `ls` for instance)
+
+```bash
+ssh -p23 -i /svc/volumes/borgmatic/keys/id_ssh_rsa uXXXXXX@uXXXXXX.your-backup.de ls
+```
+
+Initialize the backup folder
+
+```bash
+borg init --encryption=repokey-blake2 ssh://uXXXXXX@uXXXXXX.your-backup.de:23/home/green
+```
+
 ## Create secret files
 
 The following secrets are neccessary during deployment and ansible will try to
@@ -68,6 +102,7 @@ any revision control of course!**
 
 Examples of the used files (see the full listing in the file mentioned above):
 
+* `secret_borgmatic_passphrase.txt`
 * `secret_gitea_db_password.txt`
 * `secret_gitea_db_user.txt`
 * `secret_gitea_mailer_password.txt`
@@ -77,6 +112,8 @@ Examples of the used files (see the full listing in the file mentioned above):
 * `secret_mysql_mail_user.txt`
 * `secret_opendkim_key.txt`
 * `secret_postfixadmin_setup_password.txt`
+* `secret_robot_mail_password.txt`
+* `secret_robot_mail_user.txt`
 * `secret_roundcube_db_password.txt`
 * `secret_roundcube_db_user.txt`
 

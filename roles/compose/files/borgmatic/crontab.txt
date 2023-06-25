@@ -1,1 +1,1 @@
-0 3 * * * /scripts/run.sh 2>&1
+0 3 * * * export BORG_PASSPHRASE=$(cat $BORG_PASSPHRASE_FILE) && export MAIL_USER=$(cat $BORG_MAIL_USER_FILE) && export MAIL_PASSWORD=$(cat $BORG_MAIL_PASSWORD_FILE) && /scripts/run.sh 2>&1

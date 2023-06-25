@@ -375,8 +375,6 @@ services:
   # Website services
   the-issing-link:
     image: nesono/the.issing.link:2022-08-14
-    depends_on:
-      - nginx-proxy-acme
     environment:
       VIRTUAL_HOST: the.issing.link
       VIRTUAL_PORT: 80
@@ -389,8 +387,6 @@ services:
 
   katja-issing-link:
     image: nesono/katja.issing.link:2023-03-19.1
-    depends_on:
-      - nginx-proxy-acme
     environment:
       VIRTUAL_HOST: katja.issing.link
       VIRTUAL_PORT: 80

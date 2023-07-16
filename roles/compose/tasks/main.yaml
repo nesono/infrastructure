@@ -25,16 +25,26 @@
     - acme-companion
     - dovecot
     - roundcube_custom_config
-    - postgres_roundcube_data
     - spamass_vhome
     - gitea_data
     - gitea_entrypoint
-    - postgres_gitea_data
     - wordpress_noerpel_data
     - borgmatic/config
     - borgmatic/state
     - borgmatic/borg_config
     - borgmatic/cache
+  tags: [ provision ]
+
+- name: Create volume for postgres services (uid 70, gid 70)
+  ansible.builtin.file:
+    path: "/svc/volumes/{{ item }}"
+    state: directory
+    owner: 70
+    group: 70
+    mode: '0755'
+  loop:
+    - postgres_gitea_data
+    - postgres_roundcube_data
   tags: [ provision ]
 
 - name: Create volume for mysql services (uid 999, gid 999)
@@ -48,6 +58,8 @@
     - mysql_mail_data
     - mysql_mail_init_db
     - mysql_wordpress_noerpel_data
+    - mariadb_cloud_nesono_data
+    - mariadb_cloud_nesono_init_db
   tags: [ provision ]
 
 - name: Create volume for mail service (uid 1000, gid 8)
@@ -81,6 +93,21 @@
     mode: '0600'
   loop:
     - borgmatic/keys
+  tags: [ provision ]
+
+- name: Create volume for nextcloud services (uid 33, gid 33)
+  ansible.builtin.file:
+    path: "/svc/volumes/{{ item }}"
+    state: directory
+    owner: 33
+    group: 33
+    mode: '0755'
+  loop:
+    - cloud_nesono_nextcloud
+    - cloud_nesono_apps
+    - cloud_nesono_config
+    - cloud_nesono_data
+
   tags: [ provision ]
 
 - name: Create Docker compose directories
@@ -164,6 +191,11 @@
     - borgmatic_passphrase
     - robot_mail_user
     - robot_mail_password
+    - mariadb_cloud_nesono_root_password
+    - mariadb_cloud_nesono_password
+    - mariadb_cloud_nesono_user
+    - nextcloud_nesono_admin_user
+    - nextcloud_nesono_admin_password
 
 - name: Generate OpenSSH keypair for Borgmatic
   community.crypto.openssh_keypair:

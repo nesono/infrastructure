@@ -5,7 +5,7 @@ services:
 #    volumes:
 #      - /var/run/docker.sock:/var/run/docker.sock:ro
 #    command: daemon --docker
-#
+
   borg-backup:
     image: b3vis/borgmatic:msmtp-1.7
     volumes:
@@ -393,6 +393,11 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+#    labels:
+#      ofelia.enabled: "true"
+#      ofelia.job-exec.cron_sh.schedule: "@every 5m"
+#      ofelia.job-exec.cron_sh.command: "/cron.sh"
+#      ofelia.job-exec.cron_sh.user: "www-data"
 
   redis_cloud_nesono:
     image: redis:7-alpine
@@ -400,7 +405,7 @@ services:
       - cloud_nesono_internal
 
   cloud_nesono_com:
-    image: nextcloud:20
+    image: nextcloud:22
     volumes:
       - cloud_nesono_nextcloud:/var/www/html
       - cloud_nesono_apps:/var/www/html/custom_apps

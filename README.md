@@ -93,6 +93,27 @@ Initialize the backup folder
 borg init --encryption=repokey-blake2 ssh://uXXXXXX@uXXXXXX.your-backup.de:23/home/green
 ```
 
+### Run Backup Commands
+
+Start a borgmatic shell with the following commands:
+
+```bash
+docker exec -ti $(docker ps -q -f name=borg-backup) bash
+export BORG_PASSPHRASE=$(cat $BORG_PASSPHRASE_FILE)
+```
+
+List all borgmatic backups
+
+```bash
+borgmatic list 
+```
+
+Run borgmatic immediately
+
+```bash
+borgmatic
+```
+
 ## Create secret files
 
 The following secrets are neccessary during deployment and ansible will try to
@@ -137,8 +158,7 @@ ansible-playbook --tags never,all -i production/hosts green_nesono.yml
 Get the MySQL backup (if you have a FreeBSD installation with jails)
 
 ```bash
-jexec db_delado_co mysqldump mailserver --single-transaction > mysqldump.sql
-gzip mysqldump.sql
+jexec db_delado_co mysqldump mailserver --single-transaction | gzip -9 > mysqldump.sql.gz
 ```
 
 You can put this file into the directory `/svc/volumes/mysql_mail_init_db` on
@@ -551,6 +571,48 @@ AUTHENTICATE "PLAIN" "<base64_encoded_username_password>"
 ```
 
 Which takes your username and password encoded with base64, using [this tool](http://pigeonhole.dovecot.org/utilities/sieve-auth-command.pl).
+
+## NextCloud migration
+
+### Gathering the Migration data
+
+MySQL / MariaDB initialization data: 
+```bash
+jexec db_delado_co mysqldump cloud_nesono --single-transaction | gzip -9 > 2023-08-15_cloud_nesono.sql.gz
+```
+
+Commands to copy the NextCloud files:
+```bash
+rsync -avz --progress --delete -og --chown=www-data:www-data blue:/usr/jails/cloud.nesono.com/usr/local/www/nextcloud-data/ /svc/volumes/cloud_nesono_data/
+rsync -avz --progress --delete -og --chown=www-data:www-data blue:/usr/jails/cloud.nesono.com/usr/local/www/nextcloud/apps/ /svc/volumes/cloud_nesono_apps/
+```
+
+### Cleanup half-baked instance
+
+Delete volumes (make sure you disable the nextcloud and mariadb services first)
+```bash
+rm -r /svc/volumes/cloud_nesono_apps /svc/volumes/cloud_nesono_config /svc/volumes/cloud_nesono_nextcloud /svc/volumes/mariadb_cloud_nesono_data/
+```
+
+### Running Upgrades
+
+My first upgrade wasn't really going smoothly:
+Upgrading the apps failed at the mail app and I was left in mainenance mode.
+
+Running `occ upgrade` and then disabling maintenance mode using `occ maintenance:mode --off` fixed the upgrade itself.
+Then I still had to go into the webui and also upgrade the calendar app and enable it (untested) again.
+
+Note: make sure you run the `occ` commands like the following:
+```bash
+docker exec -ti --user www-data $(docker ps -q -f name=stack_cloud_nesono_com\\.) php occ
+```
+
+### Execute Migration
+
+1. Stop the old server
+2. Copy over the data as described above
+3. Deploy the server using Ansible
+4. Adapt the `config.php` as described above
 
 ## Further Reading
 

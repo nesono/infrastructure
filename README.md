@@ -572,7 +572,7 @@ AUTHENTICATE "PLAIN" "<base64_encoded_username_password>"
 
 Which takes your username and password encoded with base64, using [this tool](http://pigeonhole.dovecot.org/utilities/sieve-auth-command.pl).
 
-## NextCloud migration
+## NextCloud Migration -- Example cloud.nesono.com
 
 ### Gathering the Migration data
 
@@ -613,6 +613,13 @@ docker exec -ti --user www-data $(docker ps -q -f name=stack_cloud_nesono_com\\.
 2. Copy over the data as described above
 3. Deploy the server using Ansible
 4. Adapt the `config.php` as described above
+
+### Running Cron.php
+
+Open your crontab using `crontab -e` and add the following line:
+```crontab
+*/5 *  *   *   *     bash -c 'docker exec --user www-data `docker ps -q -f name=stack_cloud_nesono_com\.` php -f cron.php'
+```
 
 ## Further Reading
 

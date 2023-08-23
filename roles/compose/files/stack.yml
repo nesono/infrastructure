@@ -405,7 +405,7 @@ services:
       - cloud_nesono_internal
 
   cloud_nesono_com:
-    image: nextcloud:22
+    image: nextcloud:25
     volumes:
       - cloud_nesono_nextcloud:/var/www/html
       - cloud_nesono_apps:/var/www/html/custom_apps

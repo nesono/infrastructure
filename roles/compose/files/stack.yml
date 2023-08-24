@@ -393,11 +393,6 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-#    labels:
-#      ofelia.enabled: "true"
-#      ofelia.job-exec.cron_sh.schedule: "@every 5m"
-#      ofelia.job-exec.cron_sh.command: "/cron.sh"
-#      ofelia.job-exec.cron_sh.user: "www-data"
 
   redis_cloud_nesono:
     image: redis:7-alpine
@@ -535,6 +530,9 @@ networks:
     driver: overlay
     internal: true
   cloud_nesono_internal:
+    driver: overlay
+    internal: true
+  cloud_noerpel_internal:
     driver: overlay
     internal: true
 
@@ -710,6 +708,42 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/cloud_nesono_data
+  mariadb_cloud_noerpel_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mariadb_cloud_noerpel_data
+  mariadb_cloud_noerpel_init_db:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mariadb_cloud_noerpel_init_db
+  cloud_noerpel_nextcloud:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/cloud_noerpel_nextcloud
+  cloud_noerpel_apps:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/cloud_noerpel_apps
+  cloud_noerpel_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/cloud_noerpel_config
+  cloud_noerpel_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/cloud_noerpel_data
 
 secrets:
   postfixadmin_setup_password:
@@ -755,4 +789,14 @@ secrets:
   nextcloud_nesono_admin_user:
     external: true
   nextcloud_nesono_admin_password:
+    external: true
+  mariadb_cloud_noerpel_password:
+    external: true
+  mariadb_cloud_noerpel_user:
+    external: true
+  mariadb_cloud_noerpel_root_password:
+    external: true
+  nextcloud_noerpel_admin_user:
+    external: true
+  nextcloud_noerpel_admin_password:
     external: true

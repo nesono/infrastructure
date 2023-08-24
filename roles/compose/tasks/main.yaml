@@ -60,6 +60,8 @@
     - mysql_wordpress_noerpel_data
     - mariadb_cloud_nesono_data
     - mariadb_cloud_nesono_init_db
+    - mariadb_cloud_noerpel_data
+    - mariadb_cloud_noerpel_init_db
   tags: [ provision ]
 
 - name: Create volume for mail service (uid 1000, gid 8)
@@ -107,6 +109,10 @@
     - cloud_nesono_apps
     - cloud_nesono_config
     - cloud_nesono_data
+    - cloud_noerpel_nextcloud
+    - cloud_noerpel_apps
+    - cloud_noerpel_config
+    - cloud_noerpel_data
 
   tags: [ provision ]
 
@@ -196,6 +202,11 @@
     - mariadb_cloud_nesono_user
     - nextcloud_nesono_admin_user
     - nextcloud_nesono_admin_password
+    - mariadb_cloud_noerpel_root_password
+    - mariadb_cloud_noerpel_password
+    - mariadb_cloud_noerpel_user
+    - nextcloud_noerpel_admin_user
+    - nextcloud_noerpel_admin_password
 
 - name: Generate OpenSSH keypair for Borgmatic
   community.crypto.openssh_keypair:

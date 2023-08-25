@@ -589,10 +589,21 @@ rsync -avz --progress --delete -og --chown=www-data:www-data blue:/usr/jails/clo
 
 ### Cleanup half-baked instance
 
-Delete volumes (make sure you disable the nextcloud and mariadb services first)
+Delete volumes (make sure you disable the nextcloud and mariadb services first), except for Nextcloud data folders since they are expensive to sync.
+
 ```bash
 rm -r /svc/volumes/cloud_nesono_apps /svc/volumes/cloud_nesono_config /svc/volumes/cloud_nesono_nextcloud /svc/volumes/mariadb_cloud_nesono_data/
 ```
+
+### Executing the Final Migration
+
+1. Stopping the old instance
+2. Change DNS entry to the new instance
+2. Cleanup any half-baked instances on the new instance as mentioned above
+3. Syncing all the data again (copying NextCloud files as described above)
+4. Add Redis and MariaDB to your stack and let MariaDB fully initialize (Nextcloud would abort installation, if MariaDB was still running)
+5. Add NextCloud to your stack and check that it can install correctly - fix issues using occ as mentioned below
+6. Add the system cronjob to run cron.php
 
 ### Running Upgrades
 
@@ -616,9 +627,19 @@ docker exec -ti --user www-data $(docker ps -q -f name=stack_cloud_nesono_com\\.
 
 ### Running Cron.php
 
-Open your crontab using `crontab -e` and add the following line:
+Open your crontab using `crontab -e` and add the following line (make sure that user ID 33 maps to www-data inside the container):
 ```crontab
-*/5 *  *   *   *     bash -c 'docker exec --user www-data `docker ps -q -f name=stack_cloud_nesono_com\.` php -f cron.php'
+*/5 *  *   *   *     bash -c 'docker exec --user 33 `docker ps -q -f name=stack_cloud_nesono_com\.` php -f cron.php'
+```
+
+### Installing an MTU on the Main Host
+
+Install nullmailer: `apt install nullmailer`, to also get mails for cronjobs with output.
+
+And configure your remotes to contain the following:
+
+```text
+smtp.nesono.com smtp --port=25 --starttls --user=<yourmail@example.com> --pass='<yourpassword>'
 ```
 
 ## Further Reading

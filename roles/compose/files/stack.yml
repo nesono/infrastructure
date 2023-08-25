@@ -466,7 +466,7 @@ services:
       - cloud_noerpel_internal
 
   cloud_noerpel_com:
-    image: nextcloud:21
+    image: nextcloud:25
     volumes:
       - cloud_noerpel_nextcloud:/var/www/html
       - cloud_noerpel_apps:/var/www/html/custom_apps

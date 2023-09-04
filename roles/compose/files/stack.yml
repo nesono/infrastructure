@@ -427,6 +427,8 @@ services:
       OVERWRITECLIURL: https://cloud.nesono.com
       OVERWRITEPROTOCOL: https
       TRUSTED_PROXIES: 5.9.123.102
+      DOCKER_GEN_CLIENT_MAX_BODY_SIZE: 10G
+      DOCKER_GEN_CLIENT_BODY_BUFFER_SIZE: 400M
     secrets:
       - mariadb_cloud_nesono_root_password
       - mariadb_cloud_nesono_user
@@ -493,6 +495,8 @@ services:
       OVERWRITECLIURL: https://cloud.noerpel.com
       OVERWRITEPROTOCOL: https
       TRUSTED_PROXIES: 5.9.123.102
+      DOCKER_GEN_CLIENT_MAX_BODY_SIZE: 10G
+      DOCKER_GEN_CLIENT_BODY_BUFFER_SIZE: 400M
     secrets:
       - mariadb_cloud_noerpel_root_password
       - mariadb_cloud_noerpel_user

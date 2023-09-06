@@ -97,7 +97,7 @@
     - borgmatic/keys
   tags: [ provision ]
 
-- name: Create volume for nextcloud services (uid 33, gid 33)
+- name: Create volume for nextcloud services folders (uid 33, gid 33, mod 0755)
   ansible.builtin.file:
     path: "/svc/volumes/{{ item }}"
     state: directory
@@ -108,12 +108,21 @@
     - cloud_nesono_nextcloud
     - cloud_nesono_apps
     - cloud_nesono_config
-    - cloud_nesono_data
     - cloud_noerpel_nextcloud
     - cloud_noerpel_apps
     - cloud_noerpel_config
-    - cloud_noerpel_data
+  tags: [ provision ]
 
+- name: Create volume for nextcloud data (uid 33, gid 33, mod 0770)
+  ansible.builtin.file:
+    path: "/svc/volumes/{{ item }}"
+    state: directory
+    owner: 33
+    group: 33
+    mode: '0770'
+  loop:
+    - cloud_nesono_data
+    - cloud_noerpel_data
   tags: [ provision ]
 
 - name: Create Docker compose directories

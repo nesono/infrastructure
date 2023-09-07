@@ -292,9 +292,14 @@ server {
 {{/* Get the VIRTUAL_ROOT By containers w/ use fastcgi root */}}
 {{ $vhost_root := or (first (groupByKeys $containers "Env.VIRTUAL_ROOT")) "/var/www/public" }}
 
-
 {{/* Get the first cert name defined by containers w/ the same vhost */}}
 {{ $certName := (first (groupByKeys $containers "Env.CERT_NAME")) }}
+
+{{/* Get the DOCKER_GEN_CLIENT_MAX_BODY_SIZE defined by containers w/ the same vhost */}}
+{{ $maxBodySize := or (first (groupByKeys $containers "Env.DOCKER_GEN_CLIENT_MAX_BODY_SIZE")) "" }}
+
+{{/* Get the DOCKER_GEN_CLIENT_BODY_BUFFER_SIZE defined by containers w/ the same vhost */}}
+{{ $bodyBufferSize := or (first (groupByKeys $containers "Env.DOCKER_GEN_CLIENT_BODY_BUFFER_SIZE")) "" }}
 
 {{/* Get the best matching cert  by name for the vhost. */}}
 {{ $vhostCert := (closest (dir "/etc/nginx/certs") (printf "%s.crt" $host))}}
@@ -321,6 +326,13 @@ server {
 	listen [::]:{{ $external_http_port }} {{ $default_server }};
 	{{ end }}
 	{{ $access_log }}
+
+	{{ if $maxBodySize }}
+	client_max_body_size {{ $maxBodySize }};
+	{{ end }}
+	{{ if $bodyBufferSize }}
+	client_body_buffer_size {{ $bodyBufferSize }};
+	{{ end }}
 
 	# Do not HTTPS redirect Let'sEncrypt ACME challenge
 	location ^~ /.well-known/acme-challenge/ {
@@ -352,6 +364,13 @@ server {
 	listen [::]:{{ $external_https_port }} ssl http2 {{ $default_server }};
 	{{ end }}
 	{{ $access_log }}
+
+	{{ if $maxBodySize }}
+	client_max_body_size {{ $maxBodySize }};
+	{{ end }}
+	{{ if $bodyBufferSize }}
+	client_body_buffer_size {{ $bodyBufferSize }};
+	{{ end }}
 
 	{{ template "ssl_policy" (dict "ssl_policy" $ssl_policy) }}
 
@@ -423,6 +442,13 @@ server {
 	listen [::]:{{ $external_http_port }} {{ $default_server }};
 	{{ end }}
 	{{ $access_log }}
+
+	{{ if $maxBodySize }}
+	client_max_body_size {{ $maxBodySize }};
+	{{ end }}
+	{{ if $bodyBufferSize }}
+	client_body_buffer_size {{ $bodyBufferSize }};
+	{{ end }}
 
 	{{ if (exists (printf "/etc/nginx/vhost.d/%s" $host)) }}
 	include {{ printf "/etc/nginx/vhost.d/%s" $host }};

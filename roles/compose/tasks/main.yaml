@@ -33,6 +33,7 @@
     - borgmatic/state
     - borgmatic/borg_config
     - borgmatic/cache
+    - docker-gen/templates
   tags: [ provision ]
 
 - name: Create volume for postgres services (uid 70, gid 70)
@@ -146,7 +147,7 @@
 - name: Copy nginx.tmpl
   ansible.builtin.copy:
     src: nginx.tmpl
-    dest: /svc/volumes/nginx/nginx.tmpl
+    dest: /svc/volumes/docker-gen/templates/nginx.tmpl
     owner: root
     group: root
     mode: 0644

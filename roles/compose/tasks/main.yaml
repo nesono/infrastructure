@@ -207,7 +207,7 @@
   docker_secret:
     name: "{{ item }}"
     # pack the data to avoid potential interpretation of the contents by Ansible
-    data: "{{ lookup('file', 'secret_{{ item }}.txt') | b64encode }}"
+    data: "{{ lookup('file', 'secrets/secret_{{ item }}.txt') | b64encode }}"
     data_is_b64: true
     state: present
   loop:
@@ -250,7 +250,7 @@
 
 - name: Copy Secrets Files
   ansible.builtin.copy:
-    src: "secret_{{ item }}.txt"
+    src: "secrets/secret_{{ item }}.txt"
     dest: /var/docker_compose_secrets
     owner: root
     group: root
@@ -309,8 +309,8 @@
     # this file contains a password. make it secure
     mode: u=r,g=,o=
   vars:
-    mysql_mail_password: "{{ lookup('file', 'secret_mysql_mail_password.txt') }}"
-    mysql_mail_user: "{{ lookup('file', 'secret_mysql_mail_user.txt') }}"
+    mysql_mail_password: "{{ lookup('file', 'secrets/secret_mysql_mail_password.txt') }}"
+    mysql_mail_user: "{{ lookup('file', 'secrets/secret_mysql_mail_user.txt') }}"
     vmail_user_id: "1000"
     mail_group_id: "8"
   notify:
@@ -325,8 +325,8 @@
     # this file contains a password. make it secure
     mode: u=r,g=,o=
   vars:
-    mysql_mail_password: "{{ lookup('file', 'secret_mysql_mail_password.txt') }}"
-    mysql_mail_user: "{{ lookup('file', 'secret_mysql_mail_user.txt') }}"
+    mysql_mail_password: "{{ lookup('file', 'secrets/secret_mysql_mail_password.txt') }}"
+    mysql_mail_user: "{{ lookup('file', 'secrets/secret_mysql_mail_user.txt') }}"
   notify:
     - Refresh Dovecot
 

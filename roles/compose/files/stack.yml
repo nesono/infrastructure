@@ -236,6 +236,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+
   # webmail
   roundcube:
     image: roundcube/roundcubemail:1.6.x-apache
@@ -266,6 +267,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+
   pgsql_roundcube:
     image: postgres:15.1-alpine
     volumes:
@@ -603,7 +605,7 @@ networks:
     internal: true
 
 volumes:
-  # Base services
+  # nginx reverse proxy
   conf:
     driver: local
     driver_opts:
@@ -806,6 +808,7 @@ volumes:
       device: /svc/volumes/katja_issing_link_data
 
 secrets:
+  # mail
   postfixadmin_setup_password:
     external: true
   mysql_mail_password:
@@ -820,6 +823,7 @@ secrets:
     external: true
   opendkim_key:
     external: true
+  # gitea
   gitea_db_user:
     external: true
   gitea_db_password:
@@ -828,16 +832,19 @@ secrets:
     external: true
   gitea_mailer_password:
     external: true
+  # workdpress noerpel
   mysql_wordpress_noerpel_password:
     external: true
   mysql_wordpress_noerpel_user:
     external: true
   mysql_wordpress_noerpel_root_password:
     external: true
+  # robot mail
   robot_mail_user:
     external: true
   robot_mail_password:
     external: true
+  # cloud nesono
   mariadb_cloud_nesono_password:
     external: true
   mariadb_cloud_nesono_user:
@@ -848,6 +855,7 @@ secrets:
     external: true
   nextcloud_nesono_admin_password:
     external: true
+  # cloud noerpel
   mariadb_cloud_noerpel_password:
     external: true
   mariadb_cloud_noerpel_user:

@@ -1,0 +1,72 @@
+version: '3.8'
+services:
+#  ofelia:
+#    image: mcuadros/ofelia:v0.3.7
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock:ro
+#    command: daemon --docker
+
+  borg-backup:
+    image: b3vis/borgmatic:msmtp-1.7
+    volumes:
+      - /svc/volumes:/mnt/source:ro
+      - borgmatic_config:/etc/borgmatic.d/
+      - borgmatic_keys:/root/.ssh
+      - borgmatic_state:/root/.borgmatic
+      - borgmatic_borg_config:/root/.config/borg
+      - borgmatic_cache:/root/.cache/borg
+    environment:
+      BORG_PASSPHRASE_FILE: /run/secrets/borgmatic_passphrase
+      BORG_MAIL_USER_FILE: /run/secrets/robot_mail_user
+      BORG_MAIL_PASSWORD_FILE: /run/secrets/robot_mail_password
+      MAIL_RELAY_HOST: smtp.nesono.com
+      MAIL_PORT: 25
+      MAIL_FROM: robot@issing.link
+      MAIL_TO: n3s0n0@gmail.com
+      BORG_RSH: "ssh -p23 -i ~/.ssh/id_ssh_rsa"
+      TZ: "UTC"
+    secrets:
+      - borgmatic_passphrase
+      - robot_mail_user
+      - robot_mail_password
+    entrypoint: /bin/sh -c "export BORG_PASSPHRASE=$$(cat $$BORG_PASSPHRASE_FILE) && export MAIL_USER=$$(cat $$BORG_MAIL_USER_FILE) && export MAIL_PASSWORD=$$(cat $$BORG_MAIL_PASSWORD_FILE) && exec /entry.sh"
+
+volumes:
+  borgmatic_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/borgmatic/config
+  borgmatic_keys:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/borgmatic/keys
+  borgmatic_state:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/borgmatic/state
+  borgmatic_borg_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/borgmatic/borg_config
+  borgmatic_cache:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/borgmatic/cache
+
+secrets:
+  borgmatic_passphrase:
+    file: /var/docker_compose_secrets/secret_borgmatic_passphrase.txt
+  robot_mail_user:
+    file: /var/docker_compose_secrets/secret_robot_mail_user.txt
+  robot_mail_password:
+    file: /var/docker_compose_secrets/secret_robot_mail_password.txt

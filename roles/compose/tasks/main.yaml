@@ -129,7 +129,7 @@
     - cloud_noerpel_data
   tags: [ provision ]
 
-- name: Create Docker compose directories
+- name: Create Docker Stack directory
   ansible.builtin.file:
     path: /var/run/docker_compose/services/stack
     state: directory
@@ -138,10 +138,28 @@
     mode: '0755'
   tags: [ hot_compose ]
 
-- name: Copy services compose
+- name: Copy Docker Stack yaml
   ansible.builtin.copy:
     src: stack.yml
     dest: /var/run/docker_compose/services/stack/docker_compose.yml
+    owner: root
+    group: root
+    mode: 0644
+  tags: [ hot_compose ]
+
+- name: Create Docker Compose directory
+  ansible.builtin.file:
+    path: /svc/volumes/docker-compose
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  tags: [ hot_compose ]
+
+- name: Copy Docker Compose yaml
+  ansible.builtin.copy:
+    src: docker-compose.yaml
+    dest: /svc/volumes/docker-compose/docker-compose.yaml
     owner: root
     group: root
     mode: 0644
@@ -221,6 +239,51 @@
     - nextcloud_noerpel_admin_user
     - nextcloud_noerpel_admin_password
 
+- name: Create directory for Docker Compose Secrets (mode 0600)
+  ansible.builtin.file:
+    path: /var/docker_compose_secrets
+    state: directory
+    owner: root
+    group: root
+    mode: '0600'
+  tags: [ provision ]
+
+- name: Copy Secrets Files
+  ansible.builtin.copy:
+    src: "secret_{{ item }}.txt"
+    dest: /var/docker_compose_secrets
+    owner: root
+    group: root
+    mode: 0600
+  loop:
+    - mysql_mail_password
+    - mysql_mail_user
+    - mysql_mail_root_password
+    - postfixadmin_setup_password
+    - roundcube_db_user
+    - roundcube_db_password
+    - opendkim_key
+    - gitea_db_user
+    - gitea_db_password
+    - gitea_mailer_user
+    - gitea_mailer_password
+    - mysql_wordpress_noerpel_password
+    - mysql_wordpress_noerpel_user
+    - mysql_wordpress_noerpel_root_password
+    - borgmatic_passphrase
+    - robot_mail_user
+    - robot_mail_password
+    - mariadb_cloud_nesono_root_password
+    - mariadb_cloud_nesono_password
+    - mariadb_cloud_nesono_user
+    - nextcloud_nesono_admin_user
+    - nextcloud_nesono_admin_password
+    - mariadb_cloud_noerpel_root_password
+    - mariadb_cloud_noerpel_password
+    - mariadb_cloud_noerpel_user
+    - nextcloud_noerpel_admin_user
+    - nextcloud_noerpel_admin_password
+
 - name: Generate OpenSSH keypair for Borgmatic
   community.crypto.openssh_keypair:
     path: /svc/volumes/borgmatic/keys/id_ssh_rsa
@@ -271,23 +334,37 @@
   docker_swarm:
     state: present
 
-- name: Deploy services
+- name: Deploy Docker Stack services
   community.docker.docker_stack:
     state: present
     name: stack
     prune: yes
-    compose: 
+    compose:
       - /var/run/docker_compose/services/stack/docker_compose.yml
   notify:
     - Refresh nginx-proxy
     - Reload Postfix
   tags: [ hot_compose ]
 
-- name: Remove services
-  community.docker.docker_stack:
-    state: absent
-    prune: yes
-    name: mailserver
-    compose:
-      - /var/run/docker_compose/mailserver/docker-compose.yaml
-  tags: [ never, docker_purge ]
+#- name: Remove Docker Stack services
+#  community.docker.docker_stack:
+#    state: absent
+#    prune: yes
+#    name: stack
+#    compose:
+#      - /var/run/docker_compose/services/stack/docker_compose.yml
+#  tags: [ never, docker_purge ]
+
+- name: Deploy Docker Compose services
+  ansible.builtin.command: docker compose up --wait --remove-orphans
+  args:
+    chdir: /svc/volumes/docker-compose
+  notify:
+    - Reload Postfix
+  tags: [ hot_compose ]
+
+#- name: Remove Docker Compose services
+#  ansible.builtin.command: docker compose down --remove-orphans
+#  args:
+#    chdir: /svc/volumes/docker-compose
+#  tags: [ never, docker_purge ]

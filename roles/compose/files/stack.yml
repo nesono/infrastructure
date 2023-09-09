@@ -528,7 +528,9 @@ services:
         condition: on-failure
 
   katja-issing-link:
-    image: nesono/katja.issing.link:2023-03-19.1
+    image: nginx:1.22-alpine
+    volumes:
+      - katja_issing_link_data:/usr/share/nginx/html
     environment:
       VIRTUAL_HOST: katja.issing.link
       VIRTUAL_PORT: 80

@@ -843,6 +843,18 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/www_nesono_com_data
+  the_issing_link_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/the_issing_link_data
+  katja_issing_link_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/katja_issing_link_data
 
 secrets:
   postfixadmin_setup_password:

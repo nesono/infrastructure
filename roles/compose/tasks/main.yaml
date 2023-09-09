@@ -34,6 +34,7 @@
     - borgmatic/borg_config
     - borgmatic/cache
     - docker-gen/templates
+    - www_nesono_com_data
   tags: [ provision ]
 
 - name: Create volume for postgres services (uid 70, gid 70)

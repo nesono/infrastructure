@@ -536,6 +536,20 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+
+  www-nesono-com:
+    image: nginx:1.22-alpine
+    volumes:
+      - www_nesono_com_data:/usr/share/nginx/html
+    environment:
+      VIRTUAL_HOST: www.nesono.com
+      VIRTUAL_PORT: 80
+      LETSENCRYPT_HOST: www.nesono.com
+    networks:
+      - http_external
+    deploy:
+      restart_policy:
+        condition: on-failure
         
   # WordPress sites
   mysql_wordpress_noerpel:
@@ -823,6 +837,12 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/cloud_noerpel_data
+  www_nesono_com_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/www_nesono_com_data
 
 secrets:
   postfixadmin_setup_password:

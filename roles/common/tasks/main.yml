@@ -39,6 +39,8 @@
       - opendkim # for getting /etc/opendkim.conf - to test key security with DNSSEC
       - opendmarc # installing opendmarc-check
       - bind9-dnsutils # installing dig
+      - zip
+      - unzip
     state: latest
     update_cache: false
 

@@ -2,8 +2,8 @@
   ansible.builtin.copy:
     src: docker/daemon.json
     dest: /etc/docker/daemon.json
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: 0644
   notify:
     - Restart Docker service
@@ -13,8 +13,8 @@
   ansible.builtin.file:
     path: "/svc/volumes/{{ item }}"
     state: directory
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: '0755'
   loop:
     - nginx
@@ -94,8 +94,8 @@
   ansible.builtin.file:
     path: "/svc/volumes/{{ item }}"
     state: directory
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: '0600'
   loop:
     - borgmatic/keys
@@ -133,8 +133,8 @@
   ansible.builtin.file:
     path: /var/run/docker_compose/services/stack
     state: directory
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: '0755'
   tags: [ hot_compose ]
 
@@ -142,8 +142,8 @@
   ansible.builtin.copy:
     src: stack.yml
     dest: /var/run/docker_compose/services/stack/docker_compose.yml
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: 0644
   tags: [ hot_compose ]
 
@@ -151,8 +151,8 @@
   ansible.builtin.file:
     path: /svc/volumes/docker-compose
     state: directory
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: '0755'
   tags: [ hot_compose ]
 
@@ -160,8 +160,8 @@
   ansible.builtin.copy:
     src: docker-compose.yaml
     dest: /svc/volumes/docker-compose/docker-compose.yaml
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: 0644
   tags: [ hot_compose ]
 
@@ -169,16 +169,16 @@
   ansible.builtin.copy:
     src: nginx.tmpl
     dest: /svc/volumes/docker-gen/templates/nginx.tmpl
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: 0644
 
 - name: Copy dovecot configuration
   ansible.builtin.copy:
     src: dovecot/
     dest: /svc/volumes/dovecot
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: 0644
   notify:
     - Refresh Dovecot
@@ -187,8 +187,8 @@
   ansible.builtin.copy:
     src: roundcube_custom.inc.php
     dest: /svc/volumes/roundcube_custom_config
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: 0644
   notify:
     - Refresh Roundcube
@@ -198,8 +198,8 @@
   ansible.builtin.copy:
     src: gitea.entrypoint.sh
     dest: /svc/volumes/gitea_entrypoint/entrypoint
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: 0755
 
 # TODO: This will fail if the stack is running already and secrets shall change
@@ -243,8 +243,8 @@
   ansible.builtin.file:
     path: /var/docker_compose_secrets
     state: directory
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: '0600'
   tags: [ provision ]
 
@@ -252,8 +252,8 @@
   ansible.builtin.copy:
     src: "secrets/secret_{{ item }}.txt"
     dest: /var/docker_compose_secrets
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: 0600
   loop:
     - mysql_mail_password
@@ -292,8 +292,8 @@
   ansible.builtin.copy:
     src: "{{ item }}"
     dest: /svc/volumes/borgmatic/config
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     mode: 0755
   loop:
     - borgmatic/config.yaml
@@ -304,8 +304,8 @@
   ansible.builtin.template:
     src: dovecot/dovecot-sql.conf.ext.j2
     dest: /svc/volumes/dovecot/dovecot-sql.conf.ext
-    owner: root
-    group: root
+    owner: 0
+    group: 0
     # this file contains a password. make it secure
     mode: u=r,g=,o=
   vars:
@@ -321,7 +321,7 @@
     src: dovecot/dovecot-dict-quota.conf.ext.j2
     dest: /svc/volumes/dovecot/dovecot-dict-quota.conf.ext
     owner: 101
-    group: root
+    group: 0
     # this file contains a password. make it secure
     mode: u=r,g=,o=
   vars:

@@ -34,7 +34,7 @@ services:
   # Base services
   nginx-proxy:
     image: nginx:1.22-alpine
-    container_name: nginx-proxy
+    #container_name: nginx-proxy
     ports:
       - target: 80
         published: 80

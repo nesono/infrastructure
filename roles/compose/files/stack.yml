@@ -514,7 +514,9 @@ services:
 
   # Website services
   the-issing-link:
-    image: nesono/the.issing.link:2022-08-14
+    image: nginx:1.22-alpine
+    volumes:
+      - the_issing_link_data:/usr/share/nginx/html
     environment:
       VIRTUAL_HOST: the.issing.link
       VIRTUAL_PORT: 80

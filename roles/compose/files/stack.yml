@@ -105,8 +105,6 @@ services:
       - dovecot # SASL authentication
       - postfix_milters
     image: nesono/postfix-for-postfixadmin:2023-03-19
-    healthcheck:
-      disable: false
     environment:
       MYHOSTNAME: "smtp.nesono.com"
       MYNETWORKS: "5.9.123.102"
@@ -150,8 +148,6 @@ services:
 
   postfix_milters:
     image: nesono/postfix-milters:2023-01-22.1
-    healthcheck:
-      disable: false
     environment:
 #      POSTGREY_SOCKET_PATH: "private/postgrey" # not really useful
 #      SPAMASS_SOCKET_PATH: "private/spamass" # connection reset by peer errors
@@ -197,7 +193,6 @@ services:
   postfixadmin:
     depends_on:
       - mysql_mail
-      - nginx-proxy-acme
     image: postfixadmin:3.3.13
     environment:
       POSTFIXADMIN_DB_TYPE: mysqli
@@ -222,11 +217,9 @@ services:
       restart_policy:
         condition: on-failure
 
-  # mailserver http service for cert creation and docs entry point
+  # For cert creation and manual web page
   mail_nesono_com:
     image: nesono/mail.nesono.com:2023-02-18
-    depends_on:
-      - nginx-proxy-acme
     environment:
       VIRTUAL_HOST: mail.nesono.com,smtp.nesono.com,imap.nesono.com,sieve.nesono.com
       VIRTUAL_PORT: 80
@@ -244,7 +237,6 @@ services:
       - certs:/etc/roundcube_certs:ro
       - roundcube_custom_config:/var/roundcube/config:ro
     depends_on:
-      - nginx-proxy-acme
       - pgsql_roundcube
     environment:
       ROUNDCUBEMAIL_DEFAULT_HOST: tls://imap.nesono.com
@@ -285,6 +277,7 @@ services:
       restart_policy:
         condition: on-failure
 
+  # Gitea
   gitea:
     image: gitea/gitea:1.18.0
     environment:
@@ -350,7 +343,6 @@ services:
       restart_policy:
         condition: on-failure
 
-  # NextCloud Installations
   # cloud.nesono.com
   mariadb_cloud_nesono:
     image: mariadb:10
@@ -489,7 +481,7 @@ services:
       - cloud_noerpel_internal
       - http_external
 
-  # Website services
+  # Websites
   the-issing-link:
     image: nginx:1.22-alpine
     volumes:
@@ -578,6 +570,7 @@ services:
 
 
 networks:
+  # external networks
   http_external:
     driver: overlay
   mail_external:

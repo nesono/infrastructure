@@ -82,7 +82,7 @@
 	{{ else if (exists "/etc/nginx/vhost.d/default_location") }}
 		include /etc/nginx/vhost.d/default_location;
 	{{ end }}
-}
+    }
 {{ end }}
 
 {{ define "upstream" }}

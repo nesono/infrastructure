@@ -20,6 +20,7 @@
     - nginx
     - nginx/certs
     - nginx/conf.d
+    - nginx/mail.d
     - nginx/vhost.d
     - nginx/html
     - acme-companion
@@ -165,13 +166,24 @@
     mode: 0644
   tags: [ hot_compose ]
 
-- name: Copy nginx.tmpl
+- name: Copy nginx.conf
   ansible.builtin.copy:
-    src: nginx.tmpl
-    dest: /svc/volumes/docker-gen/templates/nginx.tmpl
+    src: nginx.conf
+    dest: /svc/volumes/nginx/nginx.conf
     owner: 0
     group: 0
     mode: 0644
+
+- name: Copy nginx templates
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/svc/volumes/docker-gen/templates/{{ item }}"
+    owner: 0
+    group: 0
+    mode: 0644
+  loop:
+    - nginx.tmpl
+    - nginx_mail.tmpl
 
 - name: Copy dovecot configuration
   ansible.builtin.copy:

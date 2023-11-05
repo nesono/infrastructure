@@ -1,0 +1,59 @@
+# Postfix Configuration
+{{ $defaultSmtpPorts := "25,465,587" }}
+
+{{ range $host, $containers := groupByMulti $ "Env.VIRTUAL_POSTFIX_HOST" "," }}
+{{ range $container := $containers }}
+
+{{/* Get the first cert name defined by containers w/ the same vhost */}}
+{{ $certName := (first (groupByKeys $containers "Env.CERT_NAME")) }}
+{{/* Get the best matching cert  by name for the vhost. */}}
+{{ $vhostCert := (closest (dir "/etc/nginx/certs") (printf "%s.crt" $host))}}
+
+{{/* vhostCert is actually a filename so remove any suffixes since they are added later */}}
+{{ $vhostCert := trimSuffix ".crt" $vhostCert }}
+{{ $vhostCert := trimSuffix ".key" $vhostCert }}
+
+{{/* Use the cert specified on the container or fallback to the best vhost match */}}
+{{ $cert := (coalesce $certName $vhostCert) }}
+
+{{ $is_ssl := (and (ne $cert "") (exists (printf "/etc/nginx/certs/%s.crt" $cert)) (exists (printf "/etc/nginx/certs/%s.key" $cert))) }}
+
+
+
+mail {
+    server_name {{ $host }};
+    proxy_smtp_auth on;
+
+    {{ if $is_ssl }}
+    ssl on;
+    ssl_session_timeout 5m;
+	ssl_session_cache shared:SSL:50m;
+	ssl_session_tickets off;
+
+	ssl_certificate /etc/nginx/certs/{{ (printf "%s.crt" $cert) }};
+	ssl_certificate_key /etc/nginx/certs/{{ (printf "%s.key" $cert) }};
+
+	{{ if (exists (printf "/etc/nginx/certs/%s.dhparam.pem" $cert)) }}
+	ssl_dhparam {{ printf "/etc/nginx/certs/%s.dhparam.pem" $cert }};
+	{{ end }}
+
+	{{ if (exists (printf "/etc/nginx/certs/%s.chain.pem" $cert)) }}
+	ssl_stapling on;
+	ssl_stapling_verify on;
+	ssl_trusted_certificate {{ printf "/etc/nginx/certs/%s.chain.pem" $cert }};
+	{{ end }}
+	{{ end }}
+
+
+    {{ $portString := trim (or (first (groupByKeys $containers "Env.VIRTUAL_PORT")) $defaultSmtpPorts) }}
+    {{ $postfixPorts := split $portString "," }}
+    {{ range $port := $postfixPorts }}
+    server {
+        listen {{ $port }};
+        protocol smtp;
+        proxy on;
+    }
+    {{ end }}
+}
+{{ end }}
+{{ end }}

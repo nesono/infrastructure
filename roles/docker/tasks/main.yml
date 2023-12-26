@@ -38,7 +38,7 @@
 
 - name: Install pip python package dependencies
   ansible.builtin.pip:
-    name: 
+    name:
       - jsondiff
       - pyyaml
       - requests

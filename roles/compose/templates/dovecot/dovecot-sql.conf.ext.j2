@@ -23,4 +23,3 @@ user_query = SELECT CONCAT('/srv/mail/', maildir) AS home, {{vmail_user_id}} AS 
 iterate_query = SELECT username as user FROM mailbox WHERE active = '1'
 
 #user_query = SELECT maildir, {{vmail_user_id}} AS uid, {{mail_group_id}} AS gid, 'dict:storage=' || floor(quota/1000) || '::proxy::quota' as quota FROM mailbox WHERE username = '%u' AND active='1'
-

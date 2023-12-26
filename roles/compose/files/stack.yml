@@ -565,7 +565,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-        
+
   # WordPress sites
   mysql_wordpress_noerpel:
     image: mysql:5.7

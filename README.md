@@ -105,7 +105,7 @@ export BORG_PASSPHRASE=$(cat $BORG_PASSPHRASE_FILE)
 List all borgmatic backups
 
 ```bash
-borgmatic list 
+borgmatic list
 ```
 
 Run borgmatic immediately
@@ -242,14 +242,14 @@ The file `2023-01-04.txt` contains the DNS TXT record. Here is my example:
 ```
 
 You will need to create a TXT record for your domain (`<example.com>` in my example) that points to the host
-`2023-01-04._domainkey` and has the value (change the multi-string to a single string - Cloudflare 
-will handle the rest): 
+`2023-01-04._domainkey` and has the value (change the multi-string to a single string - Cloudflare
+will handle the rest):
 ```
 v=DKIM1; h=sha256; k=rsa; t=y; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxW3loYuv7Owf9CSurIKRgtNw0GYQg7RGH41mOgb9VP5vpQNL/V3dtgo8qjkZ7afY81RFyZ48ZSKspGOfBzumJTAECsxeCjmdvpcMTWxwyNZ3uxjkb6JYwfLxh7IYbcu/+Cdcpfdxl2nQ4jx8P6zQZUbLvDKHp2DWic4KJhVdMcWXARYzwRxVZMT4PBB3OJq3aa5h4yUIOqJ+1sVx8Co5N6f6OnVG89zAxTBTx568VVEzhPtpG8TU6JLiCJj1K/0xLmmOu7jJFicdw56dZiZc9vUJ9QiC/Q9m5yclMQAvEeGVQok1Sig1+gqkO18x6f6TJrN2jXzPJHliI1PHR/8ulQIDAQAB
 ```
 
 **Note**: I had to move the DNS handling from [Hover](https://www.hover.com) to [Cloudflare](https://www.cloudflare.com),
-since Hover did not support the long (>255 characters) TXT record values.  
+since Hover did not support the long (>255 characters) TXT record values.
 
 ## Adding SPF Record
 
@@ -261,8 +261,8 @@ Add the following DNS record to your DNS configuration.
 
 ## Testing Your Mail Server Spam Tools
 
-Open [Mail-Tester](https://www.mail-tester.com) and check your score. It will show you any issues with 
-SPF, DKIM, DMARC, SPAMASSASSIN, Pyzor, etc. 
+Open [Mail-Tester](https://www.mail-tester.com) and check your score. It will show you any issues with
+SPF, DKIM, DMARC, SPAMASSASSIN, Pyzor, etc.
 
 ## Adding a New Mail Domain
 
@@ -324,7 +324,7 @@ create_gitea_repository() {
   \"default_branch\": \"master\",
   \"auto_init\": true,
   \"description\": \"${description}\",
-  \"name\": \"${name%.git}\", 
+  \"name\": \"${name%.git}\",
   \"private\": false
 }"
 }
@@ -332,7 +332,7 @@ create_gitea_repository() {
 while IFS=$'\t' read -r url description; do
     echo "Processing $url"
     pushd tmp_repo_migration
-    if [[ ! -d "${url%.git}" ]]; then 
+    if [[ ! -d "${url%.git}" ]]; then
         echo "Clone repo"
         git clone ssh://git@nesono.com:2222/${url}
     fi
@@ -576,7 +576,7 @@ Which takes your username and password encoded with base64, using [this tool](ht
 
 ### Gathering the Migration data
 
-MySQL / MariaDB initialization data: 
+MySQL / MariaDB initialization data:
 ```bash
 jexec db_delado_co mysqldump cloud_nesono --single-transaction | gzip -9 > 2023-08-15_cloud_nesono.sql.gz
 ```

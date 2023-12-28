@@ -1,7 +1,6 @@
 - name: Uninstall old Docker packages
-  apt:
+  ansible.builtin.apt:
     pkg:
-      - remove
       - docker
       - docker-engine
       - docker.io
@@ -9,7 +8,7 @@
       - runc
     state: absent
     update_cache: false
-  tags: [ never, docker_purge ]
+  tags: [never, docker_purge]
 
 - name: Add Docker Apt signing key
   ansible.builtin.apt_key:
@@ -17,8 +16,9 @@
     state: present
 
 - name: Get LSB release
-  shell: lsb_release -cs
+  ansible.builtin.command: lsb_release -cs
   register: lsb_release
+  changed_when: false
 
 - name: Add Docker repository into sources list
   ansible.builtin.apt_repository:
@@ -27,13 +27,13 @@
     filename: docker
 
 - name: Install Docker packages
-  apt:
+  ansible.builtin.apt:
     pkg:
       - docker-ce
       - docker-ce-cli
       - containerd.io
       - docker-compose-plugin
-    state: latest
+    state: present
     update_cache: true
 
 - name: Install pip python package dependencies

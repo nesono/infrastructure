@@ -1,1 +1,2 @@
+- name: site-wide play
 - import_playbook: green_nesono.yml

@@ -30,7 +30,10 @@ services:
       - borgmatic_passphrase
       - robot_mail_user
       - robot_mail_password
-    entrypoint: /bin/sh -c "export BORG_PASSPHRASE=$$(cat $$BORG_PASSPHRASE_FILE) && export MAIL_USER=$$(cat $$BORG_MAIL_USER_FILE) && export MAIL_PASSWORD=$$(cat $$BORG_MAIL_PASSWORD_FILE) && exec /entry.sh"
+    entrypoint: >
+      /bin/sh -c "export BORG_PASSPHRASE=$$(cat $$BORG_PASSPHRASE_FILE) &&
+      export MAIL_USER=$$(cat $$BORG_MAIL_USER_FILE) && export
+      MAIL_PASSWORD=$$(cat $$BORG_MAIL_PASSWORD_FILE) && exec /entry.sh"
     restart: on-failure
 
 volumes:

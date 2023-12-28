@@ -4,10 +4,10 @@
     dest: /etc/docker/daemon.json
     owner: 0
     group: 0
-    mode: 0644
+    mode: '0644'
   notify:
     - Restart Docker service
-  tags: [ provision ]
+  tags: [provision]
 
 - name: Create root owned volumes for services
   ansible.builtin.file:
@@ -38,7 +38,7 @@
     - www_nesono_com_data
     - the_issing_link_data
     - katja_issing_link_data
-  tags: [ provision ]
+  tags: [provision]
 
 - name: Create volume for postgres services (uid 70, gid 70)
   ansible.builtin.file:
@@ -50,7 +50,7 @@
   loop:
     - postgres_gitea_data
     - postgres_roundcube_data
-  tags: [ provision ]
+  tags: [provision]
 
 - name: Create volume for mysql services (uid 999, gid 999)
   ansible.builtin.file:
@@ -67,7 +67,7 @@
     - mariadb_cloud_nesono_init_db
     - mariadb_cloud_noerpel_data
     - mariadb_cloud_noerpel_init_db
-  tags: [ provision ]
+  tags: [provision]
 
 - name: Create volume for mail service (uid 1000, gid 8)
   ansible.builtin.file:
@@ -78,7 +78,7 @@
     mode: '0755'
   loop:
     - mail
-  tags: [ provision ]
+  tags: [provision]
 
 - name: Create volume for mail spool (uid 101, gid 101)
   ansible.builtin.file:
@@ -89,7 +89,7 @@
     mode: '0755'
   loop:
     - mail_spool
-  tags: [ provision ]
+  tags: [provision]
 
 - name: Create volume for borgmatic keys (mode 0600)
   ansible.builtin.file:
@@ -100,7 +100,7 @@
     mode: '0600'
   loop:
     - borgmatic/keys
-  tags: [ provision ]
+  tags: [provision]
 
 - name: Create volume for nextcloud services folders (uid 33, gid 33, mod 0755)
   ansible.builtin.file:
@@ -116,7 +116,7 @@
     - cloud_noerpel_nextcloud
     - cloud_noerpel_apps
     - cloud_noerpel_config
-  tags: [ provision ]
+  tags: [provision]
 
 - name: Create volume for nextcloud data (uid 33, gid 33, mod 0770)
   ansible.builtin.file:
@@ -128,7 +128,7 @@
   loop:
     - cloud_nesono_data
     - cloud_noerpel_data
-  tags: [ provision ]
+  tags: [provision]
 
 - name: Create Docker Stack directory
   ansible.builtin.file:
@@ -137,7 +137,7 @@
     owner: 0
     group: 0
     mode: '0755'
-  tags: [ hot_compose ]
+  tags: [hot_compose]
 
 - name: Copy Docker Stack yaml
   ansible.builtin.copy:
@@ -145,8 +145,8 @@
     dest: /var/run/docker_compose/services/stack/docker_compose.yml
     owner: 0
     group: 0
-    mode: 0644
-  tags: [ hot_compose ]
+    mode: '0644'
+  tags: [hot_compose]
 
 - name: Create Docker Compose directory
   ansible.builtin.file:
@@ -155,7 +155,7 @@
     owner: 0
     group: 0
     mode: '0755'
-  tags: [ hot_compose ]
+  tags: [hot_compose]
 
 - name: Copy Docker Compose yaml
   ansible.builtin.copy:
@@ -163,8 +163,8 @@
     dest: /svc/volumes/docker-compose/docker-compose.yaml
     owner: 0
     group: 0
-    mode: 0644
-  tags: [ hot_compose ]
+    mode: '0644'
+  tags: [hot_compose]
 
 - name: Copy nginx.conf
   ansible.builtin.copy:
@@ -172,7 +172,7 @@
     dest: /svc/volumes/nginx/nginx.conf
     owner: 0
     group: 0
-    mode: 0644
+    mode: '0644'
 
 - name: Copy nginx templates
   ansible.builtin.copy:
@@ -180,7 +180,7 @@
     dest: "/svc/volumes/docker-gen/templates/{{ item }}"
     owner: 0
     group: 0
-    mode: 0644
+    mode: '0644'
   loop:
     - nginx.tmpl
     - nginx_mail.tmpl
@@ -191,7 +191,7 @@
     dest: /svc/volumes/dovecot
     owner: 0
     group: 0
-    mode: 0644
+    mode: '0644'
   notify:
     - Refresh Dovecot
 
@@ -201,7 +201,7 @@
     dest: /svc/volumes/roundcube_custom_config
     owner: 0
     group: 0
-    mode: 0644
+    mode: '0644'
   notify:
     - Refresh Roundcube
     - Refresh nginx-proxy
@@ -212,11 +212,11 @@
     dest: /svc/volumes/gitea_entrypoint/entrypoint
     owner: 0
     group: 0
-    mode: 0755
+    mode: '0755'
 
 # TODO: This will fail if the stack is running already and secrets shall change
 - name: Create Docker secrets
-  docker_secret:
+  community.docker.docker_secret:
     name: "{{ item }}"
     # pack the data to avoid potential interpretation of the contents by Ansible
     data: "{{ lookup('file', 'secrets/secret_{{ item }}.txt') | b64encode }}"
@@ -258,7 +258,7 @@
     owner: 0
     group: 0
     mode: '0600'
-  tags: [ provision ]
+  tags: [provision]
 
 - name: Copy Secrets Files
   ansible.builtin.copy:
@@ -266,7 +266,7 @@
     dest: /var/docker_compose_secrets
     owner: 0
     group: 0
-    mode: 0600
+    mode: '0600'
   loop:
     - mysql_mail_password
     - mysql_mail_user
@@ -306,7 +306,7 @@
     dest: /svc/volumes/borgmatic/config
     owner: 0
     group: 0
-    mode: 0755
+    mode: '0755'
   loop:
     - borgmatic/config.yaml
     - borgmatic/crontab.txt
@@ -343,40 +343,40 @@
     - Refresh Dovecot
 
 - name: Init swarm with default parameters
-  docker_swarm:
+  community.docker.docker_swarm:
     state: present
 
 - name: Deploy Docker Stack services
   community.docker.docker_stack:
     state: present
     name: stack
-    prune: yes
+    prune: true
     compose:
       - /var/run/docker_compose/services/stack/docker_compose.yml
   notify:
     - Refresh nginx-proxy
     - Reload Postfix
-  tags: [ hot_compose ]
+  tags: [hot_compose]
 
-#- name: Remove Docker Stack services
-#  community.docker.docker_stack:
-#    state: absent
-#    prune: yes
-#    name: stack
-#    compose:
-#      - /var/run/docker_compose/services/stack/docker_compose.yml
-#  tags: [ never, docker_purge ]
+#
+# - name: Remove Docker Stack services
+#   community.docker.docker_stack:
+#     state: absent
+#     prune:true
+#     name: stack
+#     compose:
+#       - /var/run/docker_compose/services/stack/docker_compose.yml
+#   tags: [ never, docker_purge ]
 
 - name: Deploy Docker Compose services
   ansible.builtin.command: docker compose up --wait --remove-orphans
   args:
     chdir: /svc/volumes/docker-compose
-  notify:
-    - Reload Postfix
-  tags: [ hot_compose ]
+  changed_when: false
+  tags: [hot_compose]
 
-#- name: Remove Docker Compose services
-#  ansible.builtin.command: docker compose down --remove-orphans
-#  args:
-#    chdir: /svc/volumes/docker-compose
-#  tags: [ never, docker_purge ]
+# - name: Remove Docker Compose services
+#   ansible.builtin.command: docker compose down --remove-orphans
+#   args:
+#     chdir: /svc/volumes/docker-compose
+#   tags: [ never, docker_purge ]

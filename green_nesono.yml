@@ -1,4 +1,5 @@
-- hosts: green
+- name: Green host setup
+  hosts: green
   roles:
     - { role: 'common', tags: 'common' }
     - { role: 'docker', tags: 'docker' }

@@ -17,13 +17,16 @@
     group: 0
     mode: '0755'
   loop:
-    - nginx
-    - nginx/certs
-    - nginx/conf.d
-    - nginx/mail.d
-    - nginx/vhost.d
-    - nginx/html
-    - acme-companion
+    - nginx-http/conf.d
+    - nginx-http/mail.d
+    - nginx-http/vhost.d
+    - nginx-http/html
+    - nginx-mail/conf.d
+    - nginx-mail/mail.d
+    - nginx-mail/vhost.d
+    - nginx-mail/html
+    - acme.sh
+    - acme/certs
     - dovecot
     - roundcube_custom_config
     - spamass_vhome
@@ -169,7 +172,7 @@
 - name: Copy nginx.conf
   ansible.builtin.copy:
     src: nginx.conf
-    dest: /svc/volumes/nginx/nginx.conf
+    dest: /svc/volumes/nginx-mail/nginx.conf
     owner: 0
     group: 0
     mode: '0644'
@@ -362,11 +365,11 @@
 # - name: Remove Docker Stack services
 #   community.docker.docker_stack:
 #     state: absent
-#     prune:true
+#     prune: true
 #     name: stack
 #     compose:
 #       - /var/run/docker_compose/services/stack/docker_compose.yml
-#   tags: [ never, docker_purge ]
+#   tags: [never, docker_purge]
 
 - name: Deploy Docker Compose services
   ansible.builtin.command: docker compose up --wait --remove-orphans
@@ -379,4 +382,4 @@
 #   ansible.builtin.command: docker compose down --remove-orphans
 #   args:
 #     chdir: /svc/volumes/docker-compose
-#   tags: [ never, docker_purge ]
+#   tags: [never, docker_purge]

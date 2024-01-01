@@ -144,7 +144,7 @@ services:
       - mail_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix-for-postfixadmin:2023-03-19
+    image: nesono/postfix-for-postfixadmin:2024-01-01
     environment:
       MYHOSTNAME: "smtp.nesono.com"
       MYNETWORKS: "5.9.123.102"

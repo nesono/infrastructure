@@ -69,42 +69,7 @@ services:
       restart_policy:
         condition: on-failure
 
-#  nginx-mail-proxy:
-#    image: nginx:1.22-alpine
-#    ports:
-#      - target: 2525
-#        published: 2525
-#        mode: host
-#    volumes:
-#      - nginx_mail_conf:/etc/nginx/conf.d:ro
-#      - nginx-mail:/etc/nginx/mail.d:ro
-#      - nginx_mail_vhost:/etc/nginx/vhost.d:ro
-#      - nginx_mail_html:/usr/share/nginx/html
-#      - acme_certs:/etc/nginx/certs:ro
-#      - /svc/volumes/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-#    labels:
-#      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
-#    networks:
-#      - mail_external
-#    deploy:
-#      restart_policy:
-#        condition: on-failure
 
-  docker-gen-mail:
-    image: nginxproxy/docker-gen:0.10.6
-    command: -notify-sighup nginx-mail-proxy -watch /etc/docker-gen/templates/nginx_mail.tmpl /etc/nginx/mail.d/default.conf
-    volumes:
-      - nginx-mail:/etc/nginx/mail.d
-      - nginx_mail_vhost:/etc/nginx/vhost.d:ro
-      - nginx_mail_html:/usr/share/nginx/html:ro
-      - acme_certs:/etc/nginx/certs:ro
-      - docker_gen_templates:/etc/docker-gen/templates:ro
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-    networks:
-      - mail_external
-    deploy:
-      restart_policy:
-        condition: on-failure
 
   # Mail services
   dovecot:
@@ -688,30 +653,6 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/acme.sh
-  nginx_mail_conf:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/nginx-mail/conf.d
-  nginx_mail_vhost:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/nginx-mail/vhost.d
-  nginx_mail_html:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/nginx-mail/html
-  nginx-mail:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/nginx-mail/mail.d
   docker_gen_templates:
     driver: local
     driver_opts:

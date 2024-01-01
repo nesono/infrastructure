@@ -169,10 +169,10 @@
     mode: '0644'
   tags: [hot_compose]
 
-- name: Copy nginx.conf
+- name: Copy nginx_mail.conf
   ansible.builtin.copy:
-    src: nginx.conf
-    dest: /svc/volumes/nginx-mail/nginx.conf
+    src: nginx_mail.conf
+    dest: /svc/volumes/nginx-mail/nginx_mail.conf
     owner: 0
     group: 0
     mode: '0644'

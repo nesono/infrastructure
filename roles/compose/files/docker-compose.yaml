@@ -36,6 +36,40 @@ services:
       MAIL_PASSWORD=$$(cat $$BORG_MAIL_PASSWORD_FILE) && exec /entry.sh"
     restart: on-failure
 
+  nginx-mail-proxy:
+    image: nginx:1.22-alpine
+    container_name: nginx-mail-proxy
+    ports:
+      - "2525:2525"
+    volumes:
+      - nginx_mail_conf:/etc/nginx/conf.d:ro
+      - nginx_mail_vhost:/etc/nginx/vhost.d:ro
+      - nginx_mail_html:/usr/share/nginx/html
+      - acme_certs:/etc/nginx/certs:ro
+      - /svc/volumes/nginx/nginx_mail.conf:/etc/nginx/nginx.conf:ro
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+    networks:
+      - mail_external
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  docker-gen-mail:
+    image: nginxproxy/docker-gen:0.10.6
+    command: -notify-sighup nginx-mail-proxy -watch /etc/docker-gen/templates/nginx_mail.tmpl /etc/nginx/mail.d/default.conf
+    volumes:
+      - nginx_mail_vhost:/etc/nginx/vhost.d:ro
+      - nginx_mail_html:/usr/share/nginx/html:ro
+      - acme_certs:/etc/nginx/certs:ro
+      - docker_gen_templates:/etc/docker-gen/templates:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - mail_external
+    deploy:
+      restart_policy:
+        condition: on-failure
+
 volumes:
   borgmatic_config:
     driver: local
@@ -67,6 +101,49 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/borgmatic/cache
+  # nginx reverse proxy, docker-gen, acme
+  acme_certs:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/acme/certs
+  acme_sh:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/acme.sh
+  nginx_mail_conf:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx-mail/conf.d
+  nginx_mail_vhost:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx-mail/vhost.d
+  nginx_mail_html:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx-mail/html
+  nginx_mail:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx-mail/mail.d
+  docker_gen_templates:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/docker-gen/templates
 
 secrets:
   borgmatic_passphrase:

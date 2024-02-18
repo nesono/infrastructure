@@ -224,6 +224,9 @@ Create a DKIM txt and key file using the following command.
 opendkim-genkey -t -s 2023-01-04 -d <example.com>,<example.link>,...
 ```
 
+Note that the only domains you need to list with the `-d` option are the domains under which your mailserver is running.
+You can use the same mailserver (e.g. example.com), even if other domains use it in their DNS MX record.
+
 The command above will create two files:
 1. `2023-01-04.private` with the private key
 2. `2023-01-04.txt` containing the DNS record
@@ -244,9 +247,10 @@ The file `2023-01-04.txt` contains the DNS TXT record. Here is my example:
 You will need to create a TXT record for your domain (`<example.com>` in my example) that points to the host
 `2023-01-04._domainkey` and has the value (change the multi-string to a single string - Cloudflare
 will handle the rest):
-```
-v=DKIM1; h=sha256; k=rsa; t=y; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxW3loYuv7Owf9CSurIKRgtNw0GYQg7RGH41mOgb9VP5vpQNL/V3dtgo8qjkZ7afY81RFyZ48ZSKspGOfBzumJTAECsxeCjmdvpcMTWxwyNZ3uxjkb6JYwfLxh7IYbcu/+Cdcpfdxl2nQ4jx8P6zQZUbLvDKHp2DWic4KJhVdMcWXARYzwRxVZMT4PBB3OJq3aa5h4yUIOqJ+1sVx8Co5N6f6OnVG89zAxTBTx568VVEzhPtpG8TU6JLiCJj1K/0xLmmOu7jJFicdw56dZiZc9vUJ9QiC/Q9m5yclMQAvEeGVQok1Sig1+gqkO18x6f6TJrN2jXzPJHliI1PHR/8ulQIDAQAB
-```
+
+* Type: `TXT`
+* Name: `2023-01-04._domainkey`
+* Content: `v=DKIM1; h=sha256; k=rsa; t=y; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxW3loYuv7Owf9CSurIKRgtNw0GYQg7RGH41mOgb9VP5vpQNL/V3dtgo8qjkZ7afY81RFyZ48ZSKspGOfBzumJTAECsxeCjmdvpcMTWxwyNZ3uxjkb6JYwfLxh7IYbcu/+Cdcpfdxl2nQ4jx8P6zQZUbLvDKHp2DWic4KJhVdMcWXARYzwRxVZMT4PBB3OJq3aa5h4yUIOqJ+1sVx8Co5N6f6OnVG89zAxTBTx568VVEzhPtpG8TU6JLiCJj1K/0xLmmOu7jJFicdw56dZiZc9vUJ9QiC/Q9m5yclMQAvEeGVQok1Sig1+gqkO18x6f6TJrN2jXzPJHliI1PHR/8ulQIDAQAB`
 
 **Note**: I had to move the DNS handling from [Hover](https://www.hover.com) to [Cloudflare](https://www.cloudflare.com),
 since Hover did not support the long (>255 characters) TXT record values.
@@ -457,7 +461,7 @@ smtp-cli/smtp-cli --server=smtp.<example.com>:25 --verbose --mail-from=user@<exa
 Example with Auth:
 
 ```bash
-smtp-cli/smtp-cli --server=smtp.<example.com>:25 --user=user@<example.com> --verbose --mail-from=user@<example.com> --to=recipient@<example.com> --subject="Valid $(date)" --body-plain="Valid $(date), not authenticated!"
+smtp-cli/smtp-cli --server=smtp.<example.com>:25 --user=user@<example.com> --verbose --mail-from=user@<example.com> --to=recipient@<example.com> --subject="Valid $(date)" --body-plain="Valid $(date), authenticated!"
 ```
 
 ### Postfix Mail Queue Commands
@@ -642,6 +646,15 @@ And configure your remotes to contain the following:
 smtp.nesono.com smtp --port=25 --starttls --user=<yourmail@example.com> --pass='<yourpassword>'
 ```
 
+## Migrating from Docker Stack to Docker Compose
+
+[] Use volumes-from for [nginx proxy for instance](https://github.com/nginx-proxy/acme-companion/blob/main/docs/Docker-Compose.md#three-containers-example)
+[] No more host networking for proxy (try this!)
+[] Fix all documentation above (e.g. stack_ prefixes)
+[] User container-name for proxy
+[] Fix deploy statements -- `restart: on-failure`
+[] Do not use any secrets anymore (copy them over as files and mount them into the containers)
+
 ## Further Reading
 
 * [Enabling SASL authentication for Postfix](https://www.postfix.org/SASL_README.html)
@@ -651,3 +664,6 @@ smtp.nesono.com smtp --port=25 --starttls --user=<yourmail@example.com> --pass='
 * [Postfix Relay and Access Control](https://www.postfix.org/SMTPD_ACCESS_README.html)
 * [Understanding Postfix Percentile Reports](https://logreporters.sourceforge.net/faq.html#percentiles)
 * [Mail Blacklist Archive as used by iCloud](https://mxtoolbox.com)
+* [Testing IMAP by Dovecot](https://doc.dovecot.org/admin_manual/test_installation/#testing-installation)
+* [Managesieve Troubleshooting](https://doc.dovecot.org/3.0/configuration_manual/sieve/managesieve/troubleshooting/)
+* [Dovecot SSL Configuration](https://doc.dovecot.org/configuration_manual/dovecot_ssl_configuration/#dovecot-ssl-configuration)

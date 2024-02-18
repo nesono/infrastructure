@@ -36,39 +36,69 @@ services:
       MAIL_PASSWORD=$$(cat $$BORG_MAIL_PASSWORD_FILE) && exec /entry.sh"
     restart: on-failure
 
-  nginx-mail-proxy:
-    image: nginx:1.22-alpine
-    container_name: nginx-mail-proxy
+  nginx-proxy:
+    image: nesono/nginx_with_mail:2024-02-17.2
+    container_name: nginx-proxy
     ports:
+#      - "80:80"
+#      - "443:443"
       - "2525:2525"
+      - "9143:9143"
     volumes:
-      - nginx_mail_conf:/etc/nginx/conf.d:ro
-      - nginx_mail_vhost:/etc/nginx/vhost.d:ro
-      - nginx_mail_html:/usr/share/nginx/html
-      - acme_certs:/etc/nginx/certs:ro
-      - /svc/volumes/nginx/nginx_mail.conf:/etc/nginx/nginx.conf:ro
-    labels:
-      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+#      - nginx_conf:/etc/nginx/conf.d:ro
+#      - nginx_mail:/etc/nginx/mail.d:ro
+#      - nginx_vhost:/etc/nginx/vhost.d:ro
+#      - nginx_html:/usr/share/nginx/html
+      - /svc/volumes/acme/certs/mail.nesono.com:/etc/nginx/certs:ro
+    environment:
+      TLS_CERT: /etc/nginx/certs/fullchain.pem
+      TLS_KEY: /etc/nginx/certs/key.pem
+#      SIEVE_SERVER: sieve.nesono.com
+#      SIEVE_PORT: 4190
+      SMTP_SERVER: localhost
+      SMTP_PORT: 1110
+      IMAP_SERVER: localhost
+      IMAP_PORT: 1111
+#      AUTH_HTTP_DEBUG_LEVEL: "DEBUG"
+#    labels:
+#      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
     networks:
-      - mail_external
-    deploy:
-      restart_policy:
-        condition: on-failure
+      - net_external
+      - http_internal
+      - mail_internal
+    restart: on-failure
 
-  docker-gen-mail:
-    image: nginxproxy/docker-gen:0.10.6
-    command: -notify-sighup nginx-mail-proxy -watch /etc/docker-gen/templates/nginx_mail.tmpl /etc/nginx/mail.d/default.conf
-    volumes:
-      - nginx_mail_vhost:/etc/nginx/vhost.d:ro
-      - nginx_mail_html:/usr/share/nginx/html:ro
-      - acme_certs:/etc/nginx/certs:ro
-      - docker_gen_templates:/etc/docker-gen/templates:ro
-      - /var/run/docker.sock:/tmp/docker.sock:ro
-    networks:
-      - mail_external
-    deploy:
-      restart_policy:
-        condition: on-failure
+#  nginx-docker-gen:
+#    image: nginxproxy/docker-gen:0.10.6
+#    command: -notify-sighup nginx-proxy -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+#    volumes:
+#      - nginx_conf:/etc/nginx/conf.d
+#      - nginx_vhost:/etc/nginx/vhost.d:ro
+#      - nginx_html:/usr/share/nginx/html:ro
+#      - acme_certs:/etc/nginx/certs:ro
+#      - docker_gen_templates:/etc/docker-gen/templates:ro
+#      - /var/run/docker.sock:/tmp/docker.sock:ro
+#    labels:
+#      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen"
+#    restart: on-failure
+#
+#  nginx-acme:
+#    image: nginxproxy/acme-companion:2.2
+#    depends_on:
+#      - nginx-proxy
+#      - nginx-docker-gen
+#    volumes:
+#      - nginx_conf:/etc/nginx/conf.d:ro
+#      - nginx_vhost:/etc/nginx/vhost.d
+#      - nginx_html:/usr/share/nginx/html
+#      - acme_certs:/etc/nginx/certs:rw
+#      - acme_sh:/etc/acme.sh
+#      - /var/run/docker.sock:/var/run/docker.sock:ro
+#    environment:
+#      DEFAULT_EMAIL: c.333+letsencrypt@nesono.com
+#      # DEBUG: true
+#      # ACME_CA_URI: https://acme-staging-v02.api.letsencrypt.org/directory
+#    restart: on-failure
 
 volumes:
   borgmatic_config:
@@ -101,7 +131,25 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/borgmatic/cache
-  # nginx reverse proxy, docker-gen, acme
+  # nginx reverse proxy
+  nginx_http_conf:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx-http/conf.d
+  nginx_http_vhost:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx-http/vhost.d
+  nginx_http_html:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx-http/html
   acme_certs:
     driver: local
     driver_opts:
@@ -114,36 +162,203 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/acme.sh
-  nginx_mail_conf:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/nginx-mail/conf.d
-  nginx_mail_vhost:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/nginx-mail/vhost.d
-  nginx_mail_html:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/nginx-mail/html
-  nginx_mail:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/nginx-mail/mail.d
   docker_gen_templates:
     driver: local
     driver_opts:
       o: bind
       type: none
       device: /svc/volumes/docker-gen/templates
+  # Mail services
+  dovecot:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/dovecot
+  mail:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mail
+  mail_spool:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mail_spool
+  mysql_mail_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mysql_mail_data
+  mysql_mail_init_db:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mysql_mail_init_db
+  roundcube_custom_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/roundcube_custom_config
+  postgres_roundcube_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/postgres_roundcube_data
+  spamass_vhome:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/spamass_vhome
+  # Gitea
+  gitea_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/gitea_data
+  postgres_gitea_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/postgres_gitea_data
+  mysql_wordpress_noerpel_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mysql_wordpress_noerpel_data
+  wordpress_noerpel_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/wordpress_noerpel_data
+  mariadb_cloud_nesono_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mariadb_cloud_nesono_data
+  mariadb_cloud_nesono_init_db:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mariadb_cloud_nesono_init_db
+  cloud_nesono_nextcloud:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/cloud_nesono_nextcloud
+  cloud_nesono_apps:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/cloud_nesono_apps
+  cloud_nesono_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/cloud_nesono_config
+  cloud_nesono_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/cloud_nesono_data
+  mariadb_cloud_noerpel_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mariadb_cloud_noerpel_data
+  mariadb_cloud_noerpel_init_db:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mariadb_cloud_noerpel_init_db
+  cloud_noerpel_nextcloud:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/cloud_noerpel_nextcloud
+  cloud_noerpel_apps:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/cloud_noerpel_apps
+  cloud_noerpel_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/cloud_noerpel_config
+  cloud_noerpel_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/cloud_noerpel_data
+  www_nesono_com_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/www_nesono_com_data
+  the_issing_link_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/the_issing_link_data
+  katja_issing_link_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/katja_issing_link_data
+
+networks:
+  # external networks
+  net_external:
+    driver: bridge
+  # internal networks
+  http_internal:
+    driver: bridge
+    internal: true
+  mail_internal:
+    driver: bridge
+    internal: true
+  roundcube_internal:
+    driver: bridge
+    internal: true
+  gitea_internal:
+    driver: bridge
+    internal: true
+  wordpress_noerpel_internal:
+    driver: bridge
+    internal: true
+  cloud_nesono_internal:
+    driver: bridge
+    internal: true
+  cloud_noerpel_internal:
+    driver: bridge
+    internal: true
 
 secrets:
   borgmatic_passphrase:

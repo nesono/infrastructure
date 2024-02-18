@@ -69,8 +69,6 @@ services:
       restart_policy:
         condition: on-failure
 
-
-
   # Mail services
   dovecot:
     depends_on:
@@ -78,8 +76,8 @@ services:
       - mail_nesono_com # for getting certs in place first
     image: dovecot/dovecot:2.3.19.1
     environment:
-      VIRTUAL_DOVECOT_HOST: "imap.nesono.com"
-      VIRTUAL_PORT: "143,993,4190"
+#      VIRTUAL_DOVECOT_HOST: "imap.nesono.com"
+#      VIRTUAL_PORT: "143,993,4190"
       CERT_NAME: "mail.nesono.com"
     ports:
       - target: 993
@@ -109,7 +107,7 @@ services:
       - mail_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix-for-postfixadmin:2024-01-01
+    image: nesono/postfix_for_postfixadmin:2024-02-15
     environment:
       MYHOSTNAME: "smtp.nesono.com"
       MYNETWORKS: "5.9.123.102"
@@ -127,9 +125,10 @@ services:
       SPF_ENABLE: "1"
       DMARC_SOCKET_PATH: "private/dmarc"
       SMTPS_ENABLE: "1"
-      VIRTUAL_POSTFIX_HOST: "smtp.nesono.com"
-      VIRTUAL_PORT: "2525"
+#      VIRTUAL_POSTFIX_HOST: "smtp.nesono.com"
+#      VIRTUAL_PORT: "2525"
       CERT_NAME: "mail.nesono.com"
+      AUTHORIZED_SMTPD_XCLIENT_HOSTS: "172.20.0.1"
     secrets:
       - mysql_mail_password
       - mysql_mail_user
@@ -174,6 +173,8 @@ services:
         uid: '101'
         gid: '101'
         mode: 0400
+    networks:
+      - mail_internal
     deploy:
       restart_policy:
         condition: on-failure
@@ -335,6 +336,9 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+        delay: 15s
+        max_attempts: 5
+        window: 120s
 
   pgsql_gitea:
     image: postgres:15.1-alpine

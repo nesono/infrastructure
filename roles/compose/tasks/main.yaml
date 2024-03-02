@@ -268,7 +268,6 @@
     - postfixadmin_setup_password
     - roundcube_db_user
     - roundcube_db_password
-    - opendkim_key
     - gitea_db_user
     - gitea_db_password
     - gitea_mailer_user
@@ -289,6 +288,16 @@
     - mariadb_cloud_noerpel_user
     - nextcloud_noerpel_admin_user
     - nextcloud_noerpel_admin_password
+
+- name: Copy Secrets Files
+  ansible.builtin.copy:
+    src: "secrets/secret_{{ item }}.txt"
+    dest: /var/docker_compose_secrets
+    owner: 101
+    group: 101
+    mode: '0400'
+  loop:
+    - opendkim_key
 
 - name: Generate OpenSSH keypair for Borgmatic
   community.crypto.openssh_keypair:

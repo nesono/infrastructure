@@ -169,14 +169,6 @@
     mode: '0644'
   tags: [hot_compose]
 
-- name: Copy nginx_mail.conf
-  ansible.builtin.copy:
-    src: nginx_mail.conf
-    dest: /svc/volumes/nginx-mail/nginx_mail.conf
-    owner: 0
-    group: 0
-    mode: '0644'
-
 - name: Copy nginx templates
   ansible.builtin.copy:
     src: "{{ item }}"
@@ -186,7 +178,6 @@
     mode: '0644'
   loop:
     - nginx.tmpl
-    - nginx_mail.tmpl
 
 - name: Copy dovecot configuration
   ansible.builtin.copy:

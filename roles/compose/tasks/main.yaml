@@ -285,7 +285,7 @@
     - nextcloud_noerpel_admin_user
     - nextcloud_noerpel_admin_password
 
-- name: Copy Secrets Files
+- name: Copy Secrets Files (uid 101, gid 101)
   ansible.builtin.copy:
     src: "secrets/secret_{{ item }}.txt"
     dest: /var/docker_compose_secrets

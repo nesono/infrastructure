@@ -36,32 +36,41 @@ services:
       MAIL_PASSWORD=$$(cat $$BORG_MAIL_PASSWORD_FILE) && exec /entry.sh"
     restart: on-failure
 
+  # Reverse proxy settings
   nginx-proxy:
-    image: nesono/nginx_with_mail:2024-02-17.2
+    image: nesono/nginx_with_mail:2024-03-02.1
     container_name: nginx-proxy
     ports:
 #      - "80:80"
 #      - "443:443"
       - "2525:2525"
       - "9143:9143"
+      - "25:25"     # SMTP
+      - "587:587"   # SUBMISSION
+      - "465:465"   # SMTPS
+      - "143:143"   # IMAP
+      - "993:993"   # IMAPS
     volumes:
 #      - nginx_conf:/etc/nginx/conf.d:ro
 #      - nginx_mail:/etc/nginx/mail.d:ro
 #      - nginx_vhost:/etc/nginx/vhost.d:ro
 #      - nginx_html:/usr/share/nginx/html
       - /svc/volumes/acme/certs/mail.nesono.com:/etc/nginx/certs:ro
+      - acme_certs:/etc/nginx/certs:ro
     environment:
-      TLS_CERT: /etc/nginx/certs/fullchain.pem
-      TLS_KEY: /etc/nginx/certs/key.pem
-#      SIEVE_SERVER: sieve.nesono.com
-#      SIEVE_PORT: 4190
-      SMTP_SERVER: localhost
-      SMTP_PORT: 1110
-      IMAP_SERVER: localhost
-      IMAP_PORT: 1111
-#      AUTH_HTTP_DEBUG_LEVEL: "DEBUG"
-#    labels:
-#      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+      MAIL_TLS_CERT: /etc/nginx/certs/mail.nesono.com/fullchain.pem
+      MAIL_TLS_KEY: /etc/nginx/certs/mail.nesono.com/key.pem
+      SMTP_SERVER: postfix
+      SMTP_PORT: 25
+      SUBMISSION_SERVER: postfix
+      SUBMISSION_PORT: 25 # TODO fix this to be 587 again?
+      IMAP_SERVER: dovecot
+      IMAP_PORT: 143
+      #SIEVE_SERVER: dovecot
+      #SIEVE_PORT: 4190
+      AUTH_HTTP_DEBUG_LEVEL: "DEBUG"
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
     networks:
       - net_external
       - http_internal
@@ -99,6 +108,117 @@ services:
 #      # DEBUG: true
 #      # ACME_CA_URI: https://acme-staging-v02.api.letsencrypt.org/directory
 #    restart: on-failure
+  dovecot:
+    depends_on:
+      - mysql_mail
+      - mail_nesono_com # for getting certs in place first
+    image: dovecot/dovecot:2.3.19.1
+#    ports:
+#      - "143:143"
+#      - "993:993"
+#      - "4190:4190" # managesieve (TODO: enable this through nginx)
+    volumes:
+      - dovecot:/etc/dovecot:ro
+      - mail:/srv/mail
+      - mail_spool:/var/spool/mail
+    networks:
+      - mail_internal
+    restart: on-failure
+
+  postfix:
+    depends_on:
+      - mysql_mail
+      - mail_nesono_com # for getting certs in place first
+      - dovecot # SASL authentication
+      - postfix_milters
+    image: nesono/postfix_for_postfixadmin:2024-03-02
+    environment:
+      MYHOSTNAME: "smtp.nesono.com"
+      MYNETWORKS: "5.9.123.102"
+      SQL_USER_FILE: /run/secrets/mysql_mail_user
+      SQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
+      SQL_HOST: mysql_mail
+      SQL_DB_NAME: mailserver
+      DOVECOT_SASL_SOCKET_PATH: "private/auth"
+      DOVECOT_LMTP_PATH: "private/dovecot-lmtp"
+      #SPAMASS_SOCKET_PATH: "private/spamass" # connection reset by peer errors
+      DKIM_SOCKET_PATH: "private/dkim"
+      SPF_ENABLE: "1"
+      DMARC_SOCKET_PATH: "private/dmarc"
+      AUTHORIZED_SMTPD_XCLIENT_HOSTS: "172.23.0.4"
+    secrets:
+      - mysql_mail_password
+      - mysql_mail_user
+    volumes:
+      - mail:/var/mail
+      - mail_spool:/var/spool/postfix
+    networks:
+      - mail_internal
+    restart: on-failure
+
+  postfix_milters:
+    image: nesono/postfix-milters:2023-01-22.1
+    environment:
+      #SPAMASS_SOCKET_PATH: "private/spamass" # connection reset by peer errors
+      DKIM_SOCKET_PATH: "private/dkim"
+      DKIM_DOMAINS: "nesono.com,issing.link,noerpel.net,frankfriedbert.de,byorkesterbaritone.com"
+      DKIM_SELECTOR: "2023-01-04"
+      DKIM_KEY_PATH: "/run/secrets/opendkim_key"
+      DMARC_SOCKET_PATH: "private/dmarc"
+      MAIL_HOSTNAME: "smtp.nesono.com"
+    volumes:
+      - mail:/var/mail
+      - mail_spool:/var/spool/postfix
+      - spamass_vhome:/vhome/users
+    secrets:
+      - opendkim_key
+    networks:
+      - mail_internal
+    restart: on-failure
+
+  mysql_mail:
+    image: mysql:5.7
+    volumes:
+      - mysql_mail_data:/var/lib/mysql
+      - mysql_mail_init_db:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
+      MYSQL_USER_FILE: /run/secrets/mysql_mail_user
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_mail_root_password
+      MYSQL_DATABASE: mailserver
+    secrets:
+      - mysql_mail_password
+      - mysql_mail_user
+      - mysql_mail_root_password
+    networks:
+      - mail_internal
+    restart: on-failure
+
+  postfixadmin:
+    depends_on:
+      - mysql_mail
+    image: postfixadmin:3.3.13
+    environment:
+      POSTFIXADMIN_DB_TYPE: mysqli
+      POSTFIXADMIN_DB_HOST: mysql_mail
+      POSTFIXADMIN_DB_NAME: mailserver
+      POSTFIXADMIN_DB_USER_FILE: /run/secrets/mysql_mail_user
+      POSTFIXADMIN_DB_PASSWORD_FILE: /run/secrets/mysql_mail_password
+      POSTFIXADMIN_SETUP_PASSWORD_FILE: /run/secrets/postfixadmin_setup_password
+      POSTFIXADMIN_SMTP_SERVER: postfix
+      POSTFIXADMIN_SMTP_PORT: 25
+      VIRTUAL_HOST: postfixgreen.nesono.com,postfixadmin.nesono.com
+      VIRTUAL_PORT: 80
+      LETSENCRYPT_HOST: postfixgreen.nesono.com,postfixadmin.nesono.com
+    secrets:
+      - mysql_mail_password
+      - mysql_mail_user
+      - postfixadmin_setup_password
+    networks:
+      - http_internal
+      - mail_internal
+    restart: on-failure
+
 
 volumes:
   borgmatic_config:
@@ -217,121 +337,121 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/spamass_vhome
-  # Gitea
-  gitea_data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/gitea_data
-  postgres_gitea_data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/postgres_gitea_data
-  mysql_wordpress_noerpel_data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/mysql_wordpress_noerpel_data
-  wordpress_noerpel_data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/wordpress_noerpel_data
-  mariadb_cloud_nesono_data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/mariadb_cloud_nesono_data
-  mariadb_cloud_nesono_init_db:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/mariadb_cloud_nesono_init_db
-  cloud_nesono_nextcloud:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/cloud_nesono_nextcloud
-  cloud_nesono_apps:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/cloud_nesono_apps
-  cloud_nesono_config:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/cloud_nesono_config
-  cloud_nesono_data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/cloud_nesono_data
-  mariadb_cloud_noerpel_data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/mariadb_cloud_noerpel_data
-  mariadb_cloud_noerpel_init_db:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/mariadb_cloud_noerpel_init_db
-  cloud_noerpel_nextcloud:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/cloud_noerpel_nextcloud
-  cloud_noerpel_apps:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/cloud_noerpel_apps
-  cloud_noerpel_config:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/cloud_noerpel_config
-  cloud_noerpel_data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/cloud_noerpel_data
-  www_nesono_com_data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/www_nesono_com_data
-  the_issing_link_data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/the_issing_link_data
-  katja_issing_link_data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/katja_issing_link_data
+#  # Gitea
+#  gitea_data:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/gitea_data
+#  postgres_gitea_data:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/postgres_gitea_data
+#  mysql_wordpress_noerpel_data:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/mysql_wordpress_noerpel_data
+#  wordpress_noerpel_data:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/wordpress_noerpel_data
+#  mariadb_cloud_nesono_data:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/mariadb_cloud_nesono_data
+#  mariadb_cloud_nesono_init_db:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/mariadb_cloud_nesono_init_db
+#  cloud_nesono_nextcloud:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/cloud_nesono_nextcloud
+#  cloud_nesono_apps:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/cloud_nesono_apps
+#  cloud_nesono_config:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/cloud_nesono_config
+#  cloud_nesono_data:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/cloud_nesono_data
+#  mariadb_cloud_noerpel_data:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/mariadb_cloud_noerpel_data
+#  mariadb_cloud_noerpel_init_db:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/mariadb_cloud_noerpel_init_db
+#  cloud_noerpel_nextcloud:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/cloud_noerpel_nextcloud
+#  cloud_noerpel_apps:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/cloud_noerpel_apps
+#  cloud_noerpel_config:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/cloud_noerpel_config
+#  cloud_noerpel_data:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/cloud_noerpel_data
+#  www_nesono_com_data:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/www_nesono_com_data
+#  the_issing_link_data:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/the_issing_link_data
+#  katja_issing_link_data:
+#    driver: local
+#    driver_opts:
+#      o: bind
+#      type: none
+#      device: /svc/volumes/katja_issing_link_data
 
 networks:
   # external networks
@@ -347,18 +467,18 @@ networks:
   roundcube_internal:
     driver: bridge
     internal: true
-  gitea_internal:
-    driver: bridge
-    internal: true
-  wordpress_noerpel_internal:
-    driver: bridge
-    internal: true
-  cloud_nesono_internal:
-    driver: bridge
-    internal: true
-  cloud_noerpel_internal:
-    driver: bridge
-    internal: true
+#  gitea_internal:
+#    driver: bridge
+#    internal: true
+#  wordpress_noerpel_internal:
+#    driver: bridge
+#    internal: true
+#  cloud_nesono_internal:
+#    driver: bridge
+#    internal: true
+#  cloud_noerpel_internal:
+#    driver: bridge
+#    internal: true
 
 secrets:
   borgmatic_passphrase:
@@ -367,3 +487,61 @@ secrets:
     file: /var/docker_compose_secrets/secret_robot_mail_user.txt
   robot_mail_password:
     file: /var/docker_compose_secrets/secret_robot_mail_password.txt
+  # mail
+#  postfixadmin_setup_password:
+#    external: true
+  mysql_mail_password:
+    file: /var/docker_compose_secrets/secret_mysql_mail_password.txt
+  mysql_mail_user:
+    file: /var/docker_compose_secrets/secret_mysql_mail_user.txt
+  mysql_mail_root_password:
+    file: /var/docker_compose_secrets/secret_mysql_mail_root_password.txt
+#  roundcube_db_user:
+#    external: true
+#  roundcube_db_password:
+#    external: true
+  opendkim_key:
+    file: /var/docker_compose_secrets/secret_opendkim_key.txt
+#  # gitea
+#  gitea_db_user:
+#    external: true
+#  gitea_db_password:
+#    external: true
+#  gitea_mailer_user:
+#    external: true
+#  gitea_mailer_password:
+#    external: true
+#  # workdpress noerpel
+#  mysql_wordpress_noerpel_password:
+#    external: true
+#  mysql_wordpress_noerpel_user:
+#    external: true
+#  mysql_wordpress_noerpel_root_password:
+#    external: true
+#  # robot mail
+#  robot_mail_user:
+#    external: true
+#  robot_mail_password:
+#    external: true
+#  # cloud nesono
+#  mariadb_cloud_nesono_password:
+#    external: true
+#  mariadb_cloud_nesono_user:
+#    external: true
+#  mariadb_cloud_nesono_root_password:
+#    external: true
+#  nextcloud_nesono_admin_user:
+#    external: true
+#  nextcloud_nesono_admin_password:
+#    external: true
+#  # cloud noerpel
+#  mariadb_cloud_noerpel_password:
+#    external: true
+#  mariadb_cloud_noerpel_user:
+#    external: true
+#  mariadb_cloud_noerpel_root_password:
+#    external: true
+#  nextcloud_noerpel_admin_user:
+#    external: true
+#  nextcloud_noerpel_admin_password:
+#    external: true

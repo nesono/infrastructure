@@ -17,14 +17,10 @@
     group: 0
     mode: '0755'
   loop:
-    - nginx-http/conf.d
-    - nginx-http/mail.d
-    - nginx-http/vhost.d
-    - nginx-http/html
-    - nginx-mail/conf.d
-    - nginx-mail/mail.d
-    - nginx-mail/vhost.d
-    - nginx-mail/html
+    - nginx/conf.d
+    - nginx/mail.d
+    - nginx/vhost.d
+    - nginx/html
     - acme.sh
     - acme/certs
     - dovecot

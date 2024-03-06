@@ -1,11 +1,5 @@
 version: '3.8'
 services:
-#  ofelia:
-#    image: mcuadros/ofelia:v0.3.7
-#    volumes:
-#      - /var/run/docker.sock:/var/run/docker.sock:ro
-#    command: daemon --docker
-
   # Nginx http proxy
   nginx_proxy:
     image: nginx:1.22-alpine
@@ -76,8 +70,6 @@ services:
       - mail_nesono_com # for getting certs in place first
     image: dovecot/dovecot:2.3.19.1
     environment:
-#      VIRTUAL_DOVECOT_HOST: "imap.nesono.com"
-#      VIRTUAL_PORT: "143,993,4190"
       CERT_NAME: "mail.nesono.com"
     ports:
       - target: 993
@@ -125,8 +117,6 @@ services:
       SPF_ENABLE: "1"
       DMARC_SOCKET_PATH: "private/dmarc"
       SMTPS_ENABLE: "1"
-#      VIRTUAL_POSTFIX_HOST: "smtp.nesono.com"
-#      VIRTUAL_PORT: "2525"
       CERT_NAME: "mail.nesono.com"
       AUTHORIZED_SMTPD_XCLIENT_HOSTS: "172.20.0.1"
     secrets:
@@ -595,7 +585,6 @@ services:
       - wordpress_noerpel_data:/var/www/html
     depends_on:
       - mysql_wordpress_noerpel
-
 
 networks:
   # external networks

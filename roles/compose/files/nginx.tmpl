@@ -238,11 +238,10 @@ server {
 server {
 	server_name _; # This is just an invalid value which will never trigger on a real hostname.
 	server_tokens off;
-	listen {{ $external_https_port }} ssl;
+	listen {{ $external_https_port }} ssl http2;
 	{{ if $enable_ipv6 }}
-	listen [::]:{{ $external_https_port }} ssl;
+	listen [::]:{{ $external_https_port }} ssl http2;
 	{{ end }}
-	http2 on;
 	{{ $access_log }}
 	return 503;
 
@@ -360,11 +359,10 @@ server {
 	{{ if $server_tokens }}
 	server_tokens {{ $server_tokens }};
 	{{ end }}
-	listen {{ $external_https_port }} ssl {{ $default_server }};
+	listen {{ $external_https_port }} ssl http2 {{ $default_server }};
 	{{ if $enable_ipv6 }}
-	listen [::]:{{ $external_https_port }} ssl {{ $default_server }};
+	listen [::]:{{ $external_https_port }} ssl http2 {{ $default_server }};
 	{{ end }}
-	http2 on;
 	{{ $access_log }}
 
 	{{ if $maxBodySize }}
@@ -491,11 +489,10 @@ server {
 	{{ if $server_tokens }}
 	server_tokens {{ $server_tokens }};
 	{{ end }}
-	listen {{ $external_https_port }} ssl {{ $default_server }};
+	listen {{ $external_https_port }} ssl http2 {{ $default_server }};
 	{{ if $enable_ipv6 }}
-	listen [::]:{{ $external_https_port }} ssl {{ $default_server }};
+	listen [::]:{{ $external_https_port }} ssl http2 {{ $default_server }};
 	{{ end }}
-	http2 on;
 	{{ $access_log }}
 	return 500;
 

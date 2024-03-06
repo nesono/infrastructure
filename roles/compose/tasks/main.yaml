@@ -177,8 +177,8 @@
 
 - name: Copy dovecot configuration
   ansible.builtin.copy:
-    src: dovecot/
-    dest: /svc/volumes/dovecot
+    src: dovecot/dovecot.conf
+    dest: /svc/volumes/dovecot/dovecot.conf
     owner: 0
     group: 0
     mode: '0644'

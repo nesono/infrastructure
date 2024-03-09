@@ -45,7 +45,7 @@
     state: directory
     owner: 70
     group: 70
-    mode: '0755'
+    mode: '0700'
   loop:
     - postgres_gitea_data
     - postgres_roundcube_data
@@ -141,8 +141,8 @@
 
 - name: Copy dovecot configuration
   ansible.builtin.copy:
-    src: dovecot/
-    dest: /svc/volumes/dovecot
+    src: dovecot/dovecot.conf
+    dest: /svc/volumes/dovecot/dovecot.conf
     owner: 0
     group: 0
     mode: '0644'

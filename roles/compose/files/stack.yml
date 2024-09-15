@@ -272,13 +272,15 @@ services:
       - roundcube_db_password
     networks:
       - roundcube_internal
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
     deploy:
       restart_policy:
         condition: on-failure
 
   # Gitea
   gitea:
-    image: gitea/gitea:1.18.0
+    image: gitea/gitea:1.22.2
     depends_on:
       - pgsql_gitea
     environment:
@@ -343,6 +345,8 @@ services:
       - gitea_internal
     volumes:
       - postgres_gitea_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
     deploy:
       restart_policy:
         condition: on-failure
@@ -378,7 +382,7 @@ services:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
 
   cloud_nesono_com:
-    image: nextcloud:25
+    image: nextcloud:29
     volumes:
       - cloud_nesono_nextcloud:/var/www/html
       - cloud_nesono_apps:/var/www/html/custom_apps
@@ -454,7 +458,7 @@ services:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
 
   cloud_noerpel_com:
-    image: nextcloud:25
+    image: nextcloud:29
     volumes:
       - cloud_noerpel_nextcloud:/var/www/html
       - cloud_noerpel_apps:/var/www/html/custom_apps

@@ -1,11 +1,5 @@
 version: '3.8'
 services:
-  #  ofelia:
-  #    image: mcuadros/ofelia:v0.3.7
-  #    volumes:
-  #      - /var/run/docker.sock:/var/run/docker.sock:ro
-  #    command: daemon --docker
-
   # backup
   borg-backup:
     image: b3vis/borgmatic:msmtp-1.7

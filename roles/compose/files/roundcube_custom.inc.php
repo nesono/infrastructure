@@ -1,5 +1,5 @@
 <?php
-    $config['managesieve_host'] = 'tls://sieve.nesono.com';
+    $config['managesieve_host'] = 'dovecot';
     $config['sent_mbox'] = 'Sent Messages';
     $config['used_quotas'] = 'YES';
     $config['quota'] = 'YES';

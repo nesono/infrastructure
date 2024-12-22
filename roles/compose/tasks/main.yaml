@@ -168,43 +168,6 @@
     group: 0
     mode: '0755'
 
-# TODO: This will fail if the stack is running already and secrets shall change
-- name: Create Docker secrets
-  community.docker.docker_secret:
-    name: "{{ item }}"
-    # pack the data to avoid potential interpretation of the contents by Ansible
-    data: "{{ lookup('file', 'secrets/secret_{{ item }}.txt') | b64encode }}"
-    data_is_b64: true
-    state: present
-  loop:
-    - mysql_mail_password
-    - mysql_mail_user
-    - mysql_mail_root_password
-    - postfixadmin_setup_password
-    - roundcube_db_user
-    - roundcube_db_password
-    - opendkim_key
-    - gitea_db_user
-    - gitea_db_password
-    - gitea_mailer_user
-    - gitea_mailer_password
-    - mysql_wordpress_noerpel_password
-    - mysql_wordpress_noerpel_user
-    - mysql_wordpress_noerpel_root_password
-    - borgmatic_passphrase
-    - robot_mail_user
-    - robot_mail_password
-    - mariadb_cloud_nesono_root_password
-    - mariadb_cloud_nesono_password
-    - mariadb_cloud_nesono_user
-    - nextcloud_nesono_admin_user
-    - nextcloud_nesono_admin_password
-    - mariadb_cloud_noerpel_root_password
-    - mariadb_cloud_noerpel_password
-    - mariadb_cloud_noerpel_user
-    - nextcloud_noerpel_admin_user
-    - nextcloud_noerpel_admin_password
-
 - name: Create directory for Docker Compose Secrets (mode 0600)
   ansible.builtin.file:
     path: /var/docker_compose_secrets
@@ -258,6 +221,18 @@
     mode: '0400'
   loop:
     - opendkim_key
+
+- name: Copy Secrets Files (uid 33, gid 33)
+  ansible.builtin.copy:
+    src: "secrets/secret_{{ item }}.txt"
+    dest: /var/docker_compose_secrets
+    owner: 33
+    group: 33
+    mode: '0400'
+  loop:
+    - mysql_wordpress_noerpel_password
+    - mysql_wordpress_noerpel_user
+    - mysql_wordpress_noerpel_root_password
 
 - name: Generate OpenSSH keypair for Borgmatic
   community.crypto.openssh_keypair:

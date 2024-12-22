@@ -16,6 +16,14 @@ also has the side effect of fetching the TLS certs, that are then used by the
 email server (dovecot and postfix). Hence, the email containers depend on the http
 container.
 
+To ensure that the mail TLS certificates get reloaded every week (Sunday), add
+the following two lines to your crontab (invoking `crontab -e`):
+
+```cronexp
+5   4  *   *   Sun   bash -c 'docker kill -s HUP `docker ps -q -f name=stack_dovecot\.`'      
+5   4  *   *   Sun   bash -c 'docker kill -s HUP `docker ps -q -f name=stack_postfix\.`' 
+```
+
 ## Placeholders
 
 We use the following placeholders in this README:
@@ -423,7 +431,7 @@ docker stack deploy --compose-file docker_compose.yml stack
 ### Test the HTTP service
 
 ```bash
-curl -kivL -H 'Host: the.<example.link>' 'http://<ip.address>'
+curl -kivL -H 'Host: the.<example.link>' 'https://<ip.address>'
 ```
 
 ### Testing opendkim DNS entry
@@ -603,16 +611,17 @@ rm -r /svc/volumes/cloud_nesono_apps /svc/volumes/cloud_nesono_config /svc/volum
 
 1. Stopping the old instance
 2. Change DNS entry to the new instance
-2. Cleanup any half-baked instances on the new instance as mentioned above
-3. Syncing all the data again (copying NextCloud files as described above)
-4. Add Redis and MariaDB to your stack and let MariaDB fully initialize (Nextcloud would abort installation, if MariaDB was still running)
-5. Add NextCloud to your stack and check that it can install correctly - fix issues using occ as mentioned below
-6. Add the system cronjob to run cron.php
+3. Cleanup any half-baked instances on the new instance as mentioned above
+4. Syncing all the data again (copying NextCloud files as described above)
+5. Add Redis and MariaDB to your stack and let MariaDB fully initialize (Nextcloud would abort installation, if MariaDB
+   was still running)
+6. Add NextCloud to your stack and check that it can install correctly - fix issues using occ as mentioned below
+7. Add the system cronjob to run cron.php
 
 ### Running Upgrades
 
 My first upgrade wasn't really going smoothly:
-Upgrading the apps failed at the mail app and I was left in mainenance mode.
+Upgrading the apps failed at the mail app, and I was left in maintenance mode.
 
 Running `occ upgrade` and then disabling maintenance mode using `occ maintenance:mode --off` fixed the upgrade itself.
 Then I still had to go into the webui and also upgrade the calendar app and enable it (untested) again.

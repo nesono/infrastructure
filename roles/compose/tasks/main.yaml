@@ -129,43 +129,7 @@
     - cloud_noerpel_data
   tags: [provision]
 
-- name: Create Docker Stack directory
-  ansible.builtin.file:
-    path: /var/run/docker_compose/services/stack
-    state: directory
-    owner: 0
-    group: 0
-    mode: '0755'
-  tags: [hot_compose]
-
-- name: Copy Docker Stack yaml
-  ansible.builtin.copy:
-    src: stack.yml
-    dest: /var/run/docker_compose/services/stack/docker_compose.yml
-    owner: 0
-    group: 0
-    mode: '0644'
-  tags: [hot_compose]
-
-- name: Create Docker Compose directory
-  ansible.builtin.file:
-    path: /svc/volumes/docker-compose
-    state: directory
-    owner: 0
-    group: 0
-    mode: '0755'
-  tags: [hot_compose]
-
-- name: Copy Docker Compose yaml
-  ansible.builtin.copy:
-    src: docker-compose.yaml
-    dest: /svc/volumes/docker-compose/docker-compose.yaml
-    owner: 0
-    group: 0
-    mode: '0644'
-  tags: [hot_compose]
-
-- name: Copy nginx templates
+- name: Copy nginx template
   ansible.builtin.copy:
     src: "{{ item }}"
     dest: "/svc/volumes/docker-gen/templates/{{ item }}"
@@ -341,6 +305,28 @@
   notify:
     - Refresh Dovecot
 
+- name: Init swarm with default parameters
+  community.docker.docker_swarm:
+    state: present
+
+- name: Create Docker Stack directory
+  ansible.builtin.file:
+    path: /var/run/docker_compose/services/stack
+    state: directory
+    owner: 0
+    group: 0
+    mode: '0755'
+  tags: [ hot_compose ]
+
+- name: Copy Docker Stack yaml
+  ansible.builtin.copy:
+    src: stack.yml
+    dest: /var/run/docker_compose/services/stack/docker_compose.yml
+    owner: 0
+    group: 0
+    mode: '0644'
+  tags: [hot_compose]
+
 - name: Deploy Docker Stack services
   community.docker.docker_stack:
     state: present
@@ -351,9 +337,8 @@
   notify:
     - Refresh nginx-proxy
     - Reload Postfix
-  tags: [hot_compose]
+  tags: [ hot_compose ]
 
-#
 # - name: Remove Docker Stack services
 #   community.docker.docker_stack:
 #     state: absent
@@ -362,6 +347,24 @@
 #     compose:
 #       - /var/run/docker_compose/services/stack/docker_compose.yml
 #   tags: [never, docker_purge]
+
+- name: Create Docker Compose directory
+  ansible.builtin.file:
+    path: /svc/volumes/docker-compose
+    state: directory
+    owner: 0
+    group: 0
+    mode: '0755'
+  tags: [ hot_compose ]
+
+- name: Copy Docker Compose yaml
+  ansible.builtin.copy:
+    src: docker-compose.yaml
+    dest: /svc/volumes/docker-compose/docker-compose.yaml
+    owner: 0
+    group: 0
+    mode: '0644'
+  tags: [ hot_compose ]
 
 - name: Deploy Docker Compose services
   ansible.builtin.command: docker compose up --wait --remove-orphans

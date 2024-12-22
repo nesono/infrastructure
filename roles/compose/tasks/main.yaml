@@ -307,7 +307,7 @@
 
 - name: Init swarm with default parameters
   community.docker.docker_swarm:
-    state: absent
+    state: present
 
 - name: Create Docker Stack directory
   ansible.builtin.file:

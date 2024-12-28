@@ -72,11 +72,11 @@ services:
     environment:
       CERT_NAME: "mail.nesono.com"
     ports:
-      - target: 993
-        published: 993
-        mode: host
       - target: 143
         published: 143
+        mode: host
+      - target: 993
+        published: 993
         mode: host
       - target: 4190
         published: 4190
@@ -126,11 +126,11 @@ services:
       - target: 25
         published: 25
         mode: host
-      - target: 587
-        published: 587
-        mode: host
       - target: 465
         published: 465
+        mode: host
+      - target: 587
+        published: 587
         mode: host
     volumes:
       - mail:/var/mail

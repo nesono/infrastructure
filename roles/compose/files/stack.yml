@@ -4,8 +4,13 @@ services:
   nginx_proxy:
     image: nginx:1.22-alpine
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:80"     # HTTP (for acme-companion)
+      - "443:443"   # HTTPS
+    #      - "25:25"     # SMTP
+    #      - "587:587"   # SUBMISSION
+    #      - "465:465"   # SMTPS (to be terminated here)
+    #      - "143:143"   # IMAP
+    #      - "993:993"   # IMAPS (to be terminated here)
     volumes:
       - nginx_conf:/etc/nginx/conf.d:ro
       - nginx_vhost:/etc/nginx/vhost.d:ro

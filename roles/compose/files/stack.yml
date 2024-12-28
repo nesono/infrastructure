@@ -99,7 +99,7 @@ services:
       - mail_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix_for_postfixadmin:2024-02-15
+    image: nesono/postfix_for_postfixadmin:2024-03-04
     environment:
       MYHOSTNAME: "smtp.nesono.com"
       MYNETWORKS: "5.9.123.102"

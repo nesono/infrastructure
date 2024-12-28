@@ -11,9 +11,9 @@ services:
         published: 443
         mode: host
     volumes:
-      - nginx_http_conf:/etc/nginx/conf.d:ro
-      - nginx_http_vhost:/etc/nginx/vhost.d:ro
-      - nginx_http_html:/usr/share/nginx/html
+      - nginx_conf:/etc/nginx/conf.d:ro
+      - nginx_vhost:/etc/nginx/vhost.d:ro
+      - nginx_html:/usr/share/nginx/html
       - acme_certs:/etc/nginx/certs:ro
     labels:
       - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
@@ -27,9 +27,9 @@ services:
     image: nginxproxy/docker-gen:0.10.6
     command: -notify-sighup nginx_proxy -watch /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
     volumes:
-      - nginx_http_conf:/etc/nginx/conf.d
-      - nginx_http_vhost:/etc/nginx/vhost.d:ro
-      - nginx_http_html:/usr/share/nginx/html:ro
+      - nginx_conf:/etc/nginx/conf.d
+      - nginx_vhost:/etc/nginx/vhost.d:ro
+      - nginx_html:/usr/share/nginx/html:ro
       - acme_certs:/etc/nginx/certs:ro
       - docker_gen_templates:/etc/docker-gen/templates:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
@@ -47,9 +47,9 @@ services:
       - nginx_proxy
       - nginx_docker_gen
     volumes:
-      - nginx_http_conf:/etc/nginx/conf.d:ro
-      - nginx_http_vhost:/etc/nginx/vhost.d
-      - nginx_http_html:/usr/share/nginx/html
+      - nginx_conf:/etc/nginx/conf.d:ro
+      - nginx_vhost:/etc/nginx/vhost.d
+      - nginx_html:/usr/share/nginx/html
       - acme_certs:/etc/nginx/certs:rw
       - acme_sh:/etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -620,19 +620,19 @@ networks:
 
 volumes:
   # nginx reverse proxy
-  nginx_http_conf:
+  nginx_conf:
     driver: local
     driver_opts:
       o: bind
       type: none
       device: /svc/volumes/nginx/conf.d
-  nginx_http_vhost:
+  nginx_vhost:
     driver: local
     driver_opts:
       o: bind
       type: none
       device: /svc/volumes/nginx/vhost.d
-  nginx_http_html:
+  nginx_html:
     driver: local
     driver_opts:
       o: bind

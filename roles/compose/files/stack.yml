@@ -184,6 +184,11 @@ services:
       - mysql_mail_root_password
     networks:
       - mail_internal
+    healthcheck:
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_mail_root_password) || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     deploy:
       restart_policy:
         condition: on-failure
@@ -561,6 +566,11 @@ services:
       - mysql_wordpress_noerpel_root_password
     networks:
       - wordpress_noerpel_internal
+    healthcheck:
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_mail_root_password) || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     deploy:
       restart_policy:
         condition: on-failure

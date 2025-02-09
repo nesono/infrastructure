@@ -90,6 +90,9 @@ services:
     networks:
       - mail_external
       - mail_internal
+    healthcheck:
+      test: [ "CMD-SHELL", "echo -ne 'A001 CAPABILITY\r\nA002 LOGOUT\r\n' | openssl s_client -connect localhost:993 -quiet | grep 'CAPABILITY'
+    " ]
     deploy:
       restart_policy:
         condition: on-failure

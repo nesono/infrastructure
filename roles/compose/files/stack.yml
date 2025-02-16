@@ -325,6 +325,8 @@ services:
     networks:
       - gitea_internal
       - http_external
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:3000/ || exit 1" ]
     volumes:
       - gitea_data:/data
       - /etc/timezone:/etc/timezone:ro
@@ -432,6 +434,10 @@ services:
       - http_external
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost/index.php || exit 1" ]
+      # long start period required for version upgrades
+      start_period: 10m
+      timeout: 1m
+      retries: 2
     depends_on:
       - mariadb_cloud_nesono
       - redis_cloud_nesono
@@ -510,6 +516,10 @@ services:
       - http_external
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://localhost/index.php || exit 1" ]
+      # long start period required for version upgrades
+      start_period: 10m
+      timeout: 1m
+      retries: 2
     depends_on:
       - mariadb_cloud_noerpel
       - redis_cloud_noerpel

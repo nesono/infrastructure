@@ -103,7 +103,7 @@ services:
       - mail_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix_for_postfixadmin:2024-03-04
+    image: nesono/postfix_for_postfixadmin:2025-03-01
     environment:
       MYHOSTNAME: "smtp.nesono.com"
       MYNETWORKS: "5.9.123.102"
@@ -122,6 +122,7 @@ services:
       SMTPS_ENABLE: "1"
       CERT_NAME: "mail.nesono.com"
       AUTHORIZED_SMTPD_XCLIENT_HOSTS: "172.20.0.1"
+      SPAMHAUS_DISABLE: "1"
     secrets:
       - mysql_mail_password
       - mysql_mail_user

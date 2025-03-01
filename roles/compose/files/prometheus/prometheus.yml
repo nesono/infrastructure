@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'nginx'
+    static_configs:
+      - targets: [ 'nginx_proxy:80' ]
+
+  - job_name: 'mail_services'
+    static_configs:
+      - targets: [ 'dovecot:143', 'postfix:25' ]
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: [ 'localhost:9090' ]

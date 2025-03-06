@@ -653,6 +653,7 @@ services:
       - grafana_admin_password
     networks:
       - monitoring
+      - http_external
     deploy:
       restart_policy:
         condition: on-failure

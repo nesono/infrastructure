@@ -38,7 +38,6 @@
     - the_issing_link_data
     - katja_issing_link_data
     - prometheus
-    - grafana
   tags: [provision]
 
 - name: Create volume for postgres services (uid 70, gid 70)
@@ -130,6 +129,17 @@
     - cloud_nesono_data
     - cloud_noerpel_data
   tags: [provision]
+
+- name: Create volume for Grafana data (uid 472, gid 0, mod 0770)
+  ansible.builtin.file:
+    path: "/svc/volumes/{{ item }}"
+    state: directory
+    owner: 472
+    group: 0
+    mode: '0770'
+  loop:
+    - grafana
+  tags: [ provision ]
 
 - name: Copy nginx template
   ansible.builtin.copy:

@@ -198,7 +198,7 @@
 - name: Copy prometheus configuration
   ansible.builtin.copy:
     src: prometheus/prometheus.yml
-    dest: /svc/volumes/prometheus_etc
+    dest: /svc/volumes/prometheus_etc/
     owner: 0
     group: 0
     mode: '0755'

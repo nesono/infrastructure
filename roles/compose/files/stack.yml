@@ -629,6 +629,14 @@ services:
   # monitoring
   prometheus:
     image: prom/prometheus:latest
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    secrets:
+      - grafana_admin_user
+      - grafana_admin_password
+    expose:
+      - 9090
     networks:
       - monitoring
     healthcheck:
@@ -638,8 +646,9 @@ services:
       restart_policy:
         condition: on-failure
     volumes:
-      - prometheus_etc:/etc/prometheus/
-  #      - prometheus_data:/prometheus
+      - prometheus_etc:/etc/prometheus
+      # For some reason, we need to use a bind mount here
+      - /svc/volumes/prometheus_data:/prometheus
 
   grafana:
     image: grafana/grafana:latest

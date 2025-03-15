@@ -36,4 +36,10 @@ scrape_configs:
 #      - target_label: __address__
 #        replacement: blackbox_exporter:9115
 
+remote_write:
+  - url: 'http://grafana'
+    basic_auth:
+      username: !!file /run/secrets/grafana_admin_user
+      password: !!file /run/secrets/grafana_admin_password
+
 

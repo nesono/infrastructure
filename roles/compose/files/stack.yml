@@ -626,6 +626,82 @@ services:
     depends_on:
       - mysql_wordpress_noerpel
 
+  # monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    secrets:
+      - grafana_admin_user
+      - grafana_admin_password
+    expose:
+      - 9090
+    networks:
+      - monitoring
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --spider --quiet http://localhost:9090/-/healthy || exit 1"
+      ]
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - prometheus_etc:/etc/prometheus
+      # For some reason, we need to use a bind mount here
+      - /svc/volumes/prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      VIRTUAL_HOST: grafana.nesono.com
+      VIRTUAL_PORT: 3000
+      LETSENCRYPT_HOST: grafana.nesono.com
+      GF_SECURITY_ADMIN_USER__FILE: /run/secrets/grafana_admin_user
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+    secrets:
+      - grafana_admin_user
+      - grafana_admin_password
+    networks:
+      - monitoring
+      - http_external
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  node_exporter:
+    image: prom/node-exporter:latest
+    #    pid: "host"
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - monitoring
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+
+#  blackbox_exporter:
+#    image: prom/blackbox-exporter:latest
+#    networks:
+#      - monitoring
+#    healthcheck:
+#      test: [ "CMD-SHELL", "wget --spider --quiet http://localhost:9115/-/healthy || exit 1" ]
+#    deploy:
+#      restart_policy:
+#        condition: on-failure
+#    volumes:
+#      - blackbox_exporter_config:/etc/blackbox_exporter
+
 networks:
   # external networks
   http_external:
@@ -651,6 +727,9 @@ networks:
     driver: overlay
     internal: true
   cloud_noerpel_internal:
+    driver: overlay
+    internal: true
+  monitoring:
     driver: overlay
     internal: true
 
@@ -838,6 +917,7 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/cloud_noerpel_data
+  # web pages
   www_nesono_com_data:
     driver: local
     driver_opts:
@@ -856,6 +936,25 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/katja_issing_link_data
+  # monitoring
+  prometheus_etc:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/prometheus_etc
+  prometheus_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/prometheus_data
+  grafana_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/grafana
 
 secrets:
   # mail
@@ -915,4 +1014,9 @@ secrets:
   nextcloud_noerpel_admin_user:
     external: true
   nextcloud_noerpel_admin_password:
+    external: true
+  # monitoring
+  grafana_admin_user:
+    external: true
+  grafana_admin_password:
     external: true

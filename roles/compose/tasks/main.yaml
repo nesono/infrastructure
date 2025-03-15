@@ -37,6 +37,7 @@
     - www_nesono_com_data
     - the_issing_link_data
     - katja_issing_link_data
+    - prometheus_etc
   tags: [provision]
 
 - name: Create volume for postgres services (uid 70, gid 70)
@@ -129,6 +130,28 @@
     - cloud_noerpel_data
   tags: [provision]
 
+- name: Create volume for Grafana data (uid 472, gid 0, mod 0770)
+  ansible.builtin.file:
+    path: "/svc/volumes/{{ item }}"
+    state: directory
+    owner: 472
+    group: 0
+    mode: '0770'
+  loop:
+    - grafana
+  tags: [ provision ]
+
+- name: Create volume for Prometheus data (uid 65534, gid 65534, mod 0755)
+  ansible.builtin.file:
+    path: "/svc/volumes/{{ item }}"
+    state: directory
+    owner: 65534
+    group: 65534
+    mode: '0755'
+  loop:
+    - prometheus_data
+  tags: [ provision ]
+
 - name: Copy nginx template
   ansible.builtin.copy:
     src: "{{ item }}"
@@ -138,6 +161,7 @@
     mode: '0644'
   loop:
     - nginx.tmpl
+  tags: [ provision ]
 
 - name: Copy dovecot configuration
   ansible.builtin.copy:
@@ -148,6 +172,7 @@
     mode: '0644'
   notify:
     - Refresh Dovecot
+  tags: [ provision ]
 
 - name: Copy roundcube custom configuration
   ansible.builtin.copy:
@@ -159,6 +184,7 @@
   notify:
     - Refresh Roundcube
     - Refresh nginx-proxy
+  tags: [ provision ]
 
 - name: Copy Gitea entrypoint
   ansible.builtin.copy:
@@ -167,6 +193,16 @@
     owner: 0
     group: 0
     mode: '0755'
+  tags: [ provision ]
+
+- name: Copy prometheus configuration
+  ansible.builtin.copy:
+    src: prometheus/prometheus.yml
+    dest: /svc/volumes/prometheus_etc/
+    owner: 0
+    group: 0
+    mode: '0755'
+  tags: [ provision ]
 
 # TODO: This will fail if the stack is running already and secrets shall change
 - name: Create Docker secrets
@@ -204,7 +240,11 @@
     - mariadb_cloud_noerpel_user
     - nextcloud_noerpel_admin_user
     - nextcloud_noerpel_admin_password
+    - grafana_admin_user
+    - grafana_admin_password
+  tags: [ provision ]
 
+# this is only necessary for docker compose, not for docker stack
 - name: Create directory for Docker Compose Secrets (mode 0600)
   ansible.builtin.file:
     path: /var/docker_compose_secrets
@@ -248,6 +288,9 @@
     - mariadb_cloud_noerpel_user
     - nextcloud_noerpel_admin_user
     - nextcloud_noerpel_admin_password
+    - grafana_admin_user
+    - grafana_admin_password
+  tags: [ provision ]
 
 - name: Copy Secrets Files (uid 101, gid 101)
   ansible.builtin.copy:
@@ -258,6 +301,7 @@
     mode: '0400'
   loop:
     - opendkim_key
+  tags: [ provision ]
 
 - name: Generate OpenSSH keypair for Borgmatic
   community.crypto.openssh_keypair:
@@ -274,6 +318,7 @@
     - borgmatic/config.yaml
     - borgmatic/crontab.txt
     - borgmatic/msmtp.env
+  tags: [ provision ]
 
 - name: Template Dovecot SQL config
   ansible.builtin.template:
@@ -290,6 +335,7 @@
     mail_group_id: "8"
   notify:
     - Refresh Dovecot
+  tags: [ provision ]
 
 - name: Template Dovecot Quota config
   ansible.builtin.template:
@@ -304,6 +350,7 @@
     mysql_mail_user: "{{ lookup('file', 'secrets/secret_mysql_mail_user.txt') }}"
   notify:
     - Refresh Dovecot
+  tags: [ provision ]
 
 - name: Init swarm with default parameters
   community.docker.docker_swarm:

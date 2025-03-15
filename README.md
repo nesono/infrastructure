@@ -655,6 +655,9 @@ And configure your remotes to contain the following:
 smtp.nesono.com smtp --port=25 --starttls --user=<yourmail@example.com> --pass='<yourpassword>'
 ```
 
+## Grafana Bootstrapping
+
+To get the node exporter information on a dashboard, install/import a dashboard from grafana.com with the ID `1860`.
 ## Migrating from Docker Stack to Docker Compose
 
 [] Use volumes-from for [nginx proxy for instance](https://github.com/nginx-proxy/acme-companion/blob/main/docs/Docker-Compose.md#three-containers-example)

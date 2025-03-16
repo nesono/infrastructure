@@ -20,6 +20,11 @@ scrape_configs:
     static_configs:
       - targets: [ 'node_exporter:9100' ]
 
+  # Scrape Dovecot imap/pop server
+  - job_name: 'dovecot'
+    static_configs:
+      - targets: [ 'dovecot:9900' ]
+
 #  # Scrape Blackbox Exporter (for probing endpoints)
 #  - job_name: 'blackbox_exporter'
 #    metrics_path: /probe
@@ -37,7 +42,7 @@ scrape_configs:
 #        replacement: blackbox_exporter:9115
 
 remote_write:
-  - url: 'http://grafana'
+  - url: 'http://grafana:3000'
     basic_auth:
       username: !!file /run/secrets/grafana_admin_user
       password: !!file /run/secrets/grafana_admin_password

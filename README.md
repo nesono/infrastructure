@@ -209,18 +209,18 @@ rsync -avz --delete blue:/usr/jails/mail.<example.com>/var/spool/postfix/virtual
 Once the new mail server works, you can run a final rsync as above.
 Keep the old instance disabled and switch DNS entries to the new instance.
 
-Make sure all mail data has the right permissions (the UID 1000 is defined in the postfix image)
+Make sure all mail data has the right permissions (the vmail UID 3000 is defined in the postfix image)
 
 ```bash
-chown -R 1000:8 /svc/volumes/mail
+chown -R 3000:8 /svc/volumes/mail
 chmod -R u+w /svc/volumes/mail
 ```
 
-Convenience command to run them all together
+Convenience command to run them all together - keep the vmail user id in sync with the postfix image
 
 ```bash
 rsync -avz --delete blue:/usr/jails/mail.<example.com>/var/spool/postfix/virtual/ /svc/volumes/mail && \
-  chown -R 1000:8 /svc/volumes/mail && \
+  chown -R 3000:8 /svc/volumes/mail && \
   chmod -R u+w /svc/volumes/mail
 ```
 

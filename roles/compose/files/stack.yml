@@ -104,7 +104,7 @@ services:
       - mail_nesono_com
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix_for_postfixadmin:2025-03-01
+    image: nesono/postfix_for_postfixadmin:2025-03-22.1
     environment:
       MYHOSTNAME: "smtp.nesono.com"
       MYNETWORKS: "5.9.123.102"
@@ -145,6 +145,8 @@ services:
       - mail_external
       - mail_internal
       - monitoring
+    healthcheck:
+      test: [ "CMD-SHELL", "printf \"EHLO healthcheck\\nQUIT\\n\" | nc localhost 587 | grep -qE \"^220.*ESMTP Postfix\"" ]
     deploy:
       restart_policy:
         condition: on-failure

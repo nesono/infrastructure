@@ -69,7 +69,7 @@ services:
     depends_on:
       - mysql_mail
       - mail_nesono_com # for getting certs in place first
-    image: dovecot/dovecot:2.3.19.1
+    image: dovecot/dovecot:2.3
     environment:
       CERT_NAME: "mail.nesono.com"
     ports:
@@ -90,6 +90,7 @@ services:
     networks:
       - mail_external
       - mail_internal
+      - monitoring
     healthcheck:
       test: [ "CMD-SHELL", "echo -ne 'A001 CAPABILITY\r\nA002 LOGOUT\r\n' | openssl s_client -connect localhost:993 -quiet | grep 'CAPABILITY'
     " ]
@@ -143,6 +144,7 @@ services:
     networks:
       - mail_external
       - mail_internal
+      - monitoring
     deploy:
       restart_policy:
         condition: on-failure
@@ -635,8 +637,6 @@ services:
     secrets:
       - grafana_admin_user
       - grafana_admin_password
-    expose:
-      - 9090
     networks:
       - monitoring
     healthcheck:
@@ -673,8 +673,6 @@ services:
   node_exporter:
     image: prom/node-exporter:latest
     #    pid: "host"
-    ports:
-      - "9100:9100"
     command:
       - '--path.procfs=/host/proc'
       - '--path.rootfs=/rootfs'

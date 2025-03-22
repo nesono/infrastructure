@@ -2,7 +2,7 @@ version: '3.8'
 services:
   # Nginx http proxy
   nginx_proxy:
-    image: nginx:1.22-alpine
+    image: nesono/nginx_with_mail:2024-12-28
     ports:
       - "80:80"     # HTTP (for acme-companion)
       - "443:443"   # HTTPS

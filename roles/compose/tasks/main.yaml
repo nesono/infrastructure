@@ -69,11 +69,12 @@
     - mariadb_cloud_noerpel_init_db
   tags: [provision]
 
-- name: Create volume for mail service (uid 1000, gid 8)
+# Keep this in sync with the postfix image
+- name: Create volume for mail service (vmail uid 3000, mail gid 8)
   ansible.builtin.file:
     path: "/svc/volumes/{{ item }}"
     state: directory
-    owner: 1000
+    owner: 3000
     group: 8
     mode: '0755'
   loop:
@@ -331,7 +332,8 @@
   vars:
     mysql_mail_password: "{{ lookup('file', 'secrets/secret_mysql_mail_password.txt') }}"
     mysql_mail_user: "{{ lookup('file', 'secrets/secret_mysql_mail_user.txt') }}"
-    vmail_user_id: "1000"
+    # Keep this in sync with the postfix image vmail user id
+    vmail_user_id: "3000"
     mail_group_id: "8"
   notify:
     - Refresh Dovecot

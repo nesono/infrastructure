@@ -690,6 +690,23 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
 
+#  postfix_exporter:
+#    image: nesono/postfix_exporter:2025-03-23
+#    command:
+#      - '--web.listen-address=9154'
+#      - '--postfix.showq_path=/var/spool/mail/public/showq'
+#      - '--docker.enable'
+#      - '--docker.container.id=postfix'
+#    networks:
+#      - monitoring
+#    deploy:
+#      restart_policy:
+#        condition: on-failure
+#    volumes:
+#      - mail_spool:/var/spool/mail
+#      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+
 #  blackbox_exporter:
 #    image: prom/blackbox-exporter:latest
 #    networks:

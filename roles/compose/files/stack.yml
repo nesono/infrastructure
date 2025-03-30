@@ -690,6 +690,7 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
 
+## TODO: uncomment this after migration to docker compose - it fails due to docker name resolution of "postfix"
 #  postfix_exporter:
 #    image: nesono/postfix_exporter:2025-03-23
 #    command:

@@ -11,6 +11,7 @@ services:
     #      - "465:465"   # SMTPS (to be terminated here)
     #      - "143:143"   # IMAP
     #      - "993:993"   # IMAPS (to be terminated here)
+    #      - "4190:4190" # sieve
     volumes:
       - nginx_conf:/etc/nginx/conf.d:ro
       - nginx_vhost:/etc/nginx/vhost.d:ro

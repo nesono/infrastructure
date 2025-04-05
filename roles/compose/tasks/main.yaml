@@ -153,6 +153,15 @@
     - prometheus_data
   tags: [ provision ]
 
+- name: Copy nginx config
+  ansible.builtin.copy:
+    src: "nginx/nginx.conf"
+    dest: "/svc/volumes/nginx/nginx.conf"
+    owner: 0
+    group: 0
+    mode: '0644'
+  tags: [ provision ]
+
 - name: Copy nginx template
   ansible.builtin.copy:
     src: "{{ item }}"

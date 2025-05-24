@@ -38,6 +38,7 @@
     - the_issing_link_data
     - katja_issing_link_data
     - prometheus_etc
+    - minecraft_data
   tags: [provision]
 
 - name: Create volume for postgres services (uid 70, gid 70)

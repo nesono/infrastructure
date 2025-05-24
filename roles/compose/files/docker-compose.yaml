@@ -29,6 +29,25 @@ services:
       export MAIL_USER=$$(cat $$BORG_MAIL_USER_FILE) && export
       MAIL_PASSWORD=$$(cat $$BORG_MAIL_PASSWORD_FILE) && exec /entry.sh"
     restart: on-failure
+  minecraft:
+    image: itzg/minecraft-server
+    ports:
+      - "25565:25565"
+    volumes:
+      - minecraft_data:/data
+    environment:
+      EULA: true
+      TYPE: NEOFORGE
+      VERSION: "1.21.1"
+      NEOFORGE_VERSION: "21.1.172"
+      MOTD: "Moin Diggas!"
+      WHITELIST: |
+        Leo18771
+        DarthAdrian23
+        PlageGeist0903
+        PutaRe747474
+      OPS: |
+        Leo18771
 
 volumes:
   borgmatic_config:
@@ -61,6 +80,12 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/borgmatic/cache
+  minecraft_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/minecraft_data
 
 secrets:
   borgmatic_passphrase:

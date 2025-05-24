@@ -43,6 +43,7 @@ services:
       SERVER_NAME: "Tha Dudes"
       MOTD: "Moin Diggas!"
       MEMORY: 16G
+      SPAWN_PROTECTION: 0
       VIEW_DISTANCE: 32
       WHITELIST: |
         Leo18771
@@ -52,6 +53,7 @@ services:
         Swulfen12
       OPS: |
         Leo18771
+        PlageGeist0903
     restart: unless-stopped
 
 

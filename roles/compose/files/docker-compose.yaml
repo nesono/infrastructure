@@ -56,7 +56,6 @@ services:
         PlageGeist0903
     restart: unless-stopped
 
-
 volumes:
   borgmatic_config:
     driver: local

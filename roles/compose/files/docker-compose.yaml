@@ -40,14 +40,20 @@ services:
       TYPE: NEOFORGE
       VERSION: "1.21.1"
       NEOFORGE_VERSION: "21.1.172"
+      SERVER_NAME: "Tha Dudes"
       MOTD: "Moin Diggas!"
+      MEMORY: 16G
+      VIEW_DISTANCE: 32
       WHITELIST: |
         Leo18771
         DarthAdrian23
         PlageGeist0903
         PutaRe747474
+        Swulfen12
       OPS: |
         Leo18771
+    restart: unless-stopped
+
 
 volumes:
   borgmatic_config:

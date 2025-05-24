@@ -38,7 +38,6 @@
     - the_issing_link_data
     - katja_issing_link_data
     - prometheus_etc
-    - minecraft_data
   tags: [provision]
 
 - name: Create volume for postgres services (uid 70, gid 70)
@@ -152,6 +151,17 @@
     mode: '0755'
   loop:
     - prometheus_data
+  tags: [ provision ]
+
+- name: Create volume for Minecraft data (uid 1000, gid 1000, mod 0750)
+  ansible.builtin.file:
+    path: "/svc/volumes/{{ item }}"
+    state: directory
+    owner: 1000
+    group: 1000
+    mode: '0750'
+  loop:
+    - minecraft_data
   tags: [ provision ]
 
 - name: Copy nginx template

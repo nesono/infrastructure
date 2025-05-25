@@ -11,11 +11,14 @@ services:
     #      - "465:465"   # SMTPS (to be terminated here)
     #      - "143:143"   # IMAP
     #      - "993:993"   # IMAPS (to be terminated here)
+    #      - "4190:4190" # sieve
     volumes:
       - nginx_conf:/etc/nginx/conf.d:ro
       - nginx_vhost:/etc/nginx/vhost.d:ro
+      - nginx_mail:/etc/nginx/mail.d:ro
       - nginx_html:/usr/share/nginx/html
       - acme_certs:/etc/nginx/certs:ro
+      - /svc/volumes/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     labels:
       - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
     networks:
@@ -765,6 +768,12 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/nginx/vhost.d
+  nginx_mail:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx/mail.d
   nginx_html:
     driver: local
     driver_opts:

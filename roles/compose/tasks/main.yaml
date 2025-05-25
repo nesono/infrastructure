@@ -153,6 +153,15 @@
     - prometheus_data
   tags: [ provision ]
 
+- name: Copy nginx config
+  ansible.builtin.copy:
+    src: "nginx/nginx.conf"
+    dest: "/svc/volumes/nginx/nginx.conf"
+    owner: 0
+    group: 0
+    mode: '0644'
+  tags: [ provision ]
+
 - name: Create volume for Minecraft data (uid 1000, gid 1000, mod 0750)
   ansible.builtin.file:
     path: "/svc/volumes/{{ item }}"

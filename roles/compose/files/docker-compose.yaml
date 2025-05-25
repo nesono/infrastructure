@@ -41,8 +41,9 @@ services:
       VERSION: "1.21.1"
       NEOFORGE_VERSION: "21.1.172"
       SERVER_NAME: "Tha Dudes"
-      MOTD: "Moin Diggas!"
+      MOTD: "Hello hello hello!"
       MEMORY: 16G
+      SPAWN_PROTECTION: 0
       VIEW_DISTANCE: 32
       WHITELIST: |
         Leo18771
@@ -52,8 +53,8 @@ services:
         Swulfen12
       OPS: |
         Leo18771
+        PlageGeist0903
     restart: unless-stopped
-
 
 volumes:
   borgmatic_config:

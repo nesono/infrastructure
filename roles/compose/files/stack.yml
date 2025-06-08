@@ -76,15 +76,9 @@ services:
     environment:
       CERT_NAME: "mail.nesono.com"
     ports:
-      - target: 143
-        published: 143
-        mode: host
-      - target: 993
-        published: 993
-        mode: host
-      - target: 4190
-        published: 4190
-        mode: host
+      - "143:143"
+      - "993:993"
+      - "4190:4190"
     volumes:
       - dovecot:/etc/dovecot:ro
       - mail:/srv/mail

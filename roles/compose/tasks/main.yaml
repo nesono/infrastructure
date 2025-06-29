@@ -160,7 +160,7 @@
     owner: 0
     group: 0
     mode: '0644'
-  tags: [ provision ]
+  tags: [ hot_compose ]
 
 - name: Copy nginx template
   ansible.builtin.copy:
@@ -182,7 +182,7 @@
     mode: '0644'
   notify:
     - Refresh Dovecot
-  tags: [ provision ]
+  tags: [ hot_compose ]
 
 - name: Copy roundcube custom configuration
   ansible.builtin.copy:
@@ -383,7 +383,7 @@
     owner: 0
     group: 0
     mode: '0644'
-  tags: [hot_compose]
+  tags: [ hot_compose ]
 
 - name: Deploy Docker Stack services
   community.docker.docker_stack:

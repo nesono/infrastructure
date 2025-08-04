@@ -36,7 +36,7 @@
       - neovim
       - tmuxinator
       - pip
-      - htop
+      - btop
       - git
       - ripgrep
       - jq
@@ -48,6 +48,9 @@
       - bind9-dnsutils # installing dig
       - zip
       - unzip
+      - zsh
+      - fd-find
+      - xclip
     state: present
     update_cache: false
 

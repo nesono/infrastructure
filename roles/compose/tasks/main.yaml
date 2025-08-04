@@ -390,6 +390,7 @@
     state: present
     name: stack
     prune: true
+#    detach: true
     compose:
       - /var/run/docker_compose/services/stack/docker_compose.yml
   notify:

@@ -152,7 +152,7 @@ services:
         condition: on-failure
 
   postfix_milters:
-    image: nesono/postfix-milters:2023-01-22.1
+    image: nesono/postfix-milters:2025-08-04
     environment:
 #      SPAMASS_SOCKET_PATH: "private/spamass" # connection reset by peer errors
       DKIM_SOCKET_PATH: "private/dkim"

@@ -19,6 +19,7 @@
   loop:
     - nginx/conf.d
     - nginx/mail.d
+    - nginx/stream.d
     - nginx/vhost.d
     - nginx/html
     - acme.sh

@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   # Nginx reverse proxy
   nginx_proxy:
@@ -125,7 +124,7 @@ services:
   dovecot:
     depends_on:
       - mysql_mail
-      #- mail_nesono_com ## TODO: enable after final migration
+      - mail_nesono_com
     image: dovecot/dovecot:2.3
     environment:
       CERT_NAME: "mail.nesono.com"
@@ -174,6 +173,7 @@ services:
       - dovecot # SASL authentication
       - postfix_milters
     image: nesono/postfix_for_postfixadmin:2025-03-22.1
+    container_name: postfix
     environment:
       MYHOSTNAME: "smtp.nesono.com"
       MYNETWORKS: "5.9.123.102"
@@ -606,9 +606,6 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-    secrets:
-      - grafana_admin_user
-      - grafana_admin_password
     networks:
       - monitoring
     healthcheck:
@@ -652,22 +649,18 @@ services:
       - /:/rootfs:ro
     restart: unless-stopped
 
-## TODO: uncomment this after migration to docker compose - it fails due to docker name resolution of "postfix"
-#  postfix_exporter:
-#    image: nesono/postfix_exporter:2025-03-23
-#    command:
-#      - '--web.listen-address=9154'
-#      - '--postfix.showq_path=/var/spool/mail/public/showq'
-#      - '--docker.enable'
-#      - '--docker.container.id=postfix'
-#    networks:
-#      - monitoring
-#    deploy:
-#      restart_policy:
-#        condition: on-failure
-#    volumes:
-#      - mail_spool:/var/spool/mail
-#      - /var/run/docker.sock:/var/run/docker.sock:ro
+  postfix_exporter:
+    image: nesono/postfix_exporter:2025-03-23
+    command:
+      - '--postfix.showq_path=/var/spool/postfix/public/showq'
+      - '--docker.enable'
+      - '--docker.container.id=postfix'
+    networks:
+      - monitoring
+    volumes:
+      - mail_spool:/var/spool/postfix
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
 
 
 #  blackbox_exporter:

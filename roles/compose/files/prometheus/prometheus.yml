@@ -10,20 +10,21 @@ scrape_configs:
   #    static_configs:
   #      - targets: [ 'dovecot:143', 'postfix:25' ]
 
-  # Scrape Prometheus itself
   - job_name: 'prometheus'
     static_configs:
       - targets: [ 'localhost:9090' ]
 
-  # Scrape Node Exporter (host metrics)
   - job_name: 'node_exporter'
     static_configs:
       - targets: [ 'node_exporter:9100' ]
 
-  # Scrape Dovecot imap/pop server
   - job_name: 'dovecot'
     static_configs:
       - targets: [ 'dovecot:9900' ]
+
+  - job_name: 'postfix_exporter'
+    static_configs:
+      - targets: [ 'postfix_exporter:9154' ]
 
 #  # Scrape Blackbox Exporter (for probing endpoints)
 #  - job_name: 'blackbox_exporter'

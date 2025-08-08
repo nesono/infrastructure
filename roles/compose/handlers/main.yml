@@ -8,11 +8,14 @@
   changed_when: false
 - name: Refresh Roundcube
   ansible.builtin.shell:
-    cmd: docker ps --filter 'name=_roundcube\.' --format "{{ '{{.ID}}' }}" | xargs -L 1 docker kill
+    cmd: docker ps --filter 'name=_roundcube\.' --format "{{ '{{.ID}}' }}" | xargs -L 1 docker kill -s HUP
   changed_when: false
 - name: Reload Postfix
   ansible.builtin.shell:
     cmd: docker ps --filter 'name=_postfix\.' --format "{{ '{{.ID}}' }}" | xargs -I {} docker exec {} postfix reload
+- name: Refresh HA Proxy
+  ansible.builtin.shell:
+    cmd: docker ps --filter 'name=_haproxy_mail\.' --format "{{ '{{.ID}}' }}" | xargs -I {} docker exec {} docker kill -s HUP
   changed_when: false
 - name: Restart Docker service
   ansible.builtin.systemd:

@@ -18,8 +18,6 @@
     mode: '0755'
   loop:
     - nginx/conf.d
-    - nginx/mail.d
-    - nginx/stream.d
     - nginx/vhost.d
     - nginx/html
     - acme.sh
@@ -39,6 +37,7 @@
     - the_issing_link_data
     - katja_issing_link_data
     - prometheus_etc
+    - haproxy_mail
   tags: [provision]
 
 - name: Create volume for postgres services (uid 70, gid 70)
@@ -173,6 +172,17 @@
   loop:
     - nginx.tmpl
   tags: [ provision ]
+
+- name: Copy HA Proxy configuration
+  ansible.builtin.copy:
+    src: haproxy_mail/haproxy.cfg
+    dest: /svc/volumes/haproxy_mail/haproxy.cfg
+    owner: 0
+    group: 0
+    mode: '0644'
+  notify:
+    - Refresh HA Proxy
+  tags: [ hot_compose ]
 
 - name: Copy dovecot configuration
   ansible.builtin.copy:

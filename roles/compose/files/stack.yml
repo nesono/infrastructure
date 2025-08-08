@@ -1,12 +1,25 @@
 version: '3.8'
 services:
+  # HAProxy for mail services with PROXY protocol
+  # haproxy_mail:
+  #   image: haproxy:2.8-alpine
+  #   ports:
+  #     - "1976:1976"   # IMAPS via proxy (TLS termination)
+  #   volumes:
+  #     - haproxy_mail_config:/usr/local/etc/haproxy:ro
+  #     - acme_certs:/etc/ssl/certs:ro
+  #   networks:
+  #     - mail_external
+  #   deploy:
+  #     restart_policy:
+  #       condition: on-failure
+
   # Nginx http proxy
   nginx_proxy:
     image: nginx:1.22-alpine
     ports:
       - "80:80"     # HTTP (for acme-companion)
       - "443:443"   # HTTPS
-      - "1976:1976" # IMAPS via proxy (TLS termination)
     #      - "25:25"     # SMTP
     #      - "587:587"   # SUBMISSION
     #      - "465:465"   # SMTPS (to be terminated here)
@@ -751,6 +764,13 @@ networks:
     internal: true
 
 volumes:
+  # HAProxy mail config
+  haproxy_mail_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/haproxy_mail
   # nginx reverse proxy
   nginx_conf:
     driver: local

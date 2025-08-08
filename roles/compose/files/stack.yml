@@ -6,16 +6,20 @@ services:
     ports:
       - "80:80"     # HTTP (for acme-companion)
       - "443:443"   # HTTPS
+      - "1976:1976" # IMAPS via proxy (TLS termination)
     #      - "25:25"     # SMTP
     #      - "587:587"   # SUBMISSION
     #      - "465:465"   # SMTPS (to be terminated here)
     #      - "143:143"   # IMAP
     #      - "993:993"   # IMAPS (to be terminated here)
+    #      - "4190:4190" # sieve
     volumes:
       - nginx_conf:/etc/nginx/conf.d:ro
       - nginx_vhost:/etc/nginx/vhost.d:ro
+      - nginx_stream:/etc/nginx/stream.d:ro
       - nginx_html:/usr/share/nginx/html
       - acme_certs:/etc/nginx/certs:ro
+      - /svc/volumes/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     labels:
       - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
     networks:
@@ -73,21 +77,16 @@ services:
     environment:
       CERT_NAME: "mail.nesono.com"
     ports:
-      - target: 143
-        published: 143
-        mode: host
-      - target: 993
-        published: 993
-        mode: host
-      - target: 4190
-        published: 4190
-        mode: host
+      - "143:143"   # IMAP
+      - "993:993"   # IMAPS (to be terminated here)
+      - "4190:4190" # Managesieve
     volumes:
       - dovecot:/etc/dovecot:ro
       - mail:/srv/mail
       - /svc/volumes/acme/certs/mail.nesono.com:/etc/dovecot_certs:ro
       - mail_spool:/var/spool/mail
     networks:
+      - http_external
       - mail_external
       - mail_internal
       - monitoring
@@ -765,6 +764,12 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/nginx/vhost.d
+  nginx_stream:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/nginx/stream.d
   nginx_html:
     driver: local
     driver_opts:

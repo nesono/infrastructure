@@ -19,6 +19,7 @@
   loop:
     - nginx/conf.d
     - nginx/mail.d
+    - nginx/stream.d
     - nginx/vhost.d
     - nginx/html
     - acme.sh
@@ -153,6 +154,15 @@
     - prometheus_data
   tags: [ provision ]
 
+- name: Copy nginx files
+  ansible.builtin.copy:
+    src: "nginx/"
+    dest: "/svc/volumes/nginx/"
+    owner: 0
+    group: 0
+    mode: '0644'
+  tags: [ hot_compose ]
+
 - name: Copy nginx template
   ansible.builtin.copy:
     src: "{{ item }}"
@@ -173,7 +183,7 @@
     mode: '0644'
   notify:
     - Refresh Dovecot
-  tags: [ provision ]
+  tags: [ hot_compose ]
 
 - name: Copy roundcube custom configuration
   ansible.builtin.copy:
@@ -374,13 +384,14 @@
     owner: 0
     group: 0
     mode: '0644'
-  tags: [hot_compose]
+  tags: [ hot_compose ]
 
 - name: Deploy Docker Stack services
   community.docker.docker_stack:
     state: present
     name: stack
     prune: true
+#    detach: true
     compose:
       - /var/run/docker_compose/services/stack/docker_compose.yml
   notify:

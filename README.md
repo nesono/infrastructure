@@ -20,8 +20,8 @@ To ensure that the mail TLS certificates get reloaded every week (Sunday), add
 the following two lines to your crontab (invoking `crontab -e`):
 
 ```cronexp
-5   4  *   *   Sun   bash -c 'docker kill -s HUP `docker ps -q -f name=stack_dovecot\.`'      
-5   4  *   *   Sun   bash -c 'docker kill -s HUP `docker ps -q -f name=stack_postfix\.`' 
+5   4  *   *   Sun   bash -c 'docker kill -s HUP `docker ps -q -f name=docker-compose-dovecot\.`'
+5   4  *   *   Sun   bash -c 'docker kill -s HUP `docker ps -q -f name=docker-compose-postfix\.`'
 ```
 
 ## Placeholders
@@ -188,7 +188,7 @@ After running Ansible, you will need to go through the installation process as f
 4. Copy the password hash
 5. Paste the password hash into the setup password secret file
    `roles/compose/files/secret_mail_postfixadmin_setup_password.txt`
-6. Take down the swarm with `docker stack rm services`
+6. Take down the deployment with `docker compose down`
 7. Run ansible again `ansible-playbook --tags compose -i production/hosts green_nesono.yml`
 
 #### Log in With Setup Password
@@ -428,6 +428,7 @@ ansible-playbook --tags compose -i production/hosts green_nesono.yml
 cd /var/run/docker_compose/services/stack
 docker stack deploy --compose-file docker_compose.yml stack
 ```
+
 ### Test the HTTP service
 
 ```bash
@@ -497,7 +498,7 @@ systemctl restart docker.socket docker.service
 For instance the mail MySQL server.
 
 ```bash
-docker exec -ti stack_mysql_mail.1.frfbmnx9pefgfyc2c8n62b43h mysql -p
+docker exec -ti docker-compose-mysql_mail.1.frfbmnx9pefgfyc2c8n62b43h mysql -p
 ```
 
 Getting the list of all virtual accounts from the mail server.
@@ -628,7 +629,7 @@ Then I still had to go into the webui and also upgrade the calendar app and enab
 
 Note: make sure you run the `occ` commands like the following:
 ```bash
-docker exec -ti --user www-data $(docker ps -q -f name=stack_cloud_nesono_com\\.) php occ
+docker exec -ti --user www-data $(docker ps -q -f name=docker-compose-cloud_nesono_com\\.) php occ
 ```
 
 ### Execute Migration
@@ -642,7 +643,7 @@ docker exec -ti --user www-data $(docker ps -q -f name=stack_cloud_nesono_com\\.
 
 Open your crontab using `crontab -e` and add the following line (make sure that user ID 33 maps to www-data inside the container):
 ```crontab
-*/5 *  *   *   *     bash -c 'docker exec --user 33 `docker ps -q -f name=stack_cloud_nesono_com\.` php -f cron.php'
+*/5 *  *   *   *     bash -c 'docker exec --user 33 `docker ps -q -f name=docker-compose-cloud_nesono_com\.` php -f cron.php'
 ```
 
 ### Installing an MTU on the Main Host
@@ -658,14 +659,6 @@ smtp.nesono.com smtp --port=25 --starttls --user=<yourmail@example.com> --pass='
 ## Grafana Bootstrapping
 
 To get the node exporter information on a dashboard, install/import a dashboard from grafana.com with the ID `1860`.
-## Migrating from Docker Stack to Docker Compose
-
-[] Use volumes-from for [nginx proxy for instance](https://github.com/nginx-proxy/acme-companion/blob/main/docs/Docker-Compose.md#three-containers-example)
-[] No more host networking for proxy (try this!)
-[] Fix all documentation above (e.g. stack_ prefixes)
-[] User container-name for proxy
-[] Fix deploy statements -- `restart: on-failure`
-[] Do not use any secrets anymore (copy them over as files and mount them into the containers)
 
 ## Further Reading
 

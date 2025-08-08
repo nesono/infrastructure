@@ -5,8 +5,8 @@ services:
     container_name: nginx_proxy
     image: nginx:1.22-alpine
     ports:
-      - "80:80"     # HTTP (for acme-companion)
-      - "443:443"   # HTTPS
+      - "0.0.0.0:80:80"     # HTTP (for acme-companion)
+      - "0.0.0.0:443:443"   # HTTPS
     volumes:
       - nginx_conf:/etc/nginx/conf.d:ro
       - nginx_vhost:/etc/nginx/vhost.d:ro
@@ -130,9 +130,9 @@ services:
     environment:
       CERT_NAME: "mail.nesono.com"
     ports:
-      - "143:143"   # IMAP
-      - "993:993"   # IMAPS
-      - "4190:4190" # Managesieve
+      - "0.0.0.0:143:143"   # IMAP
+      - "0.0.0.0:993:993"   # IMAPS
+      - "0.0.0.0:4190:4190" # Managesieve
     volumes:
       - dovecot:/etc/dovecot:ro
       - mail:/srv/mail

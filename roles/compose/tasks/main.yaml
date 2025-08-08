@@ -205,47 +205,6 @@
     mode: '0755'
   tags: [ provision ]
 
-# TODO: This will fail if the stack is running already and secrets shall change
-- name: Create Docker secrets
-  community.docker.docker_secret:
-    name: "{{ item }}"
-    # pack the data to avoid potential interpretation of the contents by Ansible
-    data: "{{ lookup('file', 'secrets/secret_{{ item }}.txt') | b64encode }}"
-    data_is_b64: true
-    state: present
-  loop:
-    - mysql_mail_password
-    - mysql_mail_user
-    - mysql_mail_root_password
-    - postfixadmin_setup_password
-    - roundcube_db_user
-    - roundcube_db_password
-    - opendkim_key
-    - gitea_db_user
-    - gitea_db_password
-    - gitea_mailer_user
-    - gitea_mailer_password
-    - mysql_wordpress_noerpel_password
-    - mysql_wordpress_noerpel_user
-    - mysql_wordpress_noerpel_root_password
-    - borgmatic_passphrase
-    - robot_mail_user
-    - robot_mail_password
-    - mariadb_cloud_nesono_root_password
-    - mariadb_cloud_nesono_password
-    - mariadb_cloud_nesono_user
-    - nextcloud_nesono_admin_user
-    - nextcloud_nesono_admin_password
-    - mariadb_cloud_noerpel_root_password
-    - mariadb_cloud_noerpel_password
-    - mariadb_cloud_noerpel_user
-    - nextcloud_noerpel_admin_user
-    - nextcloud_noerpel_admin_password
-    - grafana_admin_user
-    - grafana_admin_password
-  tags: [ provision ]
-
-# this is only necessary for docker compose, not for docker stack
 - name: Create directory for Docker Compose Secrets (mode 0600)
   ansible.builtin.file:
     path: /var/docker_compose_secrets
@@ -255,7 +214,7 @@
     mode: '0600'
   tags: [provision]
 
-- name: Copy Secrets Files
+- name: Copy Secrets Files (emulate docker secrets for compse)
   ansible.builtin.copy:
     src: "secrets/secret_{{ item }}.txt"
     dest: /var/docker_compose_secrets
@@ -373,49 +332,6 @@
   notify:
     - Refresh Dovecot
   tags: [ provision ]
-
-- name: Init swarm with default parameters
-  community.docker.docker_swarm:
-    state: present
-
-- name: Create Docker Stack directory
-  ansible.builtin.file:
-    path: /var/run/docker_compose/services/stack
-    state: directory
-    owner: 0
-    group: 0
-    mode: '0755'
-  tags: [ hot_compose ]
-
-- name: Copy Docker Stack yaml
-  ansible.builtin.copy:
-    src: stack.yml
-    dest: /var/run/docker_compose/services/stack/docker_compose.yml
-    owner: 0
-    group: 0
-    mode: '0644'
-  tags: [hot_compose]
-
-# - name: Deploy Docker Stack services
-#   community.docker.docker_stack:
-#     state: present
-#     name: stack
-#     prune: true
-#     compose:
-#       - /var/run/docker_compose/services/stack/docker_compose.yml
-#   notify:
-#     - Refresh nginx-proxy
-#     - Reload Postfix
-#   tags: [ hot_compose ]
-#
-# - name: Remove Docker Stack services
-#   community.docker.docker_stack:
-#     state: absent
-#     prune: true
-#     name: stack
-#     compose:
-#       - /var/run/docker_compose/services/stack/docker_compose.yml
-#   tags: [never, docker_purge]
 
 - name: Create Docker Compose directory
   ansible.builtin.file:

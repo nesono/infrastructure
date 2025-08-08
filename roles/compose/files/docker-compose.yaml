@@ -30,6 +30,130 @@ services:
       MAIL_PASSWORD=$$(cat $$BORG_MAIL_PASSWORD_FILE) && exec /entry.sh"
     restart: on-failure
 
+  # MySQL database for mail
+  mysql_mail:
+    image: mysql:5.7
+    volumes:
+      - mysql_mail_data:/var/lib/mysql
+      - mysql_mail_init_db:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
+      MYSQL_USER_FILE: /run/secrets/mysql_mail_user
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_mail_root_password
+      MYSQL_DATABASE: mailserver
+    secrets:
+      - mysql_mail_password
+      - mysql_mail_user
+      - mysql_mail_root_password
+    networks:
+      - mail_internal
+    healthcheck:
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_mail_root_password) || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Dovecot IMAP server
+  dovecot:
+    depends_on:
+      - mysql_mail
+      #- mail_nesono_com ## TODO: enable after final migration
+    image: dovecot/dovecot:2.3
+    environment:
+      CERT_NAME: "mail.nesono.com"
+    ports:
+      - "143:143"   # IMAP
+      - "993:993"   # IMAPS
+      - "4190:4190" # Managesieve
+    volumes:
+      - dovecot:/etc/dovecot:ro
+      - mail:/srv/mail
+      - /svc/volumes/acme/certs/mail.nesono.com:/etc/dovecot_certs:ro
+      - mail_spool:/var/spool/mail
+    networks:
+      - mail_external
+      - mail_internal
+      - monitoring
+    healthcheck:
+      test: [ "CMD-SHELL", "echo -ne 'A001 CAPABILITY\r\nA002 LOGOUT\r\n' | openssl s_client -connect localhost:993 -quiet | grep 'CAPABILITY'" ]
+    restart: unless-stopped
+
+  # Postfix milters (DKIM, DMARC)
+  postfix_milters:
+    image: nesono/postfix-milters:2023-01-22.1
+    environment:
+#      SPAMASS_SOCKET_PATH: "private/spamass" # connection reset by peer errors
+      DKIM_SOCKET_PATH: "private/dkim"
+      DKIM_DOMAINS: "nesono.com,issing.link,noerpel.net,frankfriedbert.de,byorkesterbaritone.com"
+      DKIM_SELECTOR: "2023-01-04"
+      DKIM_KEY_PATH: "/run/secrets/opendkim_key"
+      DMARC_SOCKET_PATH: "private/dmarc"
+      MAIL_HOSTNAME: "smtp.nesono.com"
+    volumes:
+      - mail:/var/mail
+      - mail_spool:/var/spool/postfix
+      - spamass_vhome:/vhome/users
+    secrets:
+      - opendkim_key
+    networks:
+      - mail_internal
+    restart: unless-stopped
+
+  # Postfix SMTP server
+  postfix:
+    depends_on:
+      - mysql_mail
+      - dovecot # SASL authentication
+      - postfix_milters
+    image: nesono/postfix_for_postfixadmin:2025-03-22.1
+    environment:
+      MYHOSTNAME: "smtp.nesono.com"
+      MYNETWORKS: "5.9.123.102"
+      SQL_USER_FILE: /run/secrets/mysql_mail_user
+      SQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
+      SQL_HOST: mysql_mail
+      SQL_DB_NAME: mailserver
+      TLS_CERT: /etc/postfix/certs/fullchain.pem
+      TLS_KEY: /etc/postfix/certs/key.pem
+      DOVECOT_SASL_SOCKET_PATH: "private/auth"
+      DOVECOT_LMTP_PATH: "private/dovecot-lmtp"
+      DKIM_SOCKET_PATH: "private/dkim"
+      SPF_ENABLE: "1"
+      DMARC_SOCKET_PATH: "private/dmarc"
+      SMTPS_ENABLE: "1"
+      CERT_NAME: "mail.nesono.com"
+      AUTHORIZED_SMTPD_XCLIENT_HOSTS: "172.20.0.1"
+      SPAMHAUS_DISABLE: "1"
+    secrets:
+      - mysql_mail_password
+      - mysql_mail_user
+    ports:
+      - "0.0.0.0:25:25"     # SMTP (bind to all interfaces)
+      - "0.0.0.0:465:465"   # SMTPS (bind to all interfaces) 
+      - "0.0.0.0:587:587"   # SUBMISSION (bind to all interfaces)
+    volumes:
+      - mail:/var/mail
+      - mail_spool:/var/spool/postfix
+      - /svc/volumes/acme/certs/mail.nesono.com:/etc/postfix/certs:ro
+    networks:
+      - mail_external
+      - mail_internal
+      - monitoring
+    healthcheck:
+      test: [ "CMD-SHELL", "printf \"EHLO healthcheck\\nQUIT\\n\" | nc localhost 587 | grep -qE \"^220.*ESMTP Postfix\"" ]
+    restart: unless-stopped
+
+networks:
+  mail_external:
+    driver: bridge
+  mail_internal:
+    driver: bridge
+    internal: true
+  monitoring:
+    driver: bridge
+    internal: true
+
 volumes:
   borgmatic_config:
     driver: local
@@ -61,6 +185,43 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/borgmatic/cache
+  # Mail services
+  dovecot:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/dovecot
+  mail:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mail
+  mail_spool:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mail_spool
+  mysql_mail_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mysql_mail_data
+  mysql_mail_init_db:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/mysql_mail_init_db
+  spamass_vhome:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/spamass_vhome
 
 secrets:
   borgmatic_passphrase:
@@ -69,3 +230,11 @@ secrets:
     file: /var/docker_compose_secrets/secret_robot_mail_user.txt
   robot_mail_password:
     file: /var/docker_compose_secrets/secret_robot_mail_password.txt
+  mysql_mail_password:
+    file: /var/docker_compose_secrets/secret_mysql_mail_password.txt
+  mysql_mail_user:
+    file: /var/docker_compose_secrets/secret_mysql_mail_user.txt
+  mysql_mail_root_password:
+    file: /var/docker_compose_secrets/secret_mysql_mail_root_password.txt
+  opendkim_key:
+    file: /var/docker_compose_secrets/secret_opendkim_key.txt

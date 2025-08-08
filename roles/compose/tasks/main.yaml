@@ -273,9 +273,6 @@
     - gitea_db_password
     - gitea_mailer_user
     - gitea_mailer_password
-    - mysql_wordpress_noerpel_password
-    - mysql_wordpress_noerpel_user
-    - mysql_wordpress_noerpel_root_password
     - borgmatic_passphrase
     - robot_mail_user
     - robot_mail_password
@@ -289,8 +286,6 @@
     - mariadb_cloud_noerpel_user
     - nextcloud_noerpel_admin_user
     - nextcloud_noerpel_admin_password
-    - grafana_admin_user
-    - grafana_admin_password
   tags: [ provision ]
 
 - name: Copy Secrets Files (uid 101, gid 101)
@@ -302,6 +297,31 @@
     mode: '0400'
   loop:
     - opendkim_key
+  tags: [ provision ]
+
+- name: Copy Secrets Files (uid 33, gid 33)
+  ansible.builtin.copy:
+    src: "secrets/secret_{{ item }}.txt"
+    dest: /var/docker_compose_secrets
+    owner: 33
+    group: 33
+    mode: '0400'
+  loop:
+    - mysql_wordpress_noerpel_user
+    - mysql_wordpress_noerpel_password
+    - mysql_wordpress_noerpel_root_password
+  tags: [ provision ]
+
+- name: Copy Secrets Files (uid 472, gid 0)
+  ansible.builtin.copy:
+    src: "secrets/secret_{{ item }}.txt"
+    dest: /var/docker_compose_secrets
+    owner: 472
+    group: 0
+    mode: '0400'
+  loop:
+    - grafana_admin_user
+    - grafana_admin_password
   tags: [ provision ]
 
 - name: Generate OpenSSH keypair for Borgmatic
@@ -376,18 +396,18 @@
     mode: '0644'
   tags: [hot_compose]
 
-- name: Deploy Docker Stack services
-  community.docker.docker_stack:
-    state: present
-    name: stack
-    prune: true
-    compose:
-      - /var/run/docker_compose/services/stack/docker_compose.yml
-  notify:
-    - Refresh nginx-proxy
-    - Reload Postfix
-  tags: [ hot_compose ]
-
+# - name: Deploy Docker Stack services
+#   community.docker.docker_stack:
+#     state: present
+#     name: stack
+#     prune: true
+#     compose:
+#       - /var/run/docker_compose/services/stack/docker_compose.yml
+#   notify:
+#     - Refresh nginx-proxy
+#     - Reload Postfix
+#   tags: [ hot_compose ]
+#
 # - name: Remove Docker Stack services
 #   community.docker.docker_stack:
 #     state: absent

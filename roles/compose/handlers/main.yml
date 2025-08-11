@@ -1,5 +1,5 @@
 - name: Refresh Dovecot
- ansible.builtin.shell:
+  ansible.builtin.shell:
     cmd: docker ps --filter 'name=_dovecot\.' --format "{{ '{{.ID}}' }}" | xargs -L 1 docker kill -s HUP
   changed_when: false
 - name: Refresh nginx-proxy

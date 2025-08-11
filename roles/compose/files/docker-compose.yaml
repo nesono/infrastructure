@@ -63,7 +63,7 @@ services:
     networks:
       - http_external
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost/ || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
     restart: unless-stopped
 
   # backup
@@ -114,7 +114,7 @@ services:
     networks:
       - mail_internal
     healthcheck:
-      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_mail_root_password) || exit 1" ]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_mail_root_password) || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -142,7 +142,7 @@ services:
       - mail_internal
       - monitoring
     healthcheck:
-      test: [ "CMD-SHELL", "echo -ne 'A001 CAPABILITY\r\nA002 LOGOUT\r\n' | openssl s_client -connect localhost:993 -quiet | grep 'CAPABILITY'" ]
+      test: ["CMD-SHELL", "echo -ne 'A001 CAPABILITY\r\nA002 LOGOUT\r\n' | openssl s_client -connect localhost:993 -quiet | grep 'CAPABILITY'"]
     restart: unless-stopped
 
   # Postfix milters (DKIM, DMARC)
@@ -197,7 +197,7 @@ services:
       - mysql_mail_user
     ports:
       - "0.0.0.0:25:25"     # SMTP (bind to all interfaces)
-      - "0.0.0.0:465:465"   # SMTPS (bind to all interfaces) 
+      - "0.0.0.0:465:465"   # SMTPS (bind to all interfaces)
       - "0.0.0.0:587:587"   # SUBMISSION (bind to all interfaces)
     volumes:
       - mail:/var/mail
@@ -208,7 +208,7 @@ services:
       - mail_internal
       - monitoring
     healthcheck:
-      test: [ "CMD-SHELL", "printf \"EHLO healthcheck\\nQUIT\\n\" | nc localhost 587 | grep -qE \"^220.*ESMTP Postfix\"" ]
+      test: ["CMD-SHELL", "printf \"EHLO healthcheck\\nQUIT\\n\" | nc localhost 587 | grep -qE \"^220.*ESMTP Postfix\""]
     restart: unless-stopped
 
   # PostfixAdmin web interface
@@ -236,7 +236,7 @@ services:
       - http_external
       - mail_internal
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost/ || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
     restart: unless-stopped
 
   # Roundcube webmail
@@ -266,7 +266,7 @@ services:
       - roundcube_internal
       - http_external
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost/ || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
     restart: unless-stopped
 
   pgsql_roundcube:
@@ -283,7 +283,7 @@ services:
     networks:
       - roundcube_internal
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
     restart: unless-stopped
 
   # Gitea
@@ -327,7 +327,7 @@ services:
       - gitea_internal
       - http_external
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:3000/ || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
     volumes:
       - gitea_data:/data
       - /etc/timezone:/etc/timezone:ro
@@ -350,7 +350,7 @@ services:
     volumes:
       - postgres_gitea_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
     restart: unless-stopped
 
   # Cloud services - Nextcloud nesono
@@ -425,7 +425,7 @@ services:
       - cloud_nesono_internal
       - http_external
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost/index.php || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://localhost/index.php || exit 1"]
       start_period: 10m
       retries: 3
     depends_on:
@@ -505,7 +505,7 @@ services:
       - cloud_noerpel_internal
       - http_external
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost/index.php || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://localhost/index.php || exit 1"]
       start_period: 10m
       retries: 3
     depends_on:
@@ -525,7 +525,7 @@ services:
     networks:
       - http_external
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost/ || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
     restart: unless-stopped
 
   katja_issing_link:
@@ -539,7 +539,7 @@ services:
     networks:
       - http_external
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost/ || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
     restart: unless-stopped
 
   www_nesono_com:
@@ -553,7 +553,7 @@ services:
     networks:
       - http_external
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost/ || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
     restart: unless-stopped
 
   # WordPress services
@@ -573,7 +573,7 @@ services:
     networks:
       - wordpress_noerpel_internal
     healthcheck:
-      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_wordpress_noerpel_root_password) || exit 1" ]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_wordpress_noerpel_root_password) || exit 1"]
     restart: unless-stopped
 
   wordpress_noerpel:
@@ -593,7 +593,7 @@ services:
       - http_external
       - wordpress_noerpel_internal
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost/ || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
     volumes:
       - wordpress_noerpel_data:/var/www/html
     depends_on:
@@ -609,7 +609,7 @@ services:
     networks:
       - monitoring
     healthcheck:
-      test: [ "CMD-SHELL", "wget --spider --quiet http://localhost:9090/-/healthy || exit 1" ]
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:9090/-/healthy || exit 1"]
     volumes:
       - prometheus_etc:/etc/prometheus
       # For some reason, we need to use a bind mount here
@@ -662,18 +662,17 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
 
-
-#  blackbox_exporter:
-#    image: prom/blackbox-exporter:latest
-#    networks:
-#      - monitoring
-#    healthcheck:
-#      test: [ "CMD-SHELL", "wget --spider --quiet http://localhost:9115/-/healthy || exit 1" ]
-#    deploy:
-#      restart_policy:
-#        condition: on-failure
-#    volumes:
-#      - blackbox_exporter_config:/etc/blackbox_exporter
+  blackbox_exporter:
+    image: prom/blackbox-exporter:latest
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:9115/-/healthy || exit 1"]
+    deploy:
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - blackbox_exporter_config:/etc/blackbox_exporter
 
 networks:
   http_external:
@@ -952,6 +951,12 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/grafana
+  blackbox_exporter_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/blackbox_exporter_config
 
 secrets:
   borgmatic_passphrase:

@@ -1,13 +1,13 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
   - repo: https://github.com/ansible-community/ansible-lint.git
-    rev: v6.22.1
+    rev: 9765b8704b2c3f4ab782815b528e0393662e1c04  # frozen: v25.7.0
     hooks:
       - id: ansible-lint
         exclude: ^\.pre-commit-config\.yaml$

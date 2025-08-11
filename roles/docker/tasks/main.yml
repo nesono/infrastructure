@@ -17,12 +17,12 @@
 
 - name: Get LSB release
   ansible.builtin.command: lsb_release -cs
-  register: lsb_release
+  register: docker_lsb_release
   changed_when: false
 
 - name: Add Docker repository into sources list
   ansible.builtin.apt_repository:
-    repo: deb https://download.docker.com/linux/ubuntu {{ lsb_release.stdout }} stable
+    repo: deb https://download.docker.com/linux/ubuntu {{ docker_lsb_release.stdout }} stable
     state: present
     filename: docker
 

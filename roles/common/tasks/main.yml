@@ -12,7 +12,7 @@
   tags: [never, apt_update]
 
 - name: Check if a reboot is needed
-  register: reboot_required_file
+  register: common_reboot_required_file
   ansible.builtin.stat:
     path: /var/run/reboot-required
     get_checksum: false

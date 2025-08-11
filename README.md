@@ -19,7 +19,7 @@ container.
 To ensure that the mail TLS certificates get reloaded every week (Sunday), add
 the following two lines to your crontab (invoking `crontab -e`):
 
-```cronexp
+```shell
 5   4  *   *   Sun   bash -c 'docker kill -s HUP `docker ps -q -f name=docker-compose-dovecot\.`'
 5   4  *   *   Sun   bash -c 'docker kill -s HUP `docker ps -q -f name=docker-compose-postfix\.`'
 ```

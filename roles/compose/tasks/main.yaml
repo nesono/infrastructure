@@ -38,7 +38,6 @@
     - the_issing_link_data
     - katja_issing_link_data
     - prometheus_etc
-    - blackbox_exporter_config
   tags: [provision]
 
 - name: Create volume for postgres services (uid 70, gid 70)

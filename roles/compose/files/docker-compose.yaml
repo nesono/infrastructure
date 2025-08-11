@@ -662,18 +662,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
 
-  blackbox_exporter:
-    image: prom/blackbox-exporter:latest
-    networks:
-      - monitoring
-    healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:9115/-/healthy || exit 1"]
-    deploy:
-      restart_policy:
-        condition: on-failure
-    volumes:
-      - blackbox_exporter_config:/etc/blackbox_exporter
-
 networks:
   http_external:
     driver: bridge
@@ -951,12 +939,6 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/grafana
-  blackbox_exporter_config:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/blackbox_exporter_config
 
 secrets:
   borgmatic_passphrase:

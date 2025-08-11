@@ -14,6 +14,10 @@
   ansible.builtin.shell:
     cmd: set -o pipefail && docker ps --filter 'name=_postfix\.' --format "{{ '{{.ID}}' }}" | xargs -I {} docker exec {} postfix reload
   changed_when: false
+- name: Reload Prometheus
+  ansible.builtin.shell:
+    cmd: set -o pipefail && docker ps --filter 'name=_prometheus\.' --format "{{ '{{.ID}}' }}" | xargs -I {} docker exec {} prometheus reload
+  changed_when: false
 - name: Restart Docker service
   ansible.builtin.systemd:
     state: restarted

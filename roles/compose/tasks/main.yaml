@@ -203,7 +203,9 @@
     owner: 0
     group: 0
     mode: '0755'
-  tags: [ provision ]
+  notify:
+    - Reload Prometheus
+  tags: [ hot_compose ]
 
 - name: Create directory for Docker Compose Secrets (mode 0600)
   ansible.builtin.file:

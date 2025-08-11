@@ -1,22 +1,21 @@
 - name: Refresh Dovecot
-  ansible.builtin.shell:
-    cmd: set -o pipefail && docker ps --filter 'name=_dovecot\.' --format "{{ '{{.ID}}' }}" | xargs -L 1 docker kill -s HUP
+ ansible.builtin.shell:
+    cmd: docker ps --filter 'name=_dovecot\.' --format "{{ '{{.ID}}' }}" | xargs -L 1 docker kill -s HUP
   changed_when: false
 - name: Refresh nginx-proxy
   ansible.builtin.shell:
-    cmd: set -o pipefail && docker ps --filter 'name=_nginx-proxy\.' --format "{{ '{{.ID}}' }}" | xargs -L 1 docker kill -s HUP
+    cmd: docker ps --filter 'name=_nginx-proxy\.' --format "{{ '{{.ID}}' }}" | xargs -L 1 docker kill -s HUP
   changed_when: false
 - name: Refresh Roundcube
   ansible.builtin.shell:
-    cmd: set -o pipefail && docker ps --filter 'name=_roundcube\.' --format "{{ '{{.ID}}' }}" | xargs -L 1 docker kill
+    cmd: docker ps --filter 'name=_roundcube\.' --format "{{ '{{.ID}}' }}" | xargs -L 1 docker kill -s HUP
   changed_when: false
 - name: Reload Postfix
   ansible.builtin.shell:
-    cmd: set -o pipefail && docker ps --filter 'name=_postfix\.' --format "{{ '{{.ID}}' }}" | xargs -I {} docker exec {} postfix reload
-  changed_when: false
+    cmd: docker ps --filter 'name=_postfix\.' --format "{{ '{{.ID}}' }}" | xargs -I {} docker exec {} postfix reload
 - name: Reload Prometheus
   ansible.builtin.shell:
-    cmd: set -o pipefail && docker ps --filter 'name=_prometheus\.' --format "{{ '{{.ID}}' }}" | xargs -I {} docker exec {} prometheus reload
+    cmd: docker ps --filter 'name=_prometheus\.' --format "{{ '{{.ID}}' }}" | xargs -I {} docker exec {} prometheus reload
   changed_when: false
 - name: Restart Docker service
   ansible.builtin.systemd:

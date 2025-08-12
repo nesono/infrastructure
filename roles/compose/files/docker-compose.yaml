@@ -157,7 +157,7 @@ services:
   postfix_milters:
     image: nesono/postfix-milters:2023-01-22.1
     environment:
-      # SPAMASS_SOCKET_PATH: "private/spamass" # connection reset by peer errors
+      SPAMASS_SOCKET_PATH: "private/spamass"
       DKIM_SOCKET_PATH: "private/dkim"
       DKIM_DOMAINS: "nesono.com,issing.link,noerpel.net,frankfriedbert.de,byorkesterbaritone.com"
       DKIM_SELECTOR: "2023-01-04"

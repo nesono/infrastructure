@@ -9,7 +9,7 @@ storage:
   #   Passphrase is set in variable $BORG_PASSPHRASE
   #   encryption_passphrase: "DoNotMissToChangeYourPassphrase"
   compression: lz4
-  archive_name_format: 'backup-{now}'
+  archive_name_format: "backup-{now}"
 
 retention:
   keep_hourly: 24
@@ -17,14 +17,14 @@ retention:
   keep_weekly: 2
   keep_monthly: 5
   keep_yearly: 0
-  prefix: 'backup-'
+  prefix: "backup-"
 
 consistency:
   checks:
     - repository
     - archives
   check_last: 3
-  prefix: 'backup-'
+  prefix: "backup-"
 
 hooks:
   before_backup:

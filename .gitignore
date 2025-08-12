@@ -1,2 +1,4 @@
 secret_*.txt
 /.idea/
+/.ansible/
+/node_modules/

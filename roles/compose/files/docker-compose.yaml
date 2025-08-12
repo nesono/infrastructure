@@ -4,8 +4,8 @@ services:
     container_name: nginx_proxy
     image: nginx:1.22-alpine
     ports:
-      - "0.0.0.0:80:80"     # HTTP (for acme-companion)
-      - "0.0.0.0:443:443"   # HTTPS
+      - "0.0.0.0:80:80" # HTTP (for acme-companion)
+      - "0.0.0.0:443:443" # HTTPS
     volumes:
       - nginx_conf:/etc/nginx/conf.d:ro
       - nginx_vhost:/etc/nginx/vhost.d:ro
@@ -114,7 +114,11 @@ services:
     networks:
       - mail_internal
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_mail_root_password) || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_mail_root_password) || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -129,8 +133,8 @@ services:
     environment:
       CERT_NAME: "mail.nesono.com"
     ports:
-      - "0.0.0.0:143:143"   # IMAP
-      - "0.0.0.0:993:993"   # IMAPS
+      - "0.0.0.0:143:143" # IMAP
+      - "0.0.0.0:993:993" # IMAPS
       - "0.0.0.0:4190:4190" # Managesieve
     volumes:
       - dovecot:/etc/dovecot:ro
@@ -142,14 +146,18 @@ services:
       - mail_internal
       - monitoring
     healthcheck:
-      test: ["CMD-SHELL", "echo -ne 'A001 CAPABILITY\r\nA002 LOGOUT\r\n' | openssl s_client -connect localhost:993 -quiet | grep 'CAPABILITY'"]
+      test:
+        [
+          "CMD-SHELL",
+          "echo -ne 'A001 CAPABILITY\r\nA002 LOGOUT\r\n' | openssl s_client -connect localhost:993 -quiet | grep 'CAPABILITY'",
+        ]
     restart: unless-stopped
 
   # Postfix milters (DKIM, DMARC)
   postfix_milters:
     image: nesono/postfix-milters:2023-01-22.1
     environment:
-#      SPAMASS_SOCKET_PATH: "private/spamass" # connection reset by peer errors
+      # SPAMASS_SOCKET_PATH: "private/spamass" # connection reset by peer errors
       DKIM_SOCKET_PATH: "private/dkim"
       DKIM_DOMAINS: "nesono.com,issing.link,noerpel.net,frankfriedbert.de,byorkesterbaritone.com"
       DKIM_SELECTOR: "2023-01-04"
@@ -196,9 +204,9 @@ services:
       - mysql_mail_password
       - mysql_mail_user
     ports:
-      - "0.0.0.0:25:25"     # SMTP (bind to all interfaces)
-      - "0.0.0.0:465:465"   # SMTPS (bind to all interfaces)
-      - "0.0.0.0:587:587"   # SUBMISSION (bind to all interfaces)
+      - "0.0.0.0:25:25" # SMTP (bind to all interfaces)
+      - "0.0.0.0:465:465" # SMTPS (bind to all interfaces)
+      - "0.0.0.0:587:587" # SUBMISSION (bind to all interfaces)
     volumes:
       - mail:/var/mail
       - mail_spool:/var/spool/postfix
@@ -208,7 +216,11 @@ services:
       - mail_internal
       - monitoring
     healthcheck:
-      test: ["CMD-SHELL", "printf \"EHLO healthcheck\\nQUIT\\n\" | nc localhost 587 | grep -qE \"^220.*ESMTP Postfix\""]
+      test:
+        [
+          "CMD-SHELL",
+          "printf \"EHLO healthcheck\\nQUIT\\n\" | nc localhost 587 | grep -qE \"^220.*ESMTP Postfix\"",
+        ]
     restart: unless-stopped
 
   # PostfixAdmin web interface
@@ -371,7 +383,14 @@ services:
     networks:
       - cloud_nesono_internal
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
+      test:
+        [
+          "CMD",
+          "healthcheck.sh",
+          "--su-mysql",
+          "--connect",
+          "--innodb_initialized",
+        ]
     restart: unless-stopped
 
   redis_cloud_nesono:
@@ -451,7 +470,14 @@ services:
     networks:
       - cloud_noerpel_internal
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
+      test:
+        [
+          "CMD",
+          "healthcheck.sh",
+          "--su-mysql",
+          "--connect",
+          "--innodb_initialized",
+        ]
     restart: unless-stopped
 
   redis_cloud_noerpel:
@@ -573,7 +599,11 @@ services:
     networks:
       - wordpress_noerpel_internal
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_wordpress_noerpel_root_password) || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_wordpress_noerpel_root_password) || exit 1",
+        ]
     restart: unless-stopped
 
   wordpress_noerpel:
@@ -604,12 +634,16 @@ services:
   prometheus:
     image: prom/prometheus:latest
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
     networks:
       - monitoring
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:9090/-/healthy || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget --spider --quiet http://localhost:9090/-/healthy || exit 1",
+        ]
     volumes:
       - prometheus_etc:/etc/prometheus
       # For some reason, we need to use a bind mount here
@@ -637,10 +671,10 @@ services:
   node_exporter:
     image: prom/node-exporter:latest
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     networks:
       - monitoring
     volumes:
@@ -652,9 +686,9 @@ services:
   postfix_exporter:
     image: nesono/postfix_exporter:2025-03-23
     command:
-      - '--postfix.showq_path=/var/spool/postfix/public/showq'
-      - '--docker.enable'
-      - '--docker.container.id=postfix'
+      - "--postfix.showq_path=/var/spool/postfix/public/showq"
+      - "--docker.enable"
+      - "--docker.container.id=postfix"
     networks:
       - monitoring
     volumes:

@@ -98,7 +98,7 @@ services:
 
   # MySQL database for mail
   mysql_mail:
-    image: mysql:5.7
+    image: mysql:9.4
     volumes:
       - mysql_mail_data:/var/lib/mysql
       - mysql_mail_init_db:/docker-entrypoint-initdb.d
@@ -584,7 +584,7 @@ services:
 
   # WordPress services
   mysql_wordpress_noerpel:
-    image: mysql:5.7
+    image: mysql:9.4
     volumes:
       - mysql_wordpress_noerpel_data:/var/lib/mysql
     environment:

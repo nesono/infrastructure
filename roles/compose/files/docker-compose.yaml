@@ -394,7 +394,7 @@ services:
     restart: unless-stopped
 
   redis_cloud_nesono:
-    image: redis:7-alpine
+    image: redis:8-alpine
     networks:
       - cloud_nesono_internal
     healthcheck:
@@ -481,7 +481,7 @@ services:
     restart: unless-stopped
 
   redis_cloud_noerpel:
-    image: redis:7-alpine
+    image: redis:8-alpine
     networks:
       - cloud_noerpel_internal
     healthcheck:

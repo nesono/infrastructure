@@ -2,7 +2,7 @@ services:
   # Nginx reverse proxy
   nginx_proxy:
     container_name: nginx_proxy
-    image: nginx:1.22-alpine
+    image: nginx:1.29-alpine
     ports:
       - "0.0.0.0:80:80" # HTTP (for acme-companion)
       - "0.0.0.0:443:443" # HTTPS
@@ -541,7 +541,7 @@ services:
 
   # Static websites
   the_issing_link:
-    image: nginx:1.22-alpine
+    image: nginx:1.29-alpine
     volumes:
       - the_issing_link_data:/usr/share/nginx/html
     environment:
@@ -555,7 +555,7 @@ services:
     restart: unless-stopped
 
   katja_issing_link:
-    image: nginx:1.22-alpine
+    image: nginx:1.29-alpine
     volumes:
       - katja_issing_link_data:/usr/share/nginx/html
     environment:
@@ -569,7 +569,7 @@ services:
     restart: unless-stopped
 
   www_nesono_com:
-    image: nginx:1.22-alpine
+    image: nginx:1.29-alpine
     volumes:
       - www_nesono_com_data:/usr/share/nginx/html
     environment:

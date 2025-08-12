@@ -34,7 +34,7 @@ services:
     restart: unless-stopped
 
   nginx_acme:
-    image: nginxproxy/acme-companion:2.2
+    image: nginxproxy/acme-companion:2.6
     depends_on:
       - nginx_proxy
       - nginx_docker_gen

@@ -549,13 +549,7 @@ services:
     volumes:
       - fail2ban_data:/data
       - fail2ban_config:/etc/fail2ban
-      - /var/log:/var/log/host:ro
       - /var/log/auth.log:/var/log/auth.log:ro
-      - /var/log/syslog:/var/log/syslog:ro
-      - mail_spool:/var/log/postfix:ro
-      - gitea_data:/var/log/gitea:ro
-      - cloud_nesono_nextcloud:/var/log/nextcloud:ro
-      - cloud_noerpel_nextcloud:/var/log/nextcloud_noerpel:ro
     environment:
       TZ: Europe/Berlin
       F2B_LOG_LEVEL: INFO

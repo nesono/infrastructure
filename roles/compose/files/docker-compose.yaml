@@ -227,7 +227,7 @@ services:
   postfixadmin:
     depends_on:
       - mysql_mail
-    image: postfixadmin:3.3.13
+    image: postfixadmin:3.3.15
     environment:
       POSTFIXADMIN_DB_TYPE: mysqli
       POSTFIXADMIN_DB_HOST: mysql_mail

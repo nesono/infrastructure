@@ -560,6 +560,15 @@ services:
       TZ: Europe/Berlin
       F2B_LOG_LEVEL: INFO
       F2B_DB_PURGE_AGE: 1d
+      SSMTP_HOST: smtp.nesono.com
+      SSMTP_PORT: 587
+      SSMTP_HOSTNAME: smtp.nesono.com
+      SSMTP_USER_FILE: /run/secrets/robot_mail_user
+      SSMTP_PASSWORD_FILE: /run/secrets/robot_mail_password
+      SSMTP_TLS: 1
+    secrets:
+      - robot_mail_user
+      - robot_mail_password
     restart: unless-stopped
     depends_on:
       - postfix

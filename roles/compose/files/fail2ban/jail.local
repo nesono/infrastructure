@@ -5,13 +5,8 @@ findtime = 10m
 maxretry = 5
 backend = auto
 
-# Email notifications
-destemail = n3s0n0@gmail.com
-sender = robot@issing.link
-mta = mail
-
-# Default action: ban + email notification
-action = %(action_mw)s
+# Default action: ban only (no email)
+action = iptables-multiport[name=%(__name__)s, port="%(port)s", protocol="%(protocol)s", chain="INPUT"]
 
 [sshd]
 enabled = true
@@ -22,20 +17,3 @@ backend = auto
 maxretry = 3
 bantime = 2h
 findtime = 10m
-
-# Docker container services - disabled for now until we configure proper logging
-# [postfix-sasl]
-# enabled = false
-# port = smtp,465,submission
-# filter = postfix-sasl
-# backend = systemd
-# maxretry = 3
-# bantime = 1h
-
-# [dovecot]
-# enabled = false
-# port = pop3,pop3s,imap,imaps
-# filter = dovecot
-# backend = systemd
-# maxretry = 3
-# bantime = 1h

@@ -1,0 +1,19 @@
+[DEFAULT]
+# Ban settings
+bantime = 1h
+findtime = 10m
+maxretry = 5
+backend = auto
+
+# Default action: ban only (no email)
+action = iptables-multiport[name=%(__name__)s, port="%(port)s", protocol="%(protocol)s", chain="INPUT"]
+
+[sshd]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+backend = auto
+maxretry = 3
+bantime = 2h
+findtime = 10m

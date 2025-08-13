@@ -539,6 +539,36 @@ services:
       - redis_cloud_noerpel
     restart: unless-stopped
 
+  # Security - Fail2ban
+  fail2ban:
+    image: crazymax/fail2ban:latest
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - fail2ban_data:/data
+      - fail2ban_config:/etc/fail2ban
+      - /var/log/auth.log:/var/log/auth.log:ro
+    environment:
+      TZ: Europe/Berlin
+      F2B_LOG_LEVEL: INFO
+      F2B_DB_PURGE_AGE: 1d
+      SSMTP_HOST: smtp.nesono.com
+      SSMTP_PORT: 587
+      SSMTP_HOSTNAME: smtp.nesono.com
+      SSMTP_USER_FILE: /run/secrets/robot_mail_user
+      SSMTP_PASSWORD_FILE: /run/secrets/robot_mail_password
+      SSMTP_TLS: 1
+    secrets:
+      - robot_mail_user
+      - robot_mail_password
+    restart: unless-stopped
+    depends_on:
+      - postfix
+      - dovecot
+      - gitea
+
   # Static websites
   the_issing_link:
     image: nginx:1.29-alpine
@@ -973,6 +1003,19 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/grafana
+  # fail2ban
+  fail2ban_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/fail2ban_data
+  fail2ban_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/fail2ban_config
 
 secrets:
   borgmatic_passphrase:

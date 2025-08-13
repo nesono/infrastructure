@@ -1,0 +1,41 @@
+[DEFAULT]
+# Ban settings
+bantime = 1h
+findtime = 10m
+maxretry = 5
+backend = auto
+
+# Email notifications
+destemail = n3s0n0@gmail.com
+sender = robot@issing.link
+mta = mail
+
+# Default action: ban + email notification
+action = %(action_mw)s
+
+[sshd]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+backend = auto
+maxretry = 3
+bantime = 2h
+findtime = 10m
+
+# Docker container services - disabled for now until we configure proper logging
+# [postfix-sasl]
+# enabled = false
+# port = smtp,465,submission
+# filter = postfix-sasl
+# backend = systemd
+# maxretry = 3
+# bantime = 1h
+
+# [dovecot]
+# enabled = false
+# port = pop3,pop3s,imap,imaps
+# filter = dovecot
+# backend = systemd
+# maxretry = 3
+# bantime = 1h

@@ -209,6 +209,17 @@
     - Reload Prometheus
   tags: [hot_compose]
 
+- name: Copy fail2ban configuration
+  ansible.builtin.copy:
+    src: fail2ban/jail.local
+    dest: /svc/volumes/fail2ban_config/jail.local
+    owner: 0
+    group: 0
+    mode: "0644"
+  notify:
+    - Restart fail2ban
+  tags: [hot_compose]
+
 - name: Create directory for Docker Compose Secrets (mode 0600)
   ansible.builtin.file:
     path: /var/docker_compose_secrets

@@ -33,6 +33,13 @@
       docker ps --filter 'name=_prometheus\.' --format "{{ '{{.ID}}' }}" | xargs -r -I {} docker exec {} prometheus reload || true
     executable: /bin/bash
   changed_when: false
+- name: Restart fail2ban
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      docker ps --filter 'name=_fail2ban\.' --format "{{ '{{.ID}}' }}" | xargs -r -L 1 docker restart || true
+    executable: /bin/bash
+  changed_when: false
 - name: Restart Docker service
   ansible.builtin.systemd:
     state: restarted

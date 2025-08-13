@@ -282,7 +282,7 @@ services:
     restart: unless-stopped
 
   pgsql_roundcube:
-    image: postgres:15.1-alpine
+    image: postgres:15.13-alpine
     volumes:
       - postgres_roundcube_data:/var/lib/postgresql/data
     environment:
@@ -349,7 +349,7 @@ services:
     restart: unless-stopped
 
   pgsql_gitea:
-    image: postgres:15.1-alpine
+    image: postgres:15.13-alpine
     environment:
       - POSTGRES_DB=gitea
       - POSTGRES_USER_FILE=/run/secrets/gitea_db_user

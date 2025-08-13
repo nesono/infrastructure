@@ -539,6 +539,33 @@ services:
       - redis_cloud_noerpel
     restart: unless-stopped
 
+  # Security - Fail2ban
+  fail2ban:
+    image: crazymax/fail2ban:latest
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - fail2ban_data:/data
+      - fail2ban_config:/etc/fail2ban
+      - /var/log:/var/log/host:ro
+      - /var/log/auth.log:/var/log/auth.log:ro
+      - /var/log/syslog:/var/log/syslog:ro
+      - mail_spool:/var/log/postfix:ro
+      - gitea_data:/var/log/gitea:ro
+      - cloud_nesono_nextcloud:/var/log/nextcloud:ro
+      - cloud_noerpel_nextcloud:/var/log/nextcloud_noerpel:ro
+    environment:
+      TZ: Europe/Berlin
+      F2B_LOG_LEVEL: INFO
+      F2B_DB_PURGE_AGE: 1d
+    restart: unless-stopped
+    depends_on:
+      - postfix
+      - dovecot
+      - gitea
+
   # Static websites
   the_issing_link:
     image: nginx:1.29-alpine
@@ -973,6 +1000,19 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/grafana
+  # fail2ban
+  fail2ban_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/fail2ban_data
+  fail2ban_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/fail2ban_config
 
 secrets:
   borgmatic_passphrase:

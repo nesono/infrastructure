@@ -17,3 +17,13 @@ backend = auto
 maxretry = 3
 bantime = 2h
 findtime = 10m
+
+[dovecot]
+enabled = true
+port = pop3,pop3s,imap,imaps,sieve
+filter = dovecot
+backend = auto
+logpath = /var/log/syslog
+maxretry = 3
+bantime = 1h
+findtime = 10m

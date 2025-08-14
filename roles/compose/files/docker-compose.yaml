@@ -733,13 +733,12 @@ services:
     image: nesono/postfix_exporter:2025-03-23
     command:
       - "--postfix.showq_path=/var/spool/postfix/public/showq"
-      - "--docker.enable"
-      - "--docker.container.id=postfix"
+      - "--postfix.logfile_path=/var/log/syslog"
     networks:
       - monitoring
     volumes:
       - mail_spool:/var/spool/postfix
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/log/syslog:/var/log/syslog:ro
     restart: unless-stopped
 
 networks:

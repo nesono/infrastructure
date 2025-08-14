@@ -5,6 +5,9 @@ findtime = 10m
 maxretry = 5
 backend = auto
 
+# Ignore localhost and private networks
+ignoreip = 127.0.0.1/8 ::1 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+
 # Default action: ban only (no email)
 action = iptables-multiport[name=%(__name__)s, port="%(port)s", protocol="%(protocol)s", chain="INPUT"]
 
@@ -16,4 +19,14 @@ logpath = /var/log/auth.log
 backend = auto
 maxretry = 3
 bantime = 2h
+findtime = 10m
+
+[dovecot]
+enabled = true
+port = pop3,pop3s,imap,imaps,sieve
+filter = dovecot
+backend = auto
+logpath = /var/log/syslog
+maxretry = 3
+bantime = 1h
 findtime = 10m

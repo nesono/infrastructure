@@ -141,10 +141,16 @@ services:
       - mail:/srv/mail
       - /svc/volumes/acme/certs/mail.nesono.com:/etc/dovecot_certs:ro
       - mail_spool:/var/spool/mail
+      - /dev/log:/dev/log
     networks:
       - mail_external
       - mail_internal
       - monitoring
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: "dovecot"
     healthcheck:
       test:
         [
@@ -550,19 +556,11 @@ services:
       - fail2ban_data:/data
       - fail2ban_config:/etc/fail2ban
       - /var/log/auth.log:/var/log/auth.log:ro
+      - /var/log/syslog:/var/log/syslog:ro
     environment:
       TZ: Europe/Berlin
       F2B_LOG_LEVEL: INFO
       F2B_DB_PURGE_AGE: 1d
-      SSMTP_HOST: smtp.nesono.com
-      SSMTP_PORT: 587
-      SSMTP_HOSTNAME: smtp.nesono.com
-      SSMTP_USER_FILE: /run/secrets/robot_mail_user
-      SSMTP_PASSWORD_FILE: /run/secrets/robot_mail_password
-      SSMTP_TLS: 1
-    secrets:
-      - robot_mail_user
-      - robot_mail_password
     restart: unless-stopped
     depends_on:
       - postfix

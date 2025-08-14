@@ -704,8 +704,14 @@ services:
     networks:
       - monitoring
       - http_external
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: "grafana"
     volumes:
       - grafana_data:/var/lib/grafana
+      - /dev/log:/dev/log
     restart: unless-stopped
 
   node_exporter:

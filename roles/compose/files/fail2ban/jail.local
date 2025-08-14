@@ -60,3 +60,13 @@ logpath = /var/log/syslog
 maxretry = 3
 bantime = 1h
 findtime = 10m
+
+[grafana]
+enabled = true
+port = http,https
+filter = grafana
+backend = auto
+logpath = /var/log/syslog
+maxretry = 3
+bantime = 1h
+findtime = 10m

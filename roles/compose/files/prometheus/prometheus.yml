@@ -17,9 +17,3 @@ scrape_configs:
   - job_name: "postfix_exporter"
     static_configs:
       - targets: ["postfix_exporter:9154"]
-
-remote_write:
-  - url: "http://grafana:3000"
-    basic_auth:
-      username_file: /run/secrets/grafana_admin_user
-      password_file: /run/secrets/grafana_admin_password

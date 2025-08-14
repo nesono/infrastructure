@@ -217,10 +217,16 @@ services:
       - mail:/var/mail
       - mail_spool:/var/spool/postfix
       - /svc/volumes/acme/certs/mail.nesono.com:/etc/postfix/certs:ro
+      - /dev/log:/dev/log
     networks:
       - mail_external
       - mail_internal
       - monitoring
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: "postfix"
     healthcheck:
       test:
         [

@@ -30,3 +30,13 @@ logpath = /var/log/syslog
 maxretry = 3
 bantime = 1h
 findtime = 10m
+
+[postfix]
+enabled = true
+port = smtp,465,submission
+filter = postfix
+backend = auto
+logpath = /var/log/syslog
+maxretry = 3
+bantime = 1h
+findtime = 10m

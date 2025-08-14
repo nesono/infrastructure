@@ -350,12 +350,18 @@ services:
     networks:
       - gitea_internal
       - http_external
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "unixgram:///dev/log"
+        tag: "gitea"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
     volumes:
       - gitea_data:/data
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+      - /dev/log:/dev/log
     ports:
       - "2222:22" # SSH forwarding
     restart: unless-stopped

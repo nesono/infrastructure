@@ -40,3 +40,23 @@ logpath = /var/log/syslog
 maxretry = 3
 bantime = 1h
 findtime = 10m
+
+[gitea-ssh]
+enabled = true
+port = 2222
+filter = sshd
+backend = auto
+logpath = /var/log/syslog
+maxretry = 3
+bantime = 1h
+findtime = 10m
+
+[gitea-web]
+enabled = true
+port = http,https
+filter = gitea
+backend = auto
+logpath = /var/log/syslog
+maxretry = 3
+bantime = 1h
+findtime = 10m

@@ -40,6 +40,7 @@
     - prometheus_etc
     - fail2ban_data
     - fail2ban_config
+    - fail2ban_config/filter.d
   tags: [provision]
 
 - name: Create volume for postgres services (uid 70, gid 70)
@@ -213,6 +214,17 @@
   ansible.builtin.copy:
     src: fail2ban/jail.local
     dest: /svc/volumes/fail2ban_config/jail.local
+    owner: 0
+    group: 0
+    mode: "0644"
+  notify:
+    - Restart fail2ban
+  tags: [hot_compose]
+
+- name: Copy gitea fail2ban filter
+  ansible.builtin.copy:
+    src: fail2ban/filter.d/gitea.conf
+    dest: /svc/volumes/fail2ban_config/filter.d/gitea.conf
     owner: 0
     group: 0
     mode: "0644"

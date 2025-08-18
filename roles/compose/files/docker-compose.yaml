@@ -734,8 +734,6 @@ services:
       TZ: UTC
     volumes:
       - /var/log:/var/log:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - alloy_config:/etc/alloy
       - alloy_data:/var/lib/alloy/data
     networks:

@@ -41,6 +41,8 @@
     - fail2ban_data
     - fail2ban_config
     - fail2ban_config/filter.d
+    - loki_data
+    - promtail_config
   tags: [provision]
 
 - name: Create volume for postgres services (uid 70, gid 70)
@@ -218,7 +220,7 @@
     group: 0
     mode: "0644"
   notify:
-    - Restart fail2ban
+    - Reload fail2ban
   tags: [hot_compose]
 
 - name: Copy gitea fail2ban filter
@@ -229,7 +231,18 @@
     group: 0
     mode: "0644"
   notify:
-    - Restart fail2ban
+    - Reload fail2ban
+  tags: [hot_compose]
+
+- name: Copy promtail configuration
+  ansible.builtin.copy:
+    src: promtail/promtail.yml
+    dest: /svc/volumes/promtail_config/promtail.yml
+    owner: 0
+    group: 0
+    mode: "0644"
+  notify:
+    - Refresh Promtail
   tags: [hot_compose]
 
 - name: Create directory for Docker Compose Secrets (mode 0600)

@@ -714,6 +714,35 @@ services:
       - /dev/log:/dev/log
     restart: unless-stopped
 
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    environment:
+      TZ: UTC
+    networks:
+      - monitoring
+    volumes:
+      - loki_data:/loki
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:latest
+    command: -config.file=/etc/promtail/promtail.yml
+    environment:
+      TZ: UTC
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail_config:/etc/promtail
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+    restart: unless-stopped
+
   node_exporter:
     image: prom/node-exporter:latest
     command:
@@ -1032,6 +1061,19 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/fail2ban_config
+  # loki
+  loki_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/loki_data
+  promtail_config:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/promtail_config
 
 secrets:
   borgmatic_passphrase:

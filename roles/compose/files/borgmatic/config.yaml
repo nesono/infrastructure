@@ -10,6 +10,7 @@ storage:
   #   Passphrase is set in variable $BORG_PASSPHRASE
   compression: lz4
   archive_name_format: "backup-{now}"
+  quota: 950G
 
 retention:
   keep_hourly: 24

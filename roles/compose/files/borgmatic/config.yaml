@@ -2,14 +2,14 @@ location:
   source_directories:
     - /mnt/source
   repositories:
-    - ssh://u147627@u147627.your-backup.de:23/home/green
+    - path: "ssh://u147627@u147627.your-backup.de:23/home/green"
+      storage_quota: 950G
   one_file_system: true
 
 storage:
   #   Passphrase is set in variable $BORG_PASSPHRASE
   compression: lz4
   archive_name_format: "backup-{now}"
-  quota: 950G
 
 retention:
   keep_hourly: 24

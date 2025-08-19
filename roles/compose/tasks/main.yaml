@@ -339,7 +339,7 @@
     - borgmatic/config.yaml
     - borgmatic/crontab.txt
     - borgmatic/msmtp.env
-  tags: [provision]
+  tags: [hot_compose]
 
 - name: Template Dovecot SQL config
   ansible.builtin.template:

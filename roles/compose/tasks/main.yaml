@@ -42,7 +42,8 @@
     - fail2ban_config
     - fail2ban_config/filter.d
     - loki_data
-    - promtail_config
+    - alloy_config
+    - alloy_data
   tags: [provision]
 
 - name: Create volume for postgres services (uid 70, gid 70)
@@ -234,15 +235,15 @@
     - Reload fail2ban
   tags: [hot_compose]
 
-- name: Copy promtail configuration
+- name: Copy alloy configuration
   ansible.builtin.copy:
-    src: promtail/promtail.yml
-    dest: /svc/volumes/promtail_config/promtail.yml
+    src: alloy/alloy.river
+    dest: /svc/volumes/alloy_config/alloy.river
     owner: 0
     group: 0
     mode: "0644"
   notify:
-    - Refresh Promtail
+    - Refresh Alloy
   tags: [hot_compose]
 
 - name: Create directory for Docker Compose Secrets (mode 0600)

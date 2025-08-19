@@ -1,0 +1,40 @@
+// Grafana Alloy configuration for syslog processing
+
+// Loki write endpoint
+loki.write "loki" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+// Syslog log processing - direct file source
+loki.source.file "syslog" {
+  targets = [
+    {
+      __path__ = "/var/log/syslog",
+      job      = "syslog",
+    },
+  ]
+  forward_to = [loki.process.syslog.receiver]
+}
+
+// Process syslog entries
+loki.process "syslog" {
+  forward_to = [loki.write.loki.receiver]
+
+  stage.match {
+    selector = `{job="syslog"}`
+
+    stage.regex {
+      expression = `^(?P<timestamp>\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<hostname>\S+)\s+(?P<service>[\w.-]+)(?:\[(?P<pid>\d+)\])?: (?P<message>.*)$`
+    }
+
+    stage.labels {
+      values = {
+        hostname = "",
+        service  = "",
+        pid      = "",
+      }
+    }
+  }
+}

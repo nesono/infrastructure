@@ -727,16 +727,15 @@ services:
       - loki_data:/loki
     restart: unless-stopped
 
-  promtail:
-    image: grafana/promtail:latest
-    command: -config.file=/etc/promtail/promtail.yml
+  alloy:
+    image: grafana/alloy:latest
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/alloy.river
     environment:
       TZ: UTC
     volumes:
       - /var/log:/var/log:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - promtail_config:/etc/promtail
+      - alloy_config:/etc/alloy
+      - alloy_data:/var/lib/alloy/data
     networks:
       - monitoring
     depends_on:
@@ -1068,12 +1067,18 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/loki_data
-  promtail_config:
+  alloy_config:
     driver: local
     driver_opts:
       o: bind
       type: none
-      device: /svc/volumes/promtail_config
+      device: /svc/volumes/alloy_config
+  alloy_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /svc/volumes/alloy_data
 
 secrets:
   borgmatic_passphrase:

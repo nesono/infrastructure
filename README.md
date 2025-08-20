@@ -124,7 +124,7 @@ borgmatic
 
 ## Create secret files
 
-The following secrets are neccessary during deployment and ansible will try to
+The following secrets are necessary during deployment and ansible will try to
 fill those based on the task in `roles/compose/tasks/main.yaml`. Make sure you
 create the files with the correct content - **the files shall never be added to
 any revision control of course!**

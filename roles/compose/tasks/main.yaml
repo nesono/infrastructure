@@ -235,6 +235,28 @@
     - Reload fail2ban
   tags: [hot_compose]
 
+- name: Copy postfix-docker fail2ban filter
+  ansible.builtin.copy:
+    src: fail2ban/filter.d/postfix-docker.conf
+    dest: /svc/volumes/fail2ban_config/filter.d/postfix-docker.conf
+    owner: 0
+    group: 0
+    mode: "0644"
+  notify:
+    - Reload fail2ban
+  tags: [hot_compose]
+
+- name: Copy dovecot-docker fail2ban filter
+  ansible.builtin.copy:
+    src: fail2ban/filter.d/dovecot-docker.conf
+    dest: /svc/volumes/fail2ban_config/filter.d/dovecot-docker.conf
+    owner: 0
+    group: 0
+    mode: "0644"
+  notify:
+    - Reload fail2ban
+  tags: [hot_compose]
+
 - name: Copy alloy configuration
   ansible.builtin.copy:
     src: alloy/alloy.river

@@ -1,0 +1,29 @@
+/var/log/syslog
+/var/log/mail.info
+/var/log/mail.warn
+/var/log/mail.err
+/var/log/mail.log
+/var/log/daemon.log
+/var/log/kern.log
+/var/log/auth.log
+/var/log/user.log
+/var/log/lpr.log
+/var/log/cron.log
+/var/log/debug
+/var/log/messages
+{
+	rotate 4
+	weekly
+	missingok
+	notifempty
+	compress
+	delaycompress
+	sharedscripts
+	postrotate
+		/usr/lib/rsyslog/rsyslog-rotate
+		# Restart containers that read log files to refresh file handles
+		if [ -f /svc/volumes/docker-compose/docker-compose.yaml ]; then
+			docker compose -f /svc/volumes/docker-compose/docker-compose.yaml restart fail2ban alloy >/dev/null 2>&1 || true
+		fi
+	endscript
+}

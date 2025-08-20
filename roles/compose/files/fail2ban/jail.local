@@ -24,7 +24,7 @@ findtime = 10m
 [dovecot]
 enabled = true
 port = pop3,pop3s,imap,imaps,sieve
-filter = dovecot
+filter = dovecot-docker
 backend = auto
 logpath = /var/log/syslog
 maxretry = 3
@@ -34,22 +34,13 @@ findtime = 10m
 [postfix]
 enabled = true
 port = smtp,465,submission
-filter = postfix
+filter = postfix-docker
 backend = auto
 logpath = /var/log/syslog
 maxretry = 3
 bantime = 1h
 findtime = 10m
 
-[gitea-ssh]
-enabled = true
-port = 2222
-filter = sshd
-backend = auto
-logpath = /var/log/syslog
-maxretry = 3
-bantime = 1h
-findtime = 10m
 
 [gitea-web]
 enabled = true

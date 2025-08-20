@@ -66,3 +66,12 @@
     - quota enable /svc
     - qgroup limit -e 2T /svc
   changed_when: false
+
+- name: Copy custom rsyslog logrotate config with Docker container restart
+  ansible.builtin.copy:
+    src: rsyslog
+    dest: /etc/logrotate.d/rsyslog
+    owner: 0
+    group: 0
+    mode: "0644"
+  tags: [provision]

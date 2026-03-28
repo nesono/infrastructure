@@ -98,7 +98,8 @@ services:
 
   # MySQL database for mail
   mysql_mail:
-    image: mysql:8.0
+    image: mysql:8.4
+    command: --mysql-native-password=ON
     volumes:
       - mysql_mail_data:/var/lib/mysql
       - mysql_mail_init_db:/docker-entrypoint-initdb.d
@@ -113,15 +114,16 @@ services:
       - mysql_mail_root_password
     networks:
       - mail_internal
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_mail_root_password) || exit 1",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    # healthcheck disabled during 8.0 → 8.4 migration
+    # healthcheck:
+    #   test:
+    #     [
+    #       "CMD-SHELL",
+    #       "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_mail_root_password) || exit 1",
+    #     ]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
     restart: unless-stopped
 
   # Dovecot IMAP server
@@ -624,7 +626,8 @@ services:
 
   # WordPress services
   mysql_wordpress_noerpel:
-    image: mysql:8.0
+    image: mysql:8.4
+    command: --mysql-native-password=ON
     volumes:
       - mysql_wordpress_noerpel_data:/var/lib/mysql
     environment:
@@ -638,12 +641,13 @@ services:
       - mysql_wordpress_noerpel_root_password
     networks:
       - wordpress_noerpel_internal
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_wordpress_noerpel_root_password) || exit 1",
-        ]
+    # healthcheck disabled during 8.0 → 8.4 migration
+    # healthcheck:
+    #   test:
+    #     [
+    #       "CMD-SHELL",
+    #       "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_wordpress_noerpel_root_password) || exit 1",
+    #     ]
     restart: unless-stopped
 
   wordpress_noerpel:

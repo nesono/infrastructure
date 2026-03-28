@@ -1,5 +1,12 @@
 {
   "extends": [
     "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["mysql"],
+      "allowedVersions": "8.4.*"
+    }
   ]
 }

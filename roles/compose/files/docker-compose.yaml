@@ -119,10 +119,10 @@ services:
           "CMD-SHELL",
           "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_mail_root_password) || exit 1",
         ]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    # restart: unless-stopped
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
 
   # Dovecot IMAP server
   dovecot:
@@ -186,7 +186,7 @@ services:
       - mysql_mail
       - dovecot # SASL authentication
       - postfix_milters
-    image: nesono/postfix_for_postfixadmin:2026-03-22
+    image: nesono/postfix_for_postfixadmin:2026-02-16
     container_name: postfix
     environment:
       MYHOSTNAME: "smtp.nesono.com"
@@ -638,13 +638,13 @@ services:
       - mysql_wordpress_noerpel_root_password
     networks:
       - wordpress_noerpel_internal
-    # healthcheck:
-    #   test:
-    #     [
-    #       "CMD-SHELL",
-    #       "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_wordpress_noerpel_root_password) || exit 1",
-    #     ]
-    # restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/mysql_wordpress_noerpel_root_password) || exit 1",
+        ]
+    restart: unless-stopped
 
   wordpress_noerpel:
     image: wordpress:6.8

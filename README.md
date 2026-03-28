@@ -109,7 +109,7 @@ borg init --encryption=repokey-blake2 ssh://uXXXXXX@uXXXXXX.your-backup.de:23/ho
 Start a borgmatic shell with the following commands:
 
 ```bash
-docker exec -ti $(docker ps -q -f name=borg-backup) bash
+docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -ti borg-backup bash
 export BORG_PASSPHRASE=$(cat $BORG_PASSPHRASE_FILE)
 ```
 

@@ -165,7 +165,7 @@ services:
     depends_on:
       - mysql_mail
       - dovecot # SASL authentication
-    image: nesono/postfix_for_postfixadmin:2026-04-06
+    image: nesono/postfix_for_postfixadmin:2026-04-06.1
     container_name: postfix
     environment:
       MYHOSTNAME: "smtp.nesono.com"

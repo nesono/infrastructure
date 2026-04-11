@@ -160,78 +160,12 @@ services:
         ]
     restart: unless-stopped
 
-  # Postfix milters (DKIM, DMARC)
-  postfix_milters:
-    image: nesono/postfix-milters:2023-01-22.1
-    environment:
-      SPAMASS_SOCKET_PATH: "private/spamass"
-      DKIM_SOCKET_PATH: "private/dkim"
-      DKIM_DOMAINS: "nesono.com,issing.link,noerpel.net,frankfriedbert.de,byorkesterbaritone.com"
-      DKIM_SELECTOR: "2023-01-04"
-      DKIM_KEY_PATH: "/run/secrets/opendkim_key"
-      DMARC_SOCKET_PATH: "private/dmarc"
-      MAIL_HOSTNAME: "smtp.nesono.com"
-    volumes:
-      - mail:/var/mail
-      - mail_spool:/var/spool/postfix
-      - spamass_vhome:/vhome/users
-    secrets:
-      - opendkim_key
-    networks:
-      - mail_internal
-    restart: unless-stopped
-
-  # Staging: unified postfix + milters (for validation before cutover)
-  postfix_staging:
-    image: nesono/postfix_for_postfixadmin:2026-04-04.1
-    container_name: postfix_staging
-    environment:
-      MYHOSTNAME: "smtp.nesono.com"
-      MYNETWORKS: "5.9.123.102"
-      SQL_USER_FILE: /run/secrets/mysql_mail_user
-      SQL_PASSWORD_FILE: /run/secrets/mysql_mail_password
-      SQL_HOST: mysql_mail
-      SQL_DB_NAME: mailserver
-      TLS_CERT: /etc/postfix/certs/fullchain.pem
-      TLS_KEY: /etc/postfix/certs/key.pem
-      DOVECOT_SASL_SOCKET_PATH: "private/auth"
-      DOVECOT_LMTP_PATH: "private/dovecot-lmtp"
-      SPF_ENABLE: "1"
-      SMTPS_ENABLE: "1"
-      AUTHORIZED_SMTPD_XCLIENT_HOSTS: "172.20.0.1"
-      SPAMHAUS_DISABLE: "1"
-      # Milter env vars (merged from postfix_milters)
-      POSTGREY_SOCKET_PATH: "private/postgrey"
-      SPAMASS_SOCKET_PATH: "private/spamass"
-      DKIM_SOCKET_PATH: "private/dkim"
-      DKIM_DOMAINS: "nesono.com,issing.link,noerpel.net,frankfriedbert.de,byorkesterbaritone.com"
-      DKIM_SELECTOR: "2023-01-04"
-      DKIM_KEY_PATH: "/run/secrets/opendkim_key"
-      DMARC_SOCKET_PATH: "private/dmarc"
-      MAIL_HOSTNAME: "smtp.nesono.com"
-    secrets:
-      - mysql_mail_password
-      - mysql_mail_user
-      - opendkim_key
-    ports:
-      - "127.0.0.1:2525:25" # localhost only, for testing
-    volumes:
-      - mail:/var/mail
-      - mail_spool_staging:/var/spool/postfix
-      - spamass_vhome:/vhome/users
-      - /svc/volumes/acme/certs/mail.nesono.com:/etc/postfix/certs:ro
-    networks:
-      - mail_external
-      - mail_internal
-    restart: "no"
-
-  # Postfix SMTP server
+  # Postfix SMTP server (unified with milters since 2026-04-04)
   postfix:
     depends_on:
       - mysql_mail
       - dovecot # SASL authentication
-      - postfix_milters
-    image: nesono/postfix_for_postfixadmin:2026-02-16.1
+    image: nesono/postfix_for_postfixadmin:2026-04-11.2
     container_name: postfix
     environment:
       MYHOSTNAME: "smtp.nesono.com"
@@ -244,16 +178,24 @@ services:
       TLS_KEY: /etc/postfix/certs/key.pem
       DOVECOT_SASL_SOCKET_PATH: "private/auth"
       DOVECOT_LMTP_PATH: "private/dovecot-lmtp"
-      DKIM_SOCKET_PATH: "private/dkim"
       SPF_ENABLE: "1"
-      DMARC_SOCKET_PATH: "private/dmarc"
       SMTPS_ENABLE: "1"
       CERT_NAME: "mail.nesono.com"
       AUTHORIZED_SMTPD_XCLIENT_HOSTS: "172.20.0.1"
       SPAMHAUS_DISABLE: "1"
+      # Milter env vars (previously on postfix_milters container)
+      # POSTGREY_SOCKET_PATH: "private/postgrey"
+      SPAMASS_SOCKET_PATH: "private/spamass"
+      DKIM_SOCKET_PATH: "private/dkim"
+      DKIM_DOMAINS: "nesono.com,issing.link,noerpel.net,frankfriedbert.de,byorkesterbaritone.com"
+      DKIM_SELECTOR: "2023-01-04"
+      DKIM_KEY_PATH: "/run/secrets/opendkim_key"
+      DMARC_SOCKET_PATH: "private/dmarc"
+      MAIL_HOSTNAME: "smtp.nesono.com"
     secrets:
       - mysql_mail_password
       - mysql_mail_user
+      - opendkim_key
     ports:
       - "0.0.0.0:25:25" # SMTP (bind to all interfaces)
       - "0.0.0.0:465:465" # SMTPS (bind to all interfaces)
@@ -261,6 +203,7 @@ services:
     volumes:
       - mail:/var/mail
       - mail_spool:/var/spool/postfix
+      - spamass_vhome:/vhome/users
       - /svc/volumes/acme/certs/mail.nesono.com:/etc/postfix/certs:ro
       - /dev/log:/dev/log
     networks:
@@ -893,12 +836,6 @@ volumes:
       o: bind
       type: none
       device: /svc/volumes/mail_spool
-  mail_spool_staging:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /svc/volumes/mail_spool_staging
   mysql_mail_data:
     driver: local
     driver_opts:

@@ -747,7 +747,7 @@ services:
     restart: unless-stopped
 
   postfix_exporter:
-    image: nesono/postfix_exporter:2025-03-23
+    image: nesono/postfix_exporter:2026-04-11
     command:
       - "--postfix.showq_path=/var/spool/postfix/public/showq"
       - "--docker.enable"

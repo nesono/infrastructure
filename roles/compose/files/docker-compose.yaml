@@ -408,7 +408,7 @@ services:
     restart: unless-stopped
 
   cloud_nesono_com:
-    image: nextcloud:32
+    image: nextcloud:33
     volumes:
       - cloud_nesono_nextcloud:/var/www/html
       - cloud_nesono_apps:/var/www/html/custom_apps
@@ -495,7 +495,7 @@ services:
     restart: unless-stopped
 
   cloud_noerpel_com:
-    image: nextcloud:32
+    image: nextcloud:33
     volumes:
       - cloud_noerpel_nextcloud:/var/www/html
       - cloud_noerpel_apps:/var/www/html/custom_apps

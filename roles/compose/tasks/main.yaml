@@ -179,7 +179,7 @@
     mode: "0644"
   notify:
     - Refresh Dovecot
-  tags: [provision]
+  tags: [hot_compose]
 
 - name: Copy roundcube custom configuration
   ansible.builtin.copy:

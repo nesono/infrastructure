@@ -636,7 +636,7 @@ services:
     restart: unless-stopped
 
   wordpress_noerpel:
-    image: wordpress:6.8
+    image: wordpress:6.9
     environment:
       VIRTUAL_HOST: wordpress.noerpel.net,www.noerpel.net
       VIRTUAL_PORT: 80

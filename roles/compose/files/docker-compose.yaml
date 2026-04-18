@@ -377,6 +377,7 @@ services:
     volumes:
       - mariadb_cloud_nesono_data:/var/lib/mysql
       - mariadb_cloud_nesono_init_db:/docker-entrypoint-initdb.d
+      - ./mariadb_nextcloud.cnf:/etc/mysql/conf.d/nextcloud.cnf:ro
     environment:
       MARIADB_ROOT_PASSWORD_FILE: /run/secrets/mariadb_cloud_nesono_root_password
       MARIADB_USER_FILE: /run/secrets/mariadb_cloud_nesono_user
@@ -464,6 +465,7 @@ services:
     volumes:
       - mariadb_cloud_noerpel_data:/var/lib/mysql
       - mariadb_cloud_noerpel_init_db:/docker-entrypoint-initdb.d
+      - ./mariadb_nextcloud.cnf:/etc/mysql/conf.d/nextcloud.cnf:ro
     environment:
       MARIADB_ROOT_PASSWORD_FILE: /run/secrets/mariadb_cloud_noerpel_root_password
       MARIADB_USER_FILE: /run/secrets/mariadb_cloud_noerpel_user

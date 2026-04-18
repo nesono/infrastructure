@@ -414,6 +414,15 @@
     mode: "0644"
   tags: [hot_compose]
 
+- name: Copy MariaDB Nextcloud config
+  ansible.builtin.copy:
+    src: mariadb_nextcloud.cnf
+    dest: /svc/volumes/docker-compose/mariadb_nextcloud.cnf
+    owner: 0
+    group: 0
+    mode: "0644"
+  tags: [hot_compose]
+
 - name: Deploy Docker Compose services
   ansible.builtin.command: docker compose up --wait --remove-orphans
   args:

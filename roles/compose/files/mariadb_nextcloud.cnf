@@ -1,0 +1,2 @@
+[mysqld]
+innodb_default_row_format = dynamic

@@ -109,8 +109,7 @@ borg init --encryption=repokey-blake2 ssh://uXXXXXX@uXXXXXX.your-backup.de:23/ho
 Start a borgmatic shell with the following commands:
 
 ```bash
-docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -ti borg-backup bash
-export BORG_PASSPHRASE=$(cat $BORG_PASSPHRASE_FILE)
+docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T borg-backup sh -c 'export BORG_PASSPHRASE=$(cat $BORG_PASSPHRASE_FILE)'
 ```
 
 List all borgmatic backups
@@ -123,6 +122,12 @@ Run borgmatic immediately
 
 ```bash
 borgmatic
+```
+
+Single command for the impatient:
+
+```bash
+docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T borg-backup sh -c 'export BORG_PASSPHRASE=$(cat $BORG_PASSPHRASE_FILE) && borgmatic'
 ```
 
 ## Create secret files

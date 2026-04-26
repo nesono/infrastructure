@@ -373,7 +373,7 @@ services:
 
   # Cloud services - Nextcloud nesono
   mariadb_cloud_nesono:
-    image: mariadb:11
+    image: mariadb:12
     volumes:
       - mariadb_cloud_nesono_data:/var/lib/mysql
       - mariadb_cloud_nesono_init_db:/docker-entrypoint-initdb.d
@@ -461,7 +461,7 @@ services:
 
   # Cloud noerpel services
   mariadb_cloud_noerpel:
-    image: mariadb:11
+    image: mariadb:12
     volumes:
       - mariadb_cloud_noerpel_data:/var/lib/mysql
       - mariadb_cloud_noerpel_init_db:/docker-entrypoint-initdb.d

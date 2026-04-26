@@ -7,6 +7,11 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["mysql"],
       "allowedVersions": "8.4.*"
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["postgres"],
+      "allowedVersions": "15.*"
     }
   ]
 }

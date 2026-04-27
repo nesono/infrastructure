@@ -720,7 +720,7 @@ services:
 
   alloy:
     image: grafana/alloy:latest
-    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/alloy.river
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data --disable-reporting /etc/alloy/alloy.river
     environment:
       TZ: UTC
     volumes:

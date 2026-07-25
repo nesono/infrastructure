@@ -1,0 +1,4 @@
+# The dev Docker Compose override uses custom merge tags (!override, !reset)
+# that ansible-lint's YAML loader cannot parse. It is not Ansible content.
+exclude_paths:
+  - dev/docker-compose.override.yaml

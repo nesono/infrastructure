@@ -15,10 +15,10 @@ run_test() {
   shift
   if "$@" >/dev/null 2>&1; then
     echo "  PASS: ${name}"
-    ((PASS++))
+    PASS=$((PASS + 1))
   else
     echo "  FAIL: ${name}"
-    ((FAIL++))
+    FAIL=$((FAIL + 1))
   fi
 }
 
@@ -82,8 +82,12 @@ run_test "LMTP socket exists" ${COMPOSE} exec -T postfix \
 # Relay rejection
 echo ""
 echo "--- Security ---"
+# Use a local sender (dev.local is a hosted domain) so the relay restriction is
+# actually exercised at RCPT TO. A sender like evil@example.com is rejected
+# earlier at MAIL FROM (example.com publishes a null MX, RFC 7505), which never
+# reaches the relay check.
 run_test "Rejects unauthenticated relay" bash -c \
-  "echo -e 'EHLO test\r\nMAIL FROM:<evil@example.com>\r\nRCPT TO:<victim@example.com>\r\nQUIT\r\n' | nc -w5 localhost 1025 | grep -q '554\|450\|553\|521'"
+  "printf 'EHLO test\r\nMAIL FROM:<postmaster@dev.local>\r\nRCPT TO:<victim@example.org>\r\nQUIT\r\n' | nc -w5 localhost 1025 | grep -q '554\|553\|550\|521\|450'"
 
 # PostfixAdmin web
 echo ""

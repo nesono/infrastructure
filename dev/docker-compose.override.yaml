@@ -4,7 +4,6 @@ services:
   mysql_mail:
     volumes: !override
       - mysql_mail_data:/var/lib/mysql
-      - ./dev/init-db:/docker-entrypoint-initdb.d:ro
     healthcheck:
       interval: 10s
       retries: 10
@@ -26,7 +25,9 @@ services:
     logging:
       driver: json-file
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 143 || exit 1"]
+      # The dovecot image ships no nc/ss; doveadm talks to the master socket
+      # and confirms the daemon is up and responsive.
+      test: ["CMD-SHELL", "doveadm who >/dev/null 2>&1 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -62,6 +63,14 @@ services:
       - "8080:80"
     networks: !override
       - mail_internal
+
+# In production mail_internal is internal:true, and each service also joins an
+# external network (mail_external/http_external) for its published ports. Dev
+# collapses every service onto mail_internal only, so that network must allow
+# host port publishing — an internal:true network never binds ports to the host.
+networks:
+  mail_internal:
+    internal: false
 
 # Override all volumes to strip bind-mount driver_opts (production paths don't exist locally)
 volumes:

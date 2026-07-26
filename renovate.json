@@ -12,6 +12,11 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["postgres"],
       "allowedVersions": "15.*"
+    },
+    {
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["mariadb"],
+      "allowedVersions": "12.3.*"
     }
   ]
 }

@@ -10,21 +10,31 @@
     update_cache: false
   tags: [never, docker_purge]
 
-- name: Add Docker Apt signing key
-  ansible.builtin.apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    state: present
-
 - name: Get LSB release
   ansible.builtin.command: lsb_release -cs
   register: docker_lsb_release
   changed_when: false
 
-- name: Add Docker repository into sources list
-  ansible.builtin.apt_repository:
-    repo: deb https://download.docker.com/linux/ubuntu {{ docker_lsb_release.stdout }} stable
+- name: Ensure python-debian is present (required by deb822_repository)
+  ansible.builtin.apt:
+    name: python3-debian
     state: present
-    filename: docker
+    update_cache: true
+
+- name: Remove legacy Docker apt sources list (superseded by deb822 sources)
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/docker.list
+    state: absent
+
+- name: Add Docker repository into sources list
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: deb
+    uris: https://download.docker.com/linux/ubuntu
+    suites: "{{ docker_lsb_release.stdout }}"
+    components: stable
+    signed_by: https://download.docker.com/linux/ubuntu/gpg
+    state: present
 
 - name: Install Docker packages
   ansible.builtin.apt:

@@ -1,0 +1,227 @@
+name: mail-dev
+
+services:
+  mysql_mail:
+    volumes: !override
+      - mysql_mail_data:/var/lib/mysql
+    healthcheck:
+      interval: 10s
+      retries: 10
+
+  dovecot:
+    depends_on: !override
+      - mysql_mail
+    ports: !override
+      - "1143:143"
+      - "1993:993"
+      - "14190:4190"
+    volumes: !override
+      - ./dev/dovecot:/etc/dovecot:ro
+      - mail:/srv/mail
+      - ./dev/certs:/etc/dovecot_certs:ro
+      - mail_spool:/var/spool/mail
+    networks: !override
+      - mail_internal
+    logging:
+      driver: json-file
+    healthcheck:
+      # The dovecot image ships no nc/ss; doveadm talks to the master socket
+      # and confirms the daemon is up and responsive.
+      test: ["CMD-SHELL", "doveadm who >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postfix:
+    depends_on:
+      mysql_mail:
+        condition: service_healthy
+      dovecot:
+        condition: service_healthy
+    environment:
+      MYHOSTNAME: "localhost"
+      MYNETWORKS: "172.0.0.0/8"
+      DKIM_DOMAINS: "dev.local"
+      DKIM_SELECTOR: "dev"
+      MAIL_HOSTNAME: "localhost"
+    ports: !override
+      - "1025:25"
+      - "1465:465"
+      - "1587:587"
+    volumes: !override
+      - mail:/var/mail
+      - mail_spool:/var/spool/postfix
+      - spamass_vhome:/vhome/users
+      - ./dev/certs:/etc/postfix/certs:ro
+    networks: !override
+      - mail_internal
+    logging:
+      driver: json-file
+
+  postfixadmin:
+    ports: !override
+      - "8080:80"
+    networks: !override
+      - mail_internal
+
+# In production mail_internal is internal:true, and each service also joins an
+# external network (mail_external/http_external) for its published ports. Dev
+# collapses every service onto mail_internal only, so that network must allow
+# host port publishing — an internal:true network never binds ports to the host.
+networks:
+  mail_internal:
+    internal: false
+
+# Override all volumes to strip bind-mount driver_opts (production paths don't exist locally)
+volumes:
+  borgmatic_config:
+    driver_opts: !reset {}
+  borgmatic_keys:
+    driver_opts: !reset {}
+  borgmatic_state:
+    driver_opts: !reset {}
+  borgmatic_borg_config:
+    driver_opts: !reset {}
+  borgmatic_cache:
+    driver_opts: !reset {}
+  dovecot:
+    driver_opts: !reset {}
+  mail:
+    driver_opts: !reset {}
+  mail_spool:
+    driver_opts: !reset {}
+  mysql_mail_data:
+    driver_opts: !reset {}
+  mysql_mail_init_db:
+    driver_opts: !reset {}
+  spamass_vhome:
+    driver_opts: !reset {}
+  nginx_conf:
+    driver_opts: !reset {}
+  nginx_vhost:
+    driver_opts: !reset {}
+  nginx_html:
+    driver_opts: !reset {}
+  acme_certs:
+    driver_opts: !reset {}
+  acme_sh:
+    driver_opts: !reset {}
+  docker_gen_templates:
+    driver_opts: !reset {}
+  roundcube_custom_config:
+    driver_opts: !reset {}
+  postgres_roundcube_data:
+    driver_opts: !reset {}
+  gitea_data:
+    driver_opts: !reset {}
+  postgres_gitea_data:
+    driver_opts: !reset {}
+  mariadb_cloud_nesono_data:
+    driver_opts: !reset {}
+  mariadb_cloud_nesono_init_db:
+    driver_opts: !reset {}
+  cloud_nesono_nextcloud:
+    driver_opts: !reset {}
+  cloud_nesono_apps:
+    driver_opts: !reset {}
+  cloud_nesono_config:
+    driver_opts: !reset {}
+  cloud_nesono_data:
+    driver_opts: !reset {}
+  mariadb_cloud_noerpel_data:
+    driver_opts: !reset {}
+  mariadb_cloud_noerpel_init_db:
+    driver_opts: !reset {}
+  cloud_noerpel_nextcloud:
+    driver_opts: !reset {}
+  cloud_noerpel_apps:
+    driver_opts: !reset {}
+  cloud_noerpel_config:
+    driver_opts: !reset {}
+  cloud_noerpel_data:
+    driver_opts: !reset {}
+  www_nesono_com_data:
+    driver_opts: !reset {}
+  the_issing_link_data:
+    driver_opts: !reset {}
+  katja_issing_link_data:
+    driver_opts: !reset {}
+  mysql_wordpress_noerpel_data:
+    driver_opts: !reset {}
+  wordpress_noerpel_data:
+    driver_opts: !reset {}
+  prometheus_etc:
+    driver_opts: !reset {}
+  grafana_data:
+    driver_opts: !reset {}
+  fail2ban_data:
+    driver_opts: !reset {}
+  fail2ban_config:
+    driver_opts: !reset {}
+  loki_data:
+    driver_opts: !reset {}
+  alloy_config:
+    driver_opts: !reset {}
+  alloy_data:
+    driver_opts: !reset {}
+
+# Override all secrets to point to local dev secrets
+secrets:
+  borgmatic_passphrase:
+    file: ./dev/secrets/secret_borgmatic_passphrase.txt
+  robot_mail_user:
+    file: ./dev/secrets/secret_robot_mail_user.txt
+  robot_mail_password:
+    file: ./dev/secrets/secret_robot_mail_password.txt
+  mysql_mail_password:
+    file: ./dev/secrets/secret_mysql_mail_password.txt
+  mysql_mail_user:
+    file: ./dev/secrets/secret_mysql_mail_user.txt
+  mysql_mail_root_password:
+    file: ./dev/secrets/secret_mysql_mail_root_password.txt
+  opendkim_key:
+    file: ./dev/secrets/secret_opendkim_key.txt
+  postfixadmin_setup_password:
+    file: ./dev/secrets/secret_postfixadmin_setup_password.txt
+  roundcube_db_user:
+    file: ./dev/secrets/secret_roundcube_db_user.txt
+  roundcube_db_password:
+    file: ./dev/secrets/secret_roundcube_db_password.txt
+  gitea_db_user:
+    file: ./dev/secrets/secret_gitea_db_user.txt
+  gitea_db_password:
+    file: ./dev/secrets/secret_gitea_db_password.txt
+  gitea_mailer_user:
+    file: ./dev/secrets/secret_gitea_mailer_user.txt
+  gitea_mailer_password:
+    file: ./dev/secrets/secret_gitea_mailer_password.txt
+  mariadb_cloud_nesono_password:
+    file: ./dev/secrets/secret_mariadb_cloud_nesono_password.txt
+  mariadb_cloud_nesono_user:
+    file: ./dev/secrets/secret_mariadb_cloud_nesono_user.txt
+  mariadb_cloud_nesono_root_password:
+    file: ./dev/secrets/secret_mariadb_cloud_nesono_root_password.txt
+  nextcloud_nesono_admin_user:
+    file: ./dev/secrets/secret_nextcloud_nesono_admin_user.txt
+  nextcloud_nesono_admin_password:
+    file: ./dev/secrets/secret_nextcloud_nesono_admin_password.txt
+  mariadb_cloud_noerpel_password:
+    file: ./dev/secrets/secret_mariadb_cloud_noerpel_password.txt
+  mariadb_cloud_noerpel_user:
+    file: ./dev/secrets/secret_mariadb_cloud_noerpel_user.txt
+  mariadb_cloud_noerpel_root_password:
+    file: ./dev/secrets/secret_mariadb_cloud_noerpel_root_password.txt
+  nextcloud_noerpel_admin_user:
+    file: ./dev/secrets/secret_nextcloud_noerpel_admin_user.txt
+  nextcloud_noerpel_admin_password:
+    file: ./dev/secrets/secret_nextcloud_noerpel_admin_password.txt
+  mysql_wordpress_noerpel_password:
+    file: ./dev/secrets/secret_mysql_wordpress_noerpel_password.txt
+  mysql_wordpress_noerpel_user:
+    file: ./dev/secrets/secret_mysql_wordpress_noerpel_user.txt
+  mysql_wordpress_noerpel_root_password:
+    file: ./dev/secrets/secret_mysql_wordpress_noerpel_root_password.txt
+  grafana_admin_user:
+    file: ./dev/secrets/secret_grafana_admin_user.txt
+  grafana_admin_password:
+    file: ./dev/secrets/secret_grafana_admin_password.txt

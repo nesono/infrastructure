@@ -111,6 +111,41 @@ borg init --encryption=repokey-blake2 ssh://uXXXXXX@uXXXXXX.your-backup.de:23/ho
 
 ### Run Backup Commands
 
+#### Manual cold backup
+
+`backup.sh` stops all currently running Compose services except Borg, creates an
+archive, and starts those services again. Applications stop before databases.
+The script aborts on a forced shutdown and attempts to restart services even if
+the backup fails. All websites, cloud services, and mail access are unavailable
+for the entire archive creation. Use a maintenance window and a persistent
+terminal such as tmux; do not deploy or run other service-management commands
+during the backup.
+
+Install the script using Ansible from this directory:
+
+```sh
+ansible-playbook -i production/hosts green_nesono.yml --tags backup_script
+```
+
+Then run it on the server as root:
+
+```sh
+sudo /usr/local/sbin/backup.sh
+```
+
+The script uses `stop`/`start`, preserving containers and leaving previously
+stopped services stopped. Cleanly stopped database files are included in the
+existing `/svc/volumes` backup. Restore database files with compatible database
+image versions, and test a restore before relying on the archive.
+
+This is manual only. The existing 03:00 UTC in-container backup remains a live
+backup; avoid overlapping it with this command. Pruning and checks remain with
+that existing job, so they do not extend the cold backup's downtime. A host crash
+or SIGKILL bypasses cleanup; if that happens, restart the affected services with
+`docker compose -f /svc/volumes/docker-compose/docker-compose.yaml start`.
+
+#### Existing live backup commands
+
 Start a borgmatic shell with the following commands:
 
 ```bash

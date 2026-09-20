@@ -1,0 +1,13 @@
+connect = host=mysql_mail dbname=mailserver user=dev_user password=dev_password
+driver = mysql
+
+# Default password scheme - change to match your Postfixadmin setting.
+default_pass_scheme = MD5-CRYPT
+
+# Query to retrieve password.
+password_query = SELECT username AS user,password FROM mailbox WHERE username = '%u' AND active='1'
+
+# Query to retrieve user information.
+user_query = SELECT CONCAT('/srv/mail/', maildir) AS home, 3000 AS uid, 8 AS gid, CONCAT('*:bytes=', quota) AS quota_rule FROM mailbox WHERE username = '%u' AND active='1'
+
+iterate_query = SELECT username as user FROM mailbox WHERE active = '1'

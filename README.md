@@ -241,7 +241,7 @@ Nextcloud maintenance as `www-data` and disables TTY allocation for cron.
 ```cron
 # Nextcloud background jobs, every five minutes, as the web-server user.
 */5 * * * * docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_nesono_com php -f /var/www/html/cron.php
-*/5 * * * * docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_noerpel_com php -f /var/www/html/cron.php
+*/5 * * * * docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_noerpel_net php -f /var/www/html/cron.php
 
 # Reload mail TLS certificates on Sunday.
 5 4 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T dovecot doveadm reload
@@ -252,7 +252,7 @@ Nextcloud maintenance as `www-data` and disables TTY allocation for cron.
 
 # Nextcloud index maintenance on Sunday.
 5 7 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_nesono_com php occ db:add-missing-indices
-5 7 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_noerpel_com php occ db:add-missing-indices
+5 7 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_noerpel_net php occ db:add-missing-indices
 ```
 
 These lines belong in root's user crontab, so they have no separate username
@@ -432,7 +432,7 @@ key in the secret file.
 
 ## Nextcloud
 
-The two services are `cloud_nesono_com` and `cloud_noerpel_com`. Each has separate
+The two services are `cloud_nesono_com` and `cloud_noerpel_net`. Each has separate
 database, Redis, application, configuration, and data storage. Use the host
 cron jobs above for background processing.
 
@@ -440,7 +440,7 @@ Run `occ` as the container's web-server user:
 
 ```sh
 dc exec --user www-data cloud_nesono_com php occ status
-dc exec --user www-data cloud_noerpel_com php occ status
+dc exec --user www-data cloud_noerpel_net php occ status
 dc exec --user www-data cloud_nesono_com php occ db:add-missing-indices
 ```
 

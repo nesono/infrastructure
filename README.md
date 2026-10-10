@@ -23,12 +23,12 @@ the following two lines to your crontab (invoking `crontab -e`):
 # m h  dom mon dow   command
 # Make sure that user 33 is www-data in the container!
 */5 *  *   *   *     bash -c 'docker exec --user 33 `docker ps -q -f name=docker-compose-cloud_nesono_com\\\.` php -f cron.php'
-*/5 *  *   *   *     bash -c 'docker exec --user 33 `docker ps -q -f name=docker-compose-cloud_noerpel_com\\\.` php -f cron.php'
+*/5 *  *   *   *     bash -c 'docker exec --user 33 `docker ps -q -f name=docker-compose-cloud_noerpel_net\\\.` php -f cron.php'
 5   4  *   *   Sun   bash -c 'docker kill -s HUP `docker ps -q -f name=docker-compose-dovecot\\\.`'
 5   4  *   *   Sun   bash -c 'docker kill -s HUP `docker ps -q -f name=docker-compose-postfix\\\\.`'
 5   5  *   *   Sun   bash -c 'docker compose -f /svc/volumes/docker-compose/docker-compose.yaml up -d --pull always'
 5   7  *   *   Sun   bash -c 'docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec cloud_nesono_com php occ db:add-missing-indices'
-5   7  *   *   Sun   bash -c 'docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec cloud_noerpel_com php occ db:add-missing-indices'
+5   7  *   *   Sun   bash -c 'docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec cloud_noerpel_net php occ db:add-missing-indices'
 
 ```
 

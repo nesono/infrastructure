@@ -707,8 +707,8 @@ services:
 
   loki:
     image: grafana/loki:latest
-    ports:
-      - "3100:3100"
+    # Grafana and Alloy reach Loki over the monitoring network.
+    # Do not publish the unauthenticated API on the host.
     command: -config.file=/etc/loki/local-config.yaml
     environment:
       TZ: UTC

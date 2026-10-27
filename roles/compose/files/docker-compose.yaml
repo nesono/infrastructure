@@ -130,7 +130,7 @@ services:
     depends_on:
       - mysql_mail
       - mail_nesono_com
-    image: dovecot/dovecot:2.3
+    image: dovecot/dovecot:2.4.5-root
     environment:
       CERT_NAME: "mail.nesono.com"
     ports:

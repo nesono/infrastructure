@@ -388,13 +388,13 @@
     mail_group_id: "8"
   notify:
     - Refresh Dovecot
-  tags: [provision]
+  tags: [provision, hot_compose]
 
 - name: Template Dovecot Quota config
   ansible.builtin.template:
     src: dovecot/dovecot-dict-quota.conf.ext.j2
     dest: /svc/volumes/dovecot/dovecot-dict-quota.conf.ext
-    owner: 101
+    owner: 0
     group: 0
     # this file contains a password. make it secure
     mode: u=r,g=,o=
@@ -403,7 +403,7 @@
     mysql_mail_user: "{{ lookup('file', 'secrets/secret_mysql_mail_user.txt') }}"
   notify:
     - Refresh Dovecot
-  tags: [provision]
+  tags: [provision, hot_compose]
 
 - name: Create Docker Compose directory
   ansible.builtin.file:
@@ -421,6 +421,24 @@
     owner: 0
     group: 0
     mode: "0644"
+  tags: [hot_compose]
+
+- name: Validate migrated Dovecot configuration before deployment
+  ansible.builtin.command:
+    argv:
+      - docker
+      - compose
+      - run
+      - --rm
+      - --no-deps
+      - --pull
+      - always
+      - --entrypoint
+      - doveconf
+      - dovecot
+      - -n
+    chdir: /svc/volumes/docker-compose
+  changed_when: false
   tags: [hot_compose]
 
 - name: Copy MariaDB Nextcloud config

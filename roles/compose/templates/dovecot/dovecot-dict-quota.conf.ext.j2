@@ -1,13 +1,19 @@
-connect = host=mysql_mail dbname=mailserver user={{mysql_mail_user}} password={{mysql_mail_password}}
-map {
-  pattern = priv/quota/storage
-  table = quota2
-  username_field = username
-  value_field = bytes
+sql_driver = mysql
+mysql mysql_mail {
+  dbname = mailserver
+  user = {{ mysql_mail_user | to_json }}
+  password = {{ mysql_mail_password | to_json }}
 }
-map {
-  pattern = priv/quota/messages
-  table = quota2
+
+dict_map priv/quota/storage {
+  sql_table = quota2
   username_field = username
-  value_field = messages
+  value_field bytes {
+  }
+}
+dict_map priv/quota/messages {
+  sql_table = quota2
+  username_field = username
+  value_field messages {
+  }
 }

@@ -405,6 +405,24 @@
     - Refresh Dovecot
   tags: [provision]
 
+- name: Create PHP configuration directory
+  ansible.builtin.file:
+    path: /svc/volumes/docker-compose/php
+    state: directory
+    owner: 0
+    group: 0
+    mode: "0755"
+  tags: [hot_compose]
+
+- name: Copy PHP request parsing security settings
+  ansible.builtin.copy:
+    src: php/security.ini
+    dest: /svc/volumes/docker-compose/php/security.ini
+    owner: 0
+    group: 0
+    mode: "0644"
+  tags: [hot_compose]
+
 - name: Create Docker Compose directory
   ansible.builtin.file:
     path: /svc/volumes/docker-compose
@@ -430,6 +448,39 @@
     owner: 0
     group: 0
     mode: "0644"
+  tags: [hot_compose]
+
+- name: Copy PHP runtime security check
+  ansible.builtin.copy:
+    src: php/check-runtime.php
+    dest: /svc/volumes/docker-compose/php/check-runtime.php
+    owner: 0
+    group: 0
+    mode: "0644"
+  tags: [hot_compose]
+
+- name: Verify PHP images before deployment
+  ansible.builtin.command:
+    argv:
+      - docker
+      - compose
+      - run
+      - --rm
+      - --no-deps
+      - --pull
+      - always
+      - --entrypoint
+      - php
+      - --volume
+      - /svc/volumes/docker-compose/php/check-runtime.php:/check-runtime.php:ro
+      - "{{ item }}"
+      - /check-runtime.php
+    chdir: /svc/volumes/docker-compose
+  loop:
+    - postfixadmin
+    - wordpress_noerpel
+    - roundcube
+  changed_when: false
   tags: [hot_compose]
 
 - name: Deploy Docker Compose services

@@ -231,6 +231,8 @@ services:
       - mysql_mail
     image: postfixadmin:4.0.5-apache
     environment:
+      # Generate stronger hashes for new and changed passwords.
+      POSTFIXADMIN_ENCRYPT: ARGON2ID
       POSTFIXADMIN_DB_TYPE: mysqli
       POSTFIXADMIN_DB_HOST: mysql_mail
       POSTFIXADMIN_DB_NAME: mailserver

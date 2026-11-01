@@ -226,7 +226,7 @@ services:
   # PostfixAdmin web interface
   postfixadmin:
     volumes:
-      - /svc/volumes/docker-compose/php/security.ini:/usr/local/etc/php/conf.d/zz-security.ini:ro
+      - /svc/volumes/php/security.ini:/usr/local/etc/php/conf.d/zz-security.ini:ro
     depends_on:
       - mysql_mail
     image: postfixadmin:4.0.5-apache
@@ -260,7 +260,7 @@ services:
     volumes:
       - acme_certs:/etc/roundcube_certs:ro
       - roundcube_custom_config:/var/roundcube/config:ro
-      - /svc/volumes/docker-compose/php/security.ini:/usr/local/etc/php/conf.d/zz-security.ini:ro
+      - /svc/volumes/php/security.ini:/usr/local/etc/php/conf.d/zz-security.ini:ro
     depends_on:
       - pgsql_roundcube
     environment:
@@ -662,7 +662,7 @@ services:
       test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
     volumes:
       - wordpress_noerpel_data:/var/www/html
-      - /svc/volumes/docker-compose/php/security.ini:/usr/local/etc/php/conf.d/zz-security.ini:ro
+      - /svc/volumes/php/security.ini:/usr/local/etc/php/conf.d/zz-security.ini:ro
     depends_on:
       - mysql_wordpress_noerpel
     restart: unless-stopped

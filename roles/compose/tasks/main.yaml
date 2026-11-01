@@ -407,7 +407,7 @@
 
 - name: Create PHP configuration directory
   ansible.builtin.file:
-    path: /svc/volumes/docker-compose/php
+    path: /svc/volumes/php
     state: directory
     owner: 0
     group: 0
@@ -417,7 +417,7 @@
 - name: Copy PHP request parsing security settings
   ansible.builtin.copy:
     src: php/security.ini
-    dest: /svc/volumes/docker-compose/php/security.ini
+    dest: /svc/volumes/php/security.ini
     owner: 0
     group: 0
     mode: "0644"

@@ -230,7 +230,6 @@ services:
     depends_on:
       - mysql_mail
     image: postfixadmin:4.0.5-apache
-    pull_policy: always
     environment:
       POSTFIXADMIN_DB_TYPE: mysqli
       POSTFIXADMIN_DB_HOST: mysql_mail
@@ -643,7 +642,6 @@ services:
 
   wordpress_noerpel:
     image: wordpress:6.9-php8.3-apache
-    pull_policy: always
     environment:
       VIRTUAL_HOST: wordpress.noerpel.net,www.noerpel.net
       VIRTUAL_PORT: 80

@@ -225,9 +225,11 @@ services:
 
   # PostfixAdmin web interface
   postfixadmin:
+    volumes:
+      - /svc/volumes/php/security.ini:/usr/local/etc/php/conf.d/zz-security.ini:ro
     depends_on:
       - mysql_mail
-    image: postfixadmin:4.0.1
+    image: postfixadmin:4.0.5-apache
     environment:
       POSTFIXADMIN_DB_TYPE: mysqli
       POSTFIXADMIN_DB_HOST: mysql_mail
@@ -257,6 +259,7 @@ services:
     volumes:
       - acme_certs:/etc/roundcube_certs:ro
       - roundcube_custom_config:/var/roundcube/config:ro
+      - /svc/volumes/php/security.ini:/usr/local/etc/php/conf.d/zz-security.ini:ro
     depends_on:
       - pgsql_roundcube
     environment:
@@ -638,7 +641,7 @@ services:
     restart: unless-stopped
 
   wordpress_noerpel:
-    image: wordpress:6.9
+    image: wordpress:6.9-php8.3-apache
     environment:
       VIRTUAL_HOST: wordpress.noerpel.net,www.noerpel.net
       VIRTUAL_PORT: 80
@@ -657,6 +660,7 @@ services:
       test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
     volumes:
       - wordpress_noerpel_data:/var/www/html
+      - /svc/volumes/php/security.ini:/usr/local/etc/php/conf.d/zz-security.ini:ro
     depends_on:
       - mysql_wordpress_noerpel
     restart: unless-stopped

@@ -405,6 +405,24 @@
     - Refresh Dovecot
   tags: [provision]
 
+- name: Create PHP configuration directory
+  ansible.builtin.file:
+    path: /svc/volumes/php
+    state: directory
+    owner: 0
+    group: 0
+    mode: "0755"
+  tags: [hot_compose]
+
+- name: Copy PHP request parsing security settings
+  ansible.builtin.copy:
+    src: php/security.ini
+    dest: /svc/volumes/php/security.ini
+    owner: 0
+    group: 0
+    mode: "0644"
+  tags: [hot_compose]
+
 - name: Create Docker Compose directory
   ansible.builtin.file:
     path: /svc/volumes/docker-compose

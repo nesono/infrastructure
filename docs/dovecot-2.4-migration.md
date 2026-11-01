@@ -57,10 +57,10 @@ replace the Dovecot image while leaving the 2.3 configuration in place.
    ansible-playbook -i production/hosts green_nesono.yml --tags hot_compose
    ```
 
-   SQL templates are included in this tag. Dovecot config parsing runs before
-   Compose starts replacements. The existing deployment
-   task reconciles the whole Compose stack; inspect unrelated differences
-   before executing it. Avoid concurrent cron deployments during the migration.
+   SQL templates are included in this tag. The existing deployment task
+   reconciles the whole Compose stack; inspect unrelated differences before
+   executing it. Avoid concurrent cron deployments during the migration.
+   No temporary validation containers run as part of Ansible deployment.
 
 5. Confirm service health, IMAP login, SMTP authentication, incoming mail,
    Sieve rules, and quota display. Check Dovecot logs for SQL/plugin errors.

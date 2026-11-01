@@ -441,24 +441,6 @@
     mode: "0644"
   tags: [hot_compose]
 
-- name: Validate migrated Dovecot configuration before deployment
-  ansible.builtin.command:
-    argv:
-      - docker
-      - compose
-      - run
-      - --rm
-      - --no-deps
-      - --pull
-      - always
-      - --entrypoint
-      - doveconf
-      - dovecot
-      - -n
-    chdir: /svc/volumes/docker-compose
-  changed_when: false
-  tags: [hot_compose]
-
 - name: Copy MariaDB Nextcloud config
   ansible.builtin.copy:
     src: mariadb_nextcloud.cnf

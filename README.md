@@ -1,7 +1,7 @@
 # Nesono infrastructure
 
-This repository manages `green`, a self-hosted Ubuntu Linux server at Hetzner,
-using Ansible and Docker Compose. The production inventory is
+This repository manages `green`, a self-hosted Ubuntu 22.04.5 LTS server at
+Hetzner, using Ansible and Docker Compose. The production inventory is
 [production/hosts](production/hosts). Routine changes are made in this repository
 and copied to the server by Ansible.
 
@@ -151,10 +151,26 @@ sudo crontab -e
 timedatectl
 ```
 
-The following is a reference schedule based on the previously documented jobs,
-using current Compose service names. Compare it with the installed crontab:
-the live schedule has not been verified during this README refresh. Cron uses
-the host timezone unless overridden.
+The host runs in `Europe/Berlin`. Its root crontab was checked on 2026-11-01
+and schedules the following jobs in host local time (CET/CEST):
+
+| Schedule | Installed job |
+| --- | --- |
+| Every five minutes | Background jobs for both Nextcloud instances |
+| Sunday 04:05 | Reload Dovecot and Postfix certificates |
+| Sunday 05:05 | Pull and apply Compose images |
+| Sunday 07:05 | Add missing database indices for both Nextcloud instances |
+
+The installed Nextcloud background jobs and certificate reloads still select
+containers using old dot-style name filters. All four filters currently match
+zero containers: the Nextcloud and Dovecot names end in `-1`, and Postfix is
+named `postfix`. Those four scheduled commands therefore do not perform their
+intended work.
+
+The following is a proposed replacement for those seven installed job lines,
+keeping their existing schedule but using Compose service names. It also runs
+Nextcloud maintenance as `www-data` and disables TTY allocation for cron.
+**These replacement commands have not been installed on the server.**
 
 ```cron
 # Nextcloud background jobs, every five minutes, as the web-server user.

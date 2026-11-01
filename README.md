@@ -46,6 +46,49 @@ Host-local settings also matter: root's crontab, SSH access, host mail
 notifications, and the installed operating system are not fully described by
 the Compose file. The root crontab is maintained manually, not by this playbook.
 
+## Bootstrap a Hetzner server with installimage
+
+Use Hetzner's Rescue System and
+[installimage](https://docs.hetzner.com/robot/dedicated-server/operating-systems/installimage/)
+to install the host operating system before provisioning it with Ansible.
+
+1. Log in to Hetzner Robot and activate the Linux Rescue System for the server.
+2. Reboot the server into Rescue using Robot's reset controls.
+3. Connect as `root@<server-ip>` using the Rescue credentials.
+4. Select an Ubuntu image with `installimage` and adapt its configuration for
+   the server's disks and hostname.
+
+The RAID-1/Btrfs layout used by this setup is shown below. Replace the drive
+paths, hostname, and `IMAGE` path with values for the target server and the
+Ubuntu image available in Rescue. Installation erases the selected drives.
+
+```sh
+cat > installimage.conf <<'CONFIG'
+DRIVE1 /dev/sda
+DRIVE2 /dev/sdb
+SWRAID 1
+SWRAIDLEVEL 1
+HOSTNAME green.<example.com>
+PART   btrfs.raid    btrfs    all
+SUBVOL btrfs.raid    @        /
+SUBVOL btrfs.raid    @var     /var
+SUBVOL btrfs.raid    @svc     /svc
+SUBVOL btrfs.raid    @tmp     /tmp
+IMAGE <full-path-to-ubuntu-image.tar.gz>
+CONFIG
+```
+
+After reviewing the configuration, run the installation in the Rescue shell:
+
+```sh
+installimage -a -c installimage.conf
+```
+
+Once installation finishes, reboot into the installed system. Confirm SSH
+access and update `production/hosts` if the server address changed, then use
+the Ansible roles below to provision the host, Docker, and Compose services.
+Restore the host-local crontab and backup access as part of rebuilding a server.
+
 ## Deploy from the local checkout
 
 Run these commands on the Ansible controller, from the repository root:
@@ -78,9 +121,8 @@ update command.
 
 The `common` and `docker` roles configure the host and Docker installation.
 Full provisioning includes host-specific filesystem quotas, ownership changes,
-and possible service restarts. Review those tasks before using them to rebuild
-a server. This README describes operating the existing Hetzner installation;
-it is not a disk-partitioning or OS-installation recipe.
+and possible service restarts. Review those tasks before using them to provision
+the freshly installed server or rebuild the existing installation.
 
 ### Secrets
 

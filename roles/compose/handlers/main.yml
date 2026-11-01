@@ -1,9 +1,7 @@
 - name: Refresh Dovecot
-  ansible.builtin.shell:
-    cmd: |
-      set -o pipefail
-      docker ps --filter 'name=_dovecot\.' --format "{{ '{{.ID}}' }}" | xargs -r -L 1 docker kill -s HUP || true
-    executable: /bin/bash
+  ansible.builtin.command: docker compose exec -T dovecot doveadm reload
+  args:
+    chdir: /svc/volumes/docker-compose
   changed_when: false
 - name: Refresh nginx-proxy
   ansible.builtin.shell:

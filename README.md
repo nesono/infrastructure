@@ -465,3 +465,10 @@ If a dashboard reports a missing data source, check both the configured UID
 and Grafana's plugin status. A `Plugin not registered` error can occur even when
 the data-source record exists. Check the host syslog; restarting Grafana resolved
 that plugin-loading failure after the recent upgrade without exposing Loki.
+
+## Optional pyinfra pilot
+
+The Docker installation role also has a Python implementation for evaluation.
+See [the pyinfra pilot](pyinfra/README.md) for setup, task mapping, dry-run and
+integration-test commands. The existing Ansible playbooks remain the deployment
+entry points.

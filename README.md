@@ -92,13 +92,38 @@ access and update `production/hosts` if the server address changed, then use
 the Ansible roles below to provision the host, Docker, and Compose services.
 Restore the host-local crontab and backup access as part of rebuilding a server.
 
-## Deploy from the local checkout
+## Provision and deploy from the local checkout
 
-Run these commands on the Ansible controller, from the repository root:
+Run Ansible on the controller, from the repository root. First install the
+required collections and check the playbook syntax:
 
 ```sh
 ansible-galaxy collection install -r requirements.yml
 ansible-playbook -i production/hosts green_nesono.yml --syntax-check
+```
+
+### Initial server provisioning
+
+After `installimage`, prepare the local secrets described below and review the
+host-specific settings. Run the full playbook without a tag filter:
+
+```sh
+ansible-playbook -i production/hosts green_nesono.yml
+```
+
+This runs the `common`, `docker`, and `compose` roles in that order, including
+the provisioning and deployment tasks in the Compose role. Tasks explicitly
+tagged `never`, such as Docker package removal, remain excluded by default.
+
+The `provision` tag is a task filter, not an automatic prerequisite for
+`hot_compose`. Running only `--tags provision` does not install the complete
+host setup or start the services.
+
+### Routine deployment to an existing server
+
+Once the server has been provisioned, apply service configuration changes with:
+
+```sh
 ansible-playbook -i production/hosts green_nesono.yml --tags hot_compose
 ```
 

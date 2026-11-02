@@ -1,9 +1,12 @@
 # Nesono infrastructure
 
-This repository manages `green`, a self-hosted Ubuntu 22.04.5 LTS server at
-Hetzner, using Ansible and Docker Compose. The production inventory is
-[production/hosts](production/hosts). Routine changes are made in this repository
-and copied to the server by Ansible.
+This repository manages self-hosted services on Hetzner servers running Ubuntu,
+using Ansible and Docker Compose. Server instances alternate between the names
+`blue` and `green` during migrations; these names identify instances rather
+than a permanent server. The current instance is `green`, running Ubuntu
+22.04.5 LTS, and is configured in [production/hosts](production/hosts).
+The commands below use the current `green_nesono.yml` playbook. Routine changes
+are made in this repository and copied to the server by Ansible.
 
 ## Current services
 

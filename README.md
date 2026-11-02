@@ -1,60 +1,72 @@
-# Nesono Infrastructure Readme
+# Nesono infrastructure
 
-This repository is used to provision my personal servers.
-I am using a docker compose setup, since Kubernetes hasn't worked for me out of the box
-and Docker compose seemed like a simple alternative that still provides infra
-as code (IaC) for my server setup.
+This repository manages self-hosted services on Hetzner servers running Ubuntu,
+using Ansible and Docker Compose. Server instances alternate between the names
+`blue` and `green` during migrations; these names identify instances rather
+than a permanent server. The current instance is `green`, running Ubuntu
+22.04.5 LTS, and is configured in [production/hosts](production/hosts).
+The commands below use the current `green_nesono.yml` playbook. Routine changes
+are made in this repository and copied to the server by Ansible.
 
-All services are defined in one yaml, which is addressed as the `stack` in
-Docker compose on the server host.
+## Current services
 
-For http, I am using the `nginx-proxy` setup, in combination with a `docker-gen`
-container and the `nginx-proxy-acme` container that handles the letsencrypt certificates.
+The service definitions, image tags, mounts, networks, and secrets are in
+[roles/compose/files/docker-compose.yaml](roles/compose/files/docker-compose.yaml).
 
-Note, that I am using a documentation http container for the email setup, that
-also has the side effect of fetching the TLS certs, that are then used by the
-email server (dovecot and postfix). Hence, the email containers depend on the http
-container.
+| Area | Services |
+| --- | --- |
+| HTTPS and certificates | Nginx, docker-gen, acme-companion |
+| Mail | Postfix with integrated spam/signing milters, Dovecot, PostfixAdmin, Roundcube, MySQL, PostgreSQL |
+| Cloud | Two Nextcloud instances, each with MariaDB and Redis |
+| Websites and Git | WordPress with MySQL, static Nginx sites, Gitea with PostgreSQL |
+| Monitoring | Prometheus, Grafana, Loki, Alloy, node_exporter, postfix_exporter |
+| Host protection and backups | Fail2ban, Borgmatic |
 
-To ensure that the mail TLS certificates get reloaded every week (Sunday), add
-the following two lines to your crontab (invoking `crontab -e`):
+The `mail_nesono_com` HTTP service requests certificates for the mail hostnames.
+Postfix and Dovecot mount the resulting certificates. There is no separate
+milter service: the milters run in the custom Postfix image.
 
-```shell
-# m h  dom mon dow   command
-# Make sure that user 33 is www-data in the container!
-*/5 *  *   *   *     bash -c 'docker exec --user 33 `docker ps -q -f name=docker-compose-cloud_nesono_com\\\.` php -f cron.php'
-*/5 *  *   *   *     bash -c 'docker exec --user 33 `docker ps -q -f name=docker-compose-cloud_noerpel_com\\\.` php -f cron.php'
-5   4  *   *   Sun   bash -c 'docker kill -s HUP `docker ps -q -f name=docker-compose-dovecot\\\.`'
-5   4  *   *   Sun   bash -c 'docker kill -s HUP `docker ps -q -f name=docker-compose-postfix\\\\.`'
-5   5  *   *   Sun   bash -c 'docker compose -f /svc/volumes/docker-compose/docker-compose.yaml up -d --pull always'
-5   7  *   *   Sun   bash -c 'docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec cloud_nesono_com php occ db:add-missing-indices'
-5   7  *   *   Sun   bash -c 'docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec cloud_noerpel_com php occ db:add-missing-indices'
+## Configuration and persistent data
 
-```
+| Location | Purpose |
+| --- | --- |
+| `roles/compose/files/` | Version-controlled Compose file and service configuration |
+| `roles/compose/templates/dovecot/` | SQL configuration rendered with local secrets |
+| `secrets/secret_*.txt` on the Ansible controller | Deployment credentials; excluded from Git |
+| `/svc/volumes/docker-compose/docker-compose.yaml` | Deployed Compose file |
+| `/svc/volumes/` | Persistent application data and service configuration |
+| `/svc/volumes/php/security.ini` | PHP settings shared by PostfixAdmin, Roundcube, and WordPress |
+| `/svc/volumes/acme/certs/` | Managed TLS certificates |
+| `/var/docker_compose_secrets/` | Secret files mounted into containers under `/run/secrets/` |
+| `/usr/local/sbin/backup.sh` | Optional manual cold-backup command installed by Ansible |
 
-## Placeholders
+Named Compose volumes mostly bind to directories under `/svc/volumes`.
+Changing or recreating a container is separate from deleting its persistent
+data. The mail store uses UID 3000 and GID 8; keep these consistent with the
+custom Postfix image and Dovecot userdb configuration.
 
-We use the following placeholders in this README:
+Host-local settings also matter: root's crontab, SSH access, host mail
+notifications, and the installed operating system are not fully described by
+the Compose file. The root crontab is maintained manually, not by this playbook.
 
-* `<ip.address>` for the IP address of your server
-* `<example.com>` for the main domain of your server
-* `<example.link` an alternative domain to your server
+## Bootstrap a Hetzner server with installimage
 
-## Fresh installation (after FreeBSD Migration)
+Use Hetzner's Rescue System and
+[installimage](https://docs.hetzner.com/robot/dedicated-server/operating-systems/installimage/)
+to install the host operating system before provisioning it with Ansible.
 
-Start the Hetzner Rescue system
+1. Log in to Hetzner Robot and activate the Linux Rescue System for the server.
+2. Reboot the server into Rescue using Robot's reset controls.
+3. Connect as `root@<server-ip>` using the Rescue credentials.
+4. Select an Ubuntu image with `installimage` and adapt its configuration for
+   the server's disks and hostname.
 
-* Login into [hetzner your server](https://hetzner.your-server.de)
-* Go to Rescue tab, select Linux 64-bit
-* Enable Rescue system
-* Remember Credentials
-* Go to Reset tab and send `Ctrl-Alt-Del` to server
-* Login with rescue credentials as `root@<ip.address>`
+The RAID-1/Btrfs layout used by this setup is shown below. Replace the drive
+paths, hostname, and `IMAGE` path with values for the target server and the
+Ubuntu image available in Rescue. Installation erases the selected drives.
 
-Create a config file for installimage
-
-```bash
-cat <<-ENDOFFILE > installimage.conf
+```sh
+cat > installimage.conf <<'CONFIG'
 DRIVE1 /dev/sda
 DRIVE2 /dev/sdb
 SWRAID 1
@@ -65,658 +77,391 @@ SUBVOL btrfs.raid    @        /
 SUBVOL btrfs.raid    @var     /var
 SUBVOL btrfs.raid    @svc     /svc
 SUBVOL btrfs.raid    @tmp     /tmp
-IMAGE /root/.oldroot/nfs/install/../images/Ubuntu-2004-focal-64-minimal.tar.gz
-ENDOFFILE
+IMAGE <full-path-to-ubuntu-image.tar.gz>
+CONFIG
 ```
 
-Install the image
+After reviewing the configuration, run the installation in the Rescue shell:
 
-```bash
+```sh
 installimage -a -c installimage.conf
 ```
 
-## Set Up Backups
+Once installation finishes, reboot into the installed system. Confirm SSH
+access and update `production/hosts` if the server address changed, then use
+the Ansible roles below to provision the host, Docker, and Compose services.
+Restore the host-local crontab and backup access as part of rebuilding a server.
 
-Run the ansible playbook the first time to create the provisioning:
+## Provision and deploy from the local checkout
 
-```bash
-ansible-playbook --tags provision -i production/hosts green_nesono.yml
+Run Ansible on the controller, from the repository root. First install the
+required collections and check the playbook syntax:
+
+```sh
+ansible-galaxy collection install -r requirements.yml
+ansible-playbook -i production/hosts green_nesono.yml --syntax-check
 ```
 
-Upload the public ssh keys to the storage box by logging into your server and running the following command
+### Initial server provisioning
 
-```bash
-cat /svc/volumes/borgmatic/keys/id_ssh_rsa.pub | ssh -p23 uXXXXXX@uXXXXXX.your-backup.de install-ssh-key
+After `installimage`, prepare the local secrets described below and review the
+host-specific settings. Run the full playbook without a tag filter:
+
+```sh
+ansible-playbook -i production/hosts green_nesono.yml
 ```
 
-You will need to enter te password of your backup server.
-Upon sucessful execution, you should see the following output:
+This runs the `common`, `docker`, and `compose` roles in that order, including
+the provisioning and deployment tasks in the Compose role. Tasks explicitly
+tagged `never`, such as Docker package removal, remain excluded by default.
 
-```bash
-Key No. 1 (ssh-rsa ) was installed in RFC4716 format
-Key No. 1 (ssh-rsa ) was installed in OpenSSH format
+The `provision` tag is a task filter, not an automatic prerequisite for
+`hot_compose`. Running only `--tags provision` does not install the complete
+host setup or start the services.
+
+### Routine deployment to an existing server
+
+Once the server has been provisioned, apply service configuration changes with:
+
+```sh
+ansible-playbook -i production/hosts green_nesono.yml --tags hot_compose
 ```
 
-You can verify a successful setup by logging in (and running `ls` for instance)
+Use a checkout containing the latest merged changes. Deploying an older PR
+branch can revert unrelated service images and settings.
 
-```bash
-ssh -p23 -i /svc/volumes/borgmatic/keys/id_ssh_rsa uXXXXXX@uXXXXXX.your-backup.de ls
+The `hot_compose` tasks copy the Compose file and selected service configuration,
+render the Dovecot SQL files, and run `docker compose up --wait --remove-orphans`
+on the server. They reconcile the whole Compose project, not just the service
+edited in the current change. They also require the local mail database secret
+files used by the Dovecot templates.
+
+Deployment does not explicitly pull every image. Pulling updated images under
+existing tags is a separate operation, also performed by the host's scheduled
+update command.
+
+| Tag | Scope |
+| --- | --- |
+| `hot_compose` | Routine configuration and Compose deployment |
+| `provision` | Initial directories, secret copies, and selected configuration; does not include all deployment tasks |
+| `backup_script` | Install or update the manual cold-backup script |
+| `compose` | The entire Compose role, including provisioning tasks |
+
+The `common` and `docker` roles configure the host and Docker installation.
+Full provisioning includes host-specific filesystem quotas, ownership changes,
+and possible service restarts. Review those tasks before using them to provision
+the freshly installed server or rebuild the existing installation.
+
+### Secrets
+
+Keep the required `secret_*.txt` files in the controller's `secrets/` directory.
+The copy tasks in
+[roles/compose/tasks/main.yaml](roles/compose/tasks/main.yaml) define the required
+files and their ownership. The Compose file defines their container mounts.
+
+Provisioning copies secrets to `/var/docker_compose_secrets`. Routine
+`hot_compose` deployment does not refresh all secret files. Coordinate secret
+changes with the relevant configuration and container recreation. Never commit
+the secret files or generated SQL configuration containing passwords.
+
+## Operate on the server
+
+The server-side commands below assume you are logged in as root.
+
+For the interactive commands below, define this shell helper on the server:
+
+```sh
+dc() {
+  docker compose -f /svc/volumes/docker-compose/docker-compose.yaml "$@"
+}
 ```
 
-Initialize the backup folder
+Use service names rather than generated container IDs:
 
-```bash
-borg init --encryption=repokey-blake2 ssh://uXXXXXX@uXXXXXX.your-backup.de:23/home/green
+```sh
+dc ps -a
+dc logs --tail 100 postfixadmin
+dc exec dovecot doveconf -n
+dc exec postfix postqueue -p
 ```
 
-### Run Backup Commands
+Postfix, Dovecot, Grafana, and Gitea send logs to the host's syslog. Check
+`/var/log/syslog` for those services; container logs alone may not show the
+relevant errors. Avoid sharing startup logs or generated configuration without
+checking for credentials.
 
-#### Manual cold backup
+To pull and apply images from the deployed Compose file:
 
-`backup.sh` stops all currently running Compose services except Borg, creates an
-archive, and starts those services again. Applications stop before databases.
-The script aborts on a forced shutdown and attempts to restart services even if
-the backup fails. All websites, cloud services, and mail access are unavailable
-for the entire archive creation. Use a maintenance window and a persistent
-terminal such as tmux; do not deploy or run other service-management commands
-during the backup.
+```sh
+dc up -d --pull always
+```
 
-Install the script using Ansible from this directory:
+To restart just one existing service:
+
+```sh
+dc restart grafana
+```
+
+A restart does not apply a changed image, environment, or mount definition.
+Use Compose `up` after deploying those changes. An `up --wait` failure can mean
+a startup health check failed; inspect `dc ps -a` and the affected service's
+health-check output before assuming the whole deployment failed.
+
+## Host crontab
+
+Inspect and edit the installed schedule on the server:
+
+```sh
+crontab -l
+crontab -e
+timedatectl
+```
+
+The host runs in `Europe/Berlin`. Its root crontab was checked on 2026-11-01
+and schedules the following jobs in host local time (CET/CEST):
+
+| Schedule | Installed job |
+| --- | --- |
+| Every five minutes | Background jobs for both Nextcloud instances |
+| Sunday 04:05 | Reload Dovecot and Postfix certificates |
+| Sunday 05:05 | Pull and apply Compose images |
+| Sunday 07:05 | Add missing database indices for both Nextcloud instances |
+
+The installed Nextcloud background jobs and certificate reloads still select
+containers using old dot-style name filters. All four filters currently match
+zero containers: the Nextcloud and Dovecot names end in `-1`, and Postfix is
+named `postfix`. Those four scheduled commands therefore do not perform their
+intended work.
+
+The following is a proposed replacement for those seven installed job lines,
+keeping their existing schedule but using Compose service names. It also runs
+Nextcloud maintenance as `www-data` and disables TTY allocation for cron.
+**These replacement commands have not been installed on the server.**
+
+```cron
+# Nextcloud background jobs, every five minutes, as the web-server user.
+*/5 * * * * docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_nesono_com php -f /var/www/html/cron.php
+*/5 * * * * docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_noerpel_com php -f /var/www/html/cron.php
+
+# Reload mail TLS certificates on Sunday.
+5 4 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T dovecot doveadm reload
+5 4 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T postfix postfix reload
+
+# Pull and apply updated images on Sunday.
+5 5 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml up -d --pull always
+
+# Nextcloud index maintenance on Sunday.
+5 7 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_nesono_com php occ db:add-missing-indices
+5 7 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_noerpel_com php occ db:add-missing-indices
+```
+
+These lines belong in root's user crontab, so they have no separate username
+field. They are not installed by Ansible. The interactive `dc` helper is not
+available to cron.
+
+Borgmatic has a separate in-container schedule, described below. Avoid
+overlapping image updates, deployments, and cold backups.
+
+## Backups
+
+[Borgmatic configuration](roles/compose/files/borgmatic/config.yaml) backs up
+`/svc/volumes`, mounted read-only at `/mnt/source`, to a Hetzner Storage Box over
+SSH port 23. The configuration specifies retention and repository checks.
+The passphrase and notification credentials come from Docker secrets.
+
+The backup covers the mounted volume tree, subject to its configured
+`one_file_system` boundary. It does not include the controller checkout, root's
+crontab, or `/var/docker_compose_secrets`. Keep separate recoverable copies of
+those settings and credentials.
+
+### Scheduled live backup
+
+[Borgmatic's crontab](roles/compose/files/borgmatic/crontab.txt) runs daily at
+03:00 in the backup container, which is configured with `TZ=UTC`.
+This is a live file backup: it does not stop applications or databases.
+
+From the server shell, list archives or run the configured backup:
+
+```sh
+dc exec -T borg-backup sh -ec 'export BORG_PASSPHRASE="$(cat "$BORG_PASSPHRASE_FILE")"; exec borgmatic list'
+dc exec -T borg-backup sh -ec 'export BORG_PASSPHRASE="$(cat "$BORG_PASSPHRASE_FILE")"; exec borgmatic'
+```
+
+For an interactive backup-container shell:
+
+```sh
+dc exec borg-backup sh
+export BORG_PASSPHRASE="$(cat "$BORG_PASSPHRASE_FILE")"
+```
+
+### Manual cold backup
+
+Install or update the script from the controller:
 
 ```sh
 ansible-playbook -i production/hosts green_nesono.yml --tags backup_script
 ```
 
-Then run it on the server as root:
+Run it on the server in a persistent terminal such as tmux:
 
 ```sh
-sudo /usr/local/sbin/backup.sh
+/usr/local/sbin/backup.sh
 ```
 
-The script uses `stop`/`start`, preserving containers and leaving previously
-stopped services stopped. Cleanly stopped database files are included in the
-existing `/svc/volumes` backup. Restore database files with compatible database
-image versions, and test a restore before relying on the archive.
+The script stops currently running services except Borg, stopping applications
+before databases. It aborts if a database was forcibly killed, creates an
+archive, and restarts the services that were previously running. Websites,
+cloud services, and mail access are unavailable throughout the archive creation.
 
-This is manual only. The existing 03:00 UTC in-container backup remains a live
-backup; avoid overlapping it with this command. Pruning and checks remain with
-that existing job, so they do not extend the cold backup's downtime. A host crash
-or SIGKILL bypasses cleanup; if that happens, restart the affected services with
-`docker compose -f /svc/volumes/docker-compose/docker-compose.yaml start`.
+Do not deploy or run service-management commands during the backup, and avoid
+the scheduled live backup. Pruning and checks stay with the scheduled job.
+Restore database files with compatible database image versions and test the
+restore procedure.
 
-#### Existing live backup commands
+If a host crash or SIGKILL prevents cleanup, inspect service state and restart
+the intended services with `dc start`. That command also starts services that
+were deliberately stopped before the backup, so check before running it.
 
-Start a borgmatic shell with the following commands:
+Storage Box connection details and retention live in the Borgmatic config.
+Its SSH key is under `/svc/volumes/borgmatic/keys/`; access to a replacement
+Storage Box must be authorized before relying on backups.
 
-```bash
-docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T borg-backup sh -c 'export BORG_PASSPHRASE=$(cat $BORG_PASSPHRASE_FILE)'
+## Mail administration
+
+- PostfixAdmin: `https://postfixadmin.nesono.com`
+- Roundcube: `https://roundcube.nesono.com`
+- IMAP: `imap.nesono.com:993` with TLS, or port 143 with STARTTLS.
+- SMTP submission: `smtp.nesono.com:465` with TLS, or port 587 with STARTTLS.
+- ManageSieve: `sieve.nesono.com:4190` with STARTTLS.
+- Port 25 is also exposed for incoming server-to-server SMTP.
+
+Postfix uses Dovecot's shared UNIX sockets for authentication and LMTP delivery.
+Basic container health checks do not prove that mailbox authentication works.
+
+New and changed PostfixAdmin passwords use Argon2id. Legacy MD5-CRYPT hashes
+remain supported by `auth_allow_weak_schemes = yes` until the remaining accounts
+are migrated. Keep the explicit scheme prefixes on stored hashes; changing the
+default does not rehash existing passwords. Disable weak schemes only when no
+accounts still require them.
+
+For an initial PostfixAdmin administrator, use its `setup.php` page and the
+setup-password hash from `secrets/secret_postfixadmin_setup_password.txt`.
+Existing installations do not need to repeat setup on every deployment.
+
+### Connect to the mail database
+
+On the server:
+
+```sh
+dc exec mysql_mail sh -c 'MYSQL_PWD="$(cat /run/secrets/mysql_mail_root_password)" exec mysql -u root mailserver'
 ```
 
-List all borgmatic backups
+This uses the existing secret without printing it. Exit the MySQL shell with
+`exit;`. Take a database backup before manual credential or schema changes.
 
-```bash
-borgmatic list
+### Check mail TLS
+
+These commands connect without submitting passwords or sending messages:
+
+```sh
+openssl s_client -connect imap.nesono.com:993 -servername imap.nesono.com -verify_return_error
+openssl s_client -starttls imap -connect imap.nesono.com:143 -servername imap.nesono.com -verify_return_error
+openssl s_client -connect smtp.nesono.com:465 -servername smtp.nesono.com -verify_return_error
+openssl s_client -starttls smtp -connect smtp.nesono.com:587 -servername smtp.nesono.com -verify_return_error
 ```
 
-Run borgmatic immediately
+Certificate reloads can normally use `dc exec dovecot doveadm reload` and
+`dc exec postfix postfix reload`. Changes to authentication settings may require
+a Dovecot restart if old authentication workers retain their previous state.
 
-```bash
-borgmatic
+### Create a DKIM signing key
+
+When rebuilding a server, restore the existing `secret_opendkim_key.txt` and
+keep its matching selector and DNS records. Generate a new key only for initial
+setup or an intentional key rotation.
+
+On the server, `opendkim-tools` provides `opendkim-genkey`. Choose a new selector
+and a signing domain, then generate the private key and public DNS record in a
+private working directory:
+
+```sh
+selector=2026-11-02
+domain=example.com
+key_dir=$(mktemp -d /root/dkim.XXXXXX)
+umask 077
+opendkim-genkey -b 2048 -s "$selector" -d "$domain" -D "$key_dir"
+cat "$key_dir/$selector.txt"
 ```
 
-Single command for the impatient:
+The files are `$selector.private` and `$selector.txt`. Copy the private key
+securely to `secrets/secret_opendkim_key.txt` on the Ansible controller; never
+commit it. Provisioning installs it as
+`/var/docker_compose_secrets/secret_opendkim_key.txt`, mounted in Postfix at
+`/run/secrets/opendkim_key`.
 
-```bash
-docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T borg-backup sh -c 'export BORG_PASSPHRASE=$(cat $BORG_PASSPHRASE_FILE) && borgmatic'
+Publish the generated TXT record at `<selector>._domainkey.<domain>`. In a DNS
+provider's value field, use the generated `v=DKIM1; ... p=...` value rather than
+the surrounding zone-file syntax. This setup shares one signing key across
+`DKIM_DOMAINS`, which accepts a comma-separated list such as
+`example.com,example.net`. Publish the matching public key at
+`<selector>._domainkey` in each domain's DNS zone. The `$domain` variable passed
+to `opendkim-genkey -d` above is a single domain; the comma-separated list belongs
+in the Postfix service's `DKIM_DOMAINS` setting.
+
+For rotation, publish the new records and allow DNS propagation before deploying
+the new secret and matching `DKIM_SELECTOR`. The current selector in Compose is
+`2023-01-04`; the date above is an example for a new key. Recreate Postfix after
+deploying the updated secret and Compose configuration so its integrated
+OpenDKIM process loads the new key. Keep the old public records available while
+messages signed with the previous selector are still in transit.
+
+Check each domain's published key with:
+
+```sh
+opendkim-testkey -d "$domain" -s "$selector" -k "$key_dir/$selector.private" -vvv
 ```
 
-## Create secret files
+### Add a mail domain
 
-The following secrets are necessary during deployment and ansible will try to
-fill those based on the task in `roles/compose/tasks/main.yaml`. Make sure you
-create the files with the correct content - **the files shall never be added to
-any revision control of course!**
+Add the domain and mailboxes in PostfixAdmin. Configure its MX, SPF, DKIM, and
+DMARC DNS records to match this mail server. The current signing domains,
+selector, and key-secret path are defined by `DKIM_DOMAINS`, `DKIM_SELECTOR`,
+and `DKIM_KEY_PATH` in the Postfix service. Update the signing configuration
+when adding a domain and publish the matching public key; keep the private
+key in the secret file.
 
-Examples of the used files (see the full listing in the file mentioned above):
+## Nextcloud
 
-* `secret_borgmatic_passphrase.txt`
-* `secret_gitea_db_password.txt`
-* `secret_gitea_db_user.txt`
-* `secret_gitea_mailer_password.txt`
-* `secret_gitea_mailer_user.txt`
-* `secret_mysql_mail_password.txt`
-* `secret_mysql_mail_root_password.txt`
-* `secret_mysql_mail_user.txt`
-* `secret_opendkim_key.txt`
-* `secret_postfixadmin_setup_password.txt`
-* `secret_robot_mail_password.txt`
-* `secret_robot_mail_user.txt`
-* `secret_roundcube_db_password.txt`
-* `secret_roundcube_db_user.txt`
+The two services are `cloud_nesono_com` and `cloud_noerpel_com`. Each has separate
+database, Redis, application, configuration, and data storage. Use the host
+cron jobs above for background processing.
 
-The files contents can be stored in 1Password with a specific prefix, e.g. `green:...`
+Run `occ` as the container's web-server user:
 
-## Node Provisioning
-
-Install ansible and ansible-lint on your host
-(e.g. `pip3 install ansible`).
-
-Then run the following command to provision the node.
-
-```bash
-ansible-playbook --tags never,all -i production/hosts green_nesono.yml
+```sh
+dc exec --user www-data cloud_nesono_com php occ status
+dc exec --user www-data cloud_noerpel_com php occ status
+dc exec --user www-data cloud_nesono_com php occ db:add-missing-indices
 ```
 
-## Setup Postfixadmin
-
-### Restore from Backup
-
-Get the MySQL backup (if you have a FreeBSD installation with jails)
-
-```bash
-jexec db_delado_co mysqldump mailserver --single-transaction | gzip -9 > mysqldump.sql.gz
-```
-
-You can put this file into the directory `/svc/volumes/mysql_mail_init_db` on
-the server. We are mounting this directory into the MySQL Docker container for
-automatic initialization.
-
-In our case, we had to fix some database table definitions /
-configurations, mostly the default values for timestamps.
-
-### Install Postfixadmin
-
-After running Ansible, you will need to go through the installation process as follows.
-
-#### Generate Postfixadmin Setup Password
-
-1. Visit `postfixadmin.<example.com>`
-2. Fill in the new password in `Generate setup_password` (twice)
-3. Press `Generate setup_password hash`
-4. Copy the password hash
-5. Paste the password hash into the setup password secret file
-   `roles/compose/files/secret_mail_postfixadmin_setup_password.txt`
-6. Take down the deployment with `docker compose down`
-7. Run ansible again `ansible-playbook --tags compose -i production/hosts green_nesono.yml`
-
-#### Log in With Setup Password
-
-1. Visit `postfixadmin.<example.com>`
-2. Enter Setup Password
-3. Check if hosting environment is ok
-4. Setup Superadmin Account
-
-### Copy the Mail data
-
-First rsync of the old mails to the new instance. In my example, that was as follows.
-
-```bash
-rsync -avz --delete blue:/usr/jails/mail.<example.com>/var/spool/postfix/virtual/ /svc/volumes/mail
-```
-
-Once the new mail server works, you can run a final rsync as above.
-Keep the old instance disabled and switch DNS entries to the new instance.
-
-Make sure all mail data has the right permissions (the vmail UID 3000 is defined in the postfix image)
-
-```bash
-chown -R 3000:8 /svc/volumes/mail
-chmod -R u+w /svc/volumes/mail
-```
-
-Convenience command to run them all together - keep the vmail user id in sync with the postfix image
-
-```bash
-rsync -avz --delete blue:/usr/jails/mail.<example.com>/var/spool/postfix/virtual/ /svc/volumes/mail && \
-  chown -R 3000:8 /svc/volumes/mail && \
-  chmod -R u+w /svc/volumes/mail
-```
-
-## Create DKIM Selector and Key
-
-Create a DKIM txt and key file using the following command.
-
-```bash
-opendkim-genkey -t -s 2023-01-04 -d <example.com>,<example.link>,...
-```
-
-Note that the only domains you need to list with the `-d` option are the domains under which your mailserver is running.
-You can use the same mailserver (e.g. example.com), even if other domains use it in their DNS MX record.
-
-The command above will create two files:
-1. `2023-01-04.private` with the private key
-2. `2023-01-04.txt` containing the DNS record
-
-You will need to add a DNS record for every domain, using the data in `2023-01-04.txt`. In our example these are
-1. `2023-01-04._domainkey.<example.com>`
-2. `2023-01-04._domainkey.<example.link>`
-3. `...`
-
-The file `2023-01-04.txt` contains the DNS TXT record. Here is my example:
-
-```
-2023-01-04._domainkey	IN	TXT	( "v=DKIM1; h=sha256; k=rsa; t=y; "
-	  "p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxW3loYuv7Owf9CSurIKRgtNw0GYQg7RGH41mOgb9VP5vpQNL/V3dtgo8qjkZ7afY81RFyZ48ZSKspGOfBzumJTAECsxeCjmdvpcMTWxwyNZ3uxjkb6JYwfLxh7IYbcu/+Cdcpfdxl2nQ4jx8P6zQZUbLvDKHp2DWic4KJhVdMcWXARYzwRxVZMT4PBB3OJq3aa5h4yUIOqJ+1s"
-	  "Vx8Co5N6f6OnVG89zAxTBTx568VVEzhPtpG8TU6JLiCJj1K/0xLmmOu7jJFicdw56dZiZc9vUJ9QiC/Q9m5yclMQAvEeGVQok1Sig1+gqkO18x6f6TJrN2jXzPJHliI1PHR/8ulQIDAQAB" )  ; ----- DKIM key 2023-01-04 for <example.com>
-```
-
-You will need to create a TXT record for your domain (`<example.com>` in my example) that points to the host
-`2023-01-04._domainkey` and has the value (change the multi-string to a single string - Cloudflare
-will handle the rest):
-
-* Type: `TXT`
-* Name: `2023-01-04._domainkey`
-* Content: `v=DKIM1; h=sha256; k=rsa; t=y; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxW3loYuv7Owf9CSurIKRgtNw0GYQg7RGH41mOgb9VP5vpQNL/V3dtgo8qjkZ7afY81RFyZ48ZSKspGOfBzumJTAECsxeCjmdvpcMTWxwyNZ3uxjkb6JYwfLxh7IYbcu/+Cdcpfdxl2nQ4jx8P6zQZUbLvDKHp2DWic4KJhVdMcWXARYzwRxVZMT4PBB3OJq3aa5h4yUIOqJ+1sVx8Co5N6f6OnVG89zAxTBTx568VVEzhPtpG8TU6JLiCJj1K/0xLmmOu7jJFicdw56dZiZc9vUJ9QiC/Q9m5yclMQAvEeGVQok1Sig1+gqkO18x6f6TJrN2jXzPJHliI1PHR/8ulQIDAQAB`
-
-**Note**: I had to move the DNS handling from [Hover](https://www.hover.com) to [Cloudflare](https://www.cloudflare.com),
-since Hover did not support the long (>255 characters) TXT record values.
-
-## Adding SPF Record
-
-Add the following DNS record to your DNS configuration.
-
-* Type: `TXT`
-* Name: `@`
-* Content: `v=spf1 mx ~all` or `v=spf1 mx ip4:<ip.address> ~all` to add a second server that does not resolve backwards to `smtp.<example.com>`
-
-## Testing Your Mail Server Spam Tools
-
-Open [Mail-Tester](https://www.mail-tester.com) and check your score. It will show you any issues with
-SPF, DKIM, DMARC, SPAMASSASSIN, Pyzor, etc.
-
-## Adding a New Mail Domain
-
-1. Add DNS records
-   1. TXT `selector._domainkey` `...`
-   2. TXT `@` `v=spf1 mx ip4:<ip.address> ~all`
-   3. TXT `_dmarc` `v=DMARC1;p=reject;pct=100;rua=mailto:dmarc@<example.com>`
-2. Add to Postfixadmin (`Menu -> Domain List -> New Domain`)
-
-## Migrating cgitrc Git Repostitories to Gitea
-
-Get the `cgitrc` file from the server, on FreeBSD it's located under `/usr/jails/git.nesono.com/usr/local/etc/cgitrc`.
-
-Then convert it to a file where each line contains the repo and description separated by tab.
-
-```bash
-cat cgitrc | grep -e '\(repo.url\|repo.desc\)' | \
-  sed -E 's/(repo.url|repo.desc)=/\1 /' | \
-  awk '{if ($1 == "repo.url") { printf $2"\t"; } else { for (i=2; i<NF; i++) printf $i " "; print $NF }}' \
-  > repolist.csv
-```
-
-Make sure you have the ssh key and fingerprint accepted on the host where you run the migration.
-For instance,
-
-1. Create a new repo
-2. Create an SSH key if you need one (`ssh-keygen`)
-3. Upload the key to Gitea
-4. Verify the key with Gitea
-
-Then, create repositories in Gitea for each line in `repolist.csv` using the following script.
-
-```bash
-#!/usr/bin/env bash
-set -o errexit -o pipefail -o nounset
-
-mkdir -p tmp_repo_migration
-
-readonly REPOLIST="$1"
-readonly TOKEN="$2"
-readonly OWNER="$3"
-
-delete_gitea_repository() {
-    local owner="$1"
-    local name="$2"
-    curl -X 'DELETE' \
-  "https://gitea.nesono.com/api/v1/repos/${owner}/${name%.git}?token=${TOKEN}" \
-  -H 'accept: application/json'
-}
-
-create_gitea_repository() {
-    local name="$1"
-    local description="$2"
-    curl -X 'POST' \
-  "https://gitea.nesono.com/api/v1/user/repos?token=${TOKEN}" \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d "{
-  \"default_branch\": \"master\",
-  \"auto_init\": true,
-  \"description\": \"${description}\",
-  \"name\": \"${name%.git}\",
-  \"private\": false
-}"
-}
-
-while IFS=$'\t' read -r url description; do
-    echo "Processing $url"
-    pushd tmp_repo_migration
-    if [[ ! -d "${url%.git}" ]]; then
-        echo "Clone repo"
-        git clone ssh://git@nesono.com:2222/${url}
-    fi
-
-    echo "Change into repo"
-    pushd ${url%.git}
-
-    new_name=$(echo "${url%.git}.git" | tr "[:upper:]" "[:lower:]")
-
-    echo "Delete old repo on Gitea"
-    delete_gitea_repository ${OWNER} ${new_name}
-    sleep 2
-
-    echo "Create new repo at Gitea"
-    create_gitea_repository "${new_name}" "${description}"
-
-    if [[ -z "$(git remote get-url gitea)" ]]; then
-        echo "Add Gitea as remote"
-        git remote add gitea ssh://git@gitea.nesono.com:2222/iss/${new_name}
-    fi
-
-    echo "Push all refs to Gitea"
-    git push --all --force gitea
-    echo "Go back directories"
-    popd # ${url%.git}
-    popd # tmp_repo_migration
-done < "${REPOLIST}"
-```
-
-## Useful Commands
-
-### Testing SMTP Connection w/ STARTTLS
-
-```bash
-openssl s_client -starttls smtp -connect smtp.<example.com>:25
-```
-
-### Testing SMTP Connection w/o STARTTLS
-
-```bash
-openssl s_client -connect smtp.<example.com>:465
-```
-
-### Testing IMAP Connection w/o STARTTLS
-
-```bash
-openssl s_client -connect imap.<example.com>:993
-```
-
-### Testing IMAP Connection w/ STARTTLS
-
-```bash
-openssl s_client -starttls imap -connect imap.<example.com>:143
-```
-
-### Making ss Available in Debian-Based Container
-
-Install the `iproute2` package:
-
-```bash
-apt update && apt install iproute2
-```
-
-### Make lsof Available in Debian-Based Container
-
-Install the `lsof` package
-
-```bash
-apt update && apt install lsof
-```
-
-### Applying Docker compose changes
-
-```bash
-ansible-playbook --tags compose -i production/hosts green_nesono.yml
-```
-
-### Forcing a Docker Compose Refresh (on the Server)
-
-```bash
-cd /var/run/docker_compose/services/stack
-docker stack deploy --compose-file docker_compose.yml stack
-```
-
-### Test the HTTP service
-
-```bash
-curl -kivL -H 'Host: the.<example.link>' 'https://<ip.address>'
-```
-
-### Testing opendkim DNS entry
-
-```bash
-opendkim-testkey -d <example.com> -s 2023-01-04 -vvv
-```
-
-### Testing if the Mailserver is Safe
-
-Try the SMTP test on [mxtoolbox](https://mxtoolbox.com)
-
-### Testing DNS entries broadly
-
-Using the webservice [DnsViz](https://dnsviz.net)
-
-### Testing dmarc DNS entry
-
-This needs the package `opendmarc-tools` installed.
-
-```bash
-opendmarc-check <example.com>
-```
-
-### Testing Sending Mails With and Without Authentication
-
-Get [smtp-cli](https://github.com/mludvig/smtp-cli) first, and make sure you have the required perl packages installed.
-
-Example without Auth:
-
-```bash
-smtp-cli/smtp-cli --server=smtp.<example.com>:25 --verbose --mail-from=user@<example.com> --to=recipient@<example.com> --subject="Invalid $(date)" --body-plain="Invalid $(date), not authenticated!"
-```
-
-Example with Auth:
-
-```bash
-smtp-cli/smtp-cli --server=smtp.<example.com>:25 --user=user@<example.com> --verbose --mail-from=user@<example.com> --to=recipient@<example.com> --subject="Valid $(date)" --body-plain="Valid $(date), authenticated!"
-```
-
-### Postfix Mail Queue Commands
-
-Print the queue
-
-```bash
-postqueue -p
-```
-
-Delete all messages in the queue
-
-```bash
-postsuper -d ALL
-```
-
-### Reset docker
-
-```bash
-systemctl restart docker.socket docker.service
-```
-
-### Accessing MySql via Terminal
-
-For instance the mail MySQL server.
-
-```bash
-docker exec -ti docker-compose-mysql_mail.1.frfbmnx9pefgfyc2c8n62b43h mysql -p
-```
-
-Getting the list of all virtual accounts from the mail server.
-
-```bash
-docker exec -ti <container_id> mysql -p -N -B mailserver -e "SELECT username FROM mailbox;"
-```
-### Check what ports are open in the container (no need for ss to be installed in the container)
-
-```bash
-sudo nsenter -t $(docker inspect -f '{{.State.Pid}}' <container_name_or_id>) -n ss -tunap
-```
-
-Note: you can run pretty much any host command within the namespace of the container using above command line.
-
-### Testing managesieve login
-
-First, start the connection to the mailserver
-```bash
-gnutls-cli --starttls -p 4190 mail.<example.com>
-```
-
-This should give you something similar to this output:
-
-```bash
-Processed 127 CA certificate(s).
-Resolving 'mail.<example.com>:4190'...
-Connecting to '<ip.address>:4190'...
-<ip.address>
-- Simple Client Mode:
-
-"IMPLEMENTATION" "Dovecot Pigeonhole"
-"SIEVE" "fileinto reject envelope encoded-character vacation subaddress comparator-i;ascii-numeric relational regex imap4flags copy include variables body enotify environment mailbox date index ihave duplicate mime foreverypart extracttext"
-"NOTIFY" "mailto"
-"SASL" ""
-"STARTTLS"
-"VERSION" "1.0"
-OK "Dovecot ready."
-```
-
-Then, initiate StartTLS
-
-```bash
-STARTTLS
-```
-
-And then press `Ctrl-D`, to let gnutls handle the STARTTLS process.
-This should give you something similar to this
-
-```bash
-> OK "Begin TLS negotiation now."
-*** Starting TLS handshake
-- Certificate type: X.509
-- Got a certificate list of 3 certificates.
-- Certificate[0] info:
- - subject `CN=mail.<example.com>', issuer `CN=R3,O=Let's Encrypt,C=US', serial 0x0415dd4a6e6a2ce9a7931fa2113ed8db9f1b, RSA key 4096 bits, signed using RSA-SHA256, activated `2022-11-29 18:56:08 UTC', expires `2023-02-27 18:56:07 UTC', pin-sha256="2uuU14K+QM4SIUb+oUUSTNCeBVuS8Vb6zmhymbWyxfA="
-	Public Key ID:
-		sha1:2f592ea0a8bfa8b9f7da21106730c1f68e0398ed
-		sha256:daeb94d782be40ce122146fea145124cd09e055b92f156face687299b5b2c5f0
-	Public Key PIN:
-		pin-sha256:2uuU14K+QM4SIUb+oUUSTNCeBVuS8Vb6zmhymbWyxfA=
-
-- Certificate[1] info:
- - subject `CN=R3,O=Let's Encrypt,C=US', issuer `CN=ISRG Root X1,O=Internet Security Research Group,C=US', serial 0x00912b084acf0c18a753f6d62e25a75f5a, RSA key 2048 bits, signed using RSA-SHA256, activated `2020-09-04 00:00:00 UTC', expires `2025-09-15 16:00:00 UTC', pin-sha256="jQJTbIh0grw0/1TkHSumWb+Fs0Ggogr621gT3PvPKG0="
-- Certificate[2] info:
- - subject `CN=ISRG Root X1,O=Internet Security Research Group,C=US', issuer `CN=DST Root CA X3,O=Digital Signature Trust Co.', serial 0x4001772137d4e942b8ee76aa3c640ab7, RSA key 4096 bits, signed using RSA-SHA256, activated `2021-01-20 19:14:03 UTC', expires `2024-09-30 18:14:03 UTC', pin-sha256="C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M="
-- Status: The certificate is trusted.
-- Description: (TLS1.3-X.509)-(ECDHE-SECP256R1)-(RSA-PSS-RSAE-SHA256)-(AES-256-GCM)
-- Session ID: D6:77:98:BC:6B:5A:76:5C:89:37:3B:AC:DD:45:36:CB:FA:80:F5:F5:EF:FE:E6:85:78:37:23:CD:99:0D:58:04
-- Options:
-"IMPLEMENTATION" "Dovecot Pigeonhole"
-"SIEVE" "fileinto reject envelope encoded-character vacation subaddress comparator-i;ascii-numeric relational regex imap4flags copy include variables body enotify environment mailbox date index ihave duplicate mime foreverypart extracttext"
-"NOTIFY" "mailto"
-"SASL" "PLAIN LOGIN"
-"VERSION" "1.0"
-OK "TLS negotiation successful."
-```
-
-Then, authenticate
-
-```bash
-AUTHENTICATE "PLAIN" "<base64_encoded_username_password>"
-```
-
-Which takes your username and password encoded with base64, using [this tool](http://pigeonhole.dovecot.org/utilities/sieve-auth-command.pl).
-
-## NextCloud Migration -- Example cloud.nesono.com
-
-### Gathering the Migration data
-
-MySQL / MariaDB initialization data:
-```bash
-jexec db_delado_co mysqldump cloud_nesono --single-transaction | gzip -9 > 2023-08-15_cloud_nesono.sql.gz
-```
-
-Commands to copy the NextCloud files:
-```bash
-rsync -avz --progress --delete -og --chown=www-data:www-data blue:/usr/jails/cloud.nesono.com/usr/local/www/nextcloud-data/ /svc/volumes/cloud_nesono_data/
-rsync -avz --progress --delete -og --chown=www-data:www-data blue:/usr/jails/cloud.nesono.com/usr/local/www/nextcloud/apps/ /svc/volumes/cloud_nesono_apps/
-```
-
-### Cleanup half-baked instance
-
-Delete volumes (make sure you disable the nextcloud and mariadb services first), except for Nextcloud data folders since they are expensive to sync.
-
-```bash
-rm -r /svc/volumes/cloud_nesono_apps /svc/volumes/cloud_nesono_config /svc/volumes/cloud_nesono_nextcloud /svc/volumes/mariadb_cloud_nesono_data/
-```
-
-### Executing the Final Migration
-
-1. Stopping the old instance
-2. Change DNS entry to the new instance
-3. Cleanup any half-baked instances on the new instance as mentioned above
-4. Syncing all the data again (copying NextCloud files as described above)
-5. Add Redis and MariaDB to your stack and let MariaDB fully initialize (Nextcloud would abort installation, if MariaDB
-   was still running)
-6. Add NextCloud to your stack and check that it can install correctly - fix issues using occ as mentioned below
-7. Add the system cronjob to run cron.php
-
-### Running Upgrades
-
-My first upgrade wasn't really going smoothly:
-Upgrading the apps failed at the mail app, and I was left in maintenance mode.
-
-Running `occ upgrade` and then disabling maintenance mode using `occ maintenance:mode --off` fixed the upgrade itself.
-Then I still had to go into the webui and also upgrade the calendar app and enable it (untested) again.
-
-Note: make sure you run the `occ` commands like the following:
-```bash
-docker exec -ti --user www-data $(docker ps -q -f name=docker-compose-cloud_nesono_com\\.) php occ
-```
-
-### Execute Migration
-
-1. Stop the old server
-2. Copy over the data as described above
-3. Deploy the server using Ansible
-4. Adapt the `config.php` as described above
-
-### Running Cron.php
-
-Open your crontab using `crontab -e` and add the following line (make sure that user ID 33 maps to www-data inside the container):
-```crontab
-*/5 *  *   *   *     bash -c 'docker exec --user 33 `docker ps -q -f name=docker-compose-cloud_nesono_com\.` php -f cron.php'
-```
-
-### Installing an MTU on the Main Host
-
-Install nullmailer: `apt install nullmailer`, to also get mails for cronjobs with output.
-
-And configure your remotes to contain the following:
-
-```text
-smtp.nesono.com smtp --port=25 --starttls --user=<yourmail@example.com> --pass='<yourpassword>'
-```
-
-## Grafana Bootstrapping
-
-To get the node exporter information on a dashboard, install/import a dashboard from grafana.com with the ID `1860`.
-
-## Further Reading
-
-* [Enabling SASL authentication for Postfix](https://www.postfix.org/SASL_README.html)
-* [Set up Managesieve with Dovecot](https://wiki.dovecot.org/Pigeonhole/ManageSieve/Troubleshooting)
-* [Part 4: How to Set up SPF and DKIM with Postfix on Ubuntu Server](https://www.linuxbabe.com/mail-server/setting-up-dkim-and-spf)
-* [Set Up OpenDMARC with Postfix on Ubuntu to Block Spam/Email Spoofing](https://www.linuxbabe.com/mail-server/opendmarc-postfix-ubuntu)
-* [Postfix Relay and Access Control](https://www.postfix.org/SMTPD_ACCESS_README.html)
-* [Understanding Postfix Percentile Reports](https://logreporters.sourceforge.net/faq.html#percentiles)
-* [Mail Blacklist Archive as used by iCloud](https://mxtoolbox.com)
-* [Testing IMAP by Dovecot](https://doc.dovecot.org/admin_manual/test_installation/#testing-installation)
-* [Managesieve Troubleshooting](https://doc.dovecot.org/3.0/configuration_manual/sieve/managesieve/troubleshooting/)
-* [Dovecot SSL Configuration](https://doc.dovecot.org/configuration_manual/dovecot_ssl_configuration/#dovecot-ssl-configuration)
+Follow Nextcloud's supported upgrade sequence when changing image versions.
+If an upgrade is incomplete, inspect its logs and `occ status` before deciding
+whether `occ upgrade` is needed. Disable maintenance mode only after the upgrade
+has completed successfully.
+
+## Monitoring
+
+Grafana uses `http://prometheus:9090` for metrics and `http://loki:3100` for logs
+on the private monitoring network. Loki has no published host port. Alloy reads
+the host syslog and sends it to Loki.
+
+Prometheus scrapes itself, node_exporter, Dovecot, and postfix_exporter according
+to [its configuration](roles/compose/files/prometheus/prometheus.yml).
+Grafana's dashboards and data-source definitions are stored in its persistent
+volume; they are not provisioned by Ansible. The existing dashboards include
+Node Exporter Full, Dovecot, and Postfix.
+
+If a dashboard reports a missing data source, check both the configured UID
+and Grafana's plugin status. A `Plugin not registered` error can occur even when
+the data-source record exists. Check the host syslog; restarting Grafana resolved
+that plugin-loading failure after the recent upgrade without exposing Loki.

@@ -5,12 +5,9 @@ playbooks still run as before. Start with a disposable **Ubuntu 22.04** host;
 the pilot deliberately rejects other releases because it preserves the original
 role's global pip installation, which newer Ubuntu releases restrict.
 
-Install on the controller with Python 3.10 or newer, from the repository root:
-
-```sh
-python3 -m venv /tmp/infrastructure-pyinfra
-/tmp/infrastructure-pyinfra/bin/pip install -r pyinfra/requirements.txt
-```
+Run from the repository root with `uv` installed. `uvx` downloads the pinned
+pyinfra version into its local cache; no manual virtual environment setup is
+needed.
 
 Review `pyinfra/inventory.example.py`, replace its example host, and use your SSH
 key or agent. For a non-root SSH account, add `--sudo` to the commands below.
@@ -18,11 +15,11 @@ The Ansible INI inventory is not read by this deployment.
 
 ```sh
 # Prepare and inspect changes without applying them.
-/tmp/infrastructure-pyinfra/bin/pyinfra pyinfra/inventory.example.py pyinfra/docker.py --dry
+uvx --from 'pyinfra==3.10.0' pyinfra pyinfra/inventory.example.py pyinfra/docker.py --dry --diff
 # Apply only the Docker role.
-/tmp/infrastructure-pyinfra/bin/pyinfra pyinfra/inventory.example.py pyinfra/docker.py
+uvx --from 'pyinfra==3.10.0' pyinfra pyinfra/inventory.example.py pyinfra/docker.py
 # Repeat to check convergence.
-/tmp/infrastructure-pyinfra/bin/pyinfra pyinfra/inventory.example.py pyinfra/docker.py
+uvx --from 'pyinfra==3.10.0' pyinfra pyinfra/inventory.example.py pyinfra/docker.py
 ```
 
 ## Mapping and deliberate differences
@@ -51,9 +48,14 @@ role's handlers. It is not a replacement for the complete provisioning playbook.
 
 ## Disposable integration check
 
-With Docker available, run `tests/pyinfra/docker-role.sh` from the repository root
-with the controller virtual environment activated. It provisions a fresh Ubuntu
-22.04 container, verifies packages and repository configuration, then requires a
+With Docker available, run the check from the repository root using `uv`:
+
+```sh
+uv run --no-project --with-requirements pyinfra/requirements.txt bash tests/pyinfra/docker-role.sh
+```
+
+It provisions a fresh Ubuntu 22.04 container, verifies packages and repository
+configuration, then requires a
 second run to report no changes. The container is removed on exit. This checks
 configuration and convergence, not a running Docker daemon or production service
 health. No production hosts or secrets are needed.

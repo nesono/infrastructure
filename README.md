@@ -374,6 +374,49 @@ Certificate reloads can normally use `dc exec dovecot doveadm reload` and
 `dc exec postfix postfix reload`. Changes to authentication settings may require
 a Dovecot restart if old authentication workers retain their previous state.
 
+### Create a DKIM signing key
+
+When rebuilding a server, restore the existing `secret_opendkim_key.txt` and
+keep its matching selector and DNS records. Generate a new key only for initial
+setup or an intentional key rotation.
+
+On the server, `opendkim-tools` provides `opendkim-genkey`. Choose a new selector
+and a signing domain, then generate the private key and public DNS record in a
+private working directory:
+
+```sh
+selector=2026-11-02
+domain=example.com
+key_dir=$(mktemp -d /root/dkim.XXXXXX)
+umask 077
+opendkim-genkey -b 2048 -s "$selector" -d "$domain" -D "$key_dir"
+cat "$key_dir/$selector.txt"
+```
+
+The files are `$selector.private` and `$selector.txt`. Copy the private key
+securely to `secrets/secret_opendkim_key.txt` on the Ansible controller; never
+commit it. Provisioning installs it as
+`/var/docker_compose_secrets/secret_opendkim_key.txt`, mounted in Postfix at
+`/run/secrets/opendkim_key`.
+
+Publish the generated TXT record at `<selector>._domainkey.<domain>`. In a DNS
+provider's value field, use the generated `v=DKIM1; ... p=...` value rather than
+the surrounding zone-file syntax. This setup shares one signing key across
+`DKIM_DOMAINS`, so publish the matching public key for every signing domain.
+
+For rotation, publish the new records and allow DNS propagation before deploying
+the new secret and matching `DKIM_SELECTOR`. The current selector in Compose is
+`2023-01-04`; the date above is an example for a new key. Recreate Postfix after
+deploying the updated secret and Compose configuration so its integrated
+OpenDKIM process loads the new key. Keep the old public records available while
+messages signed with the previous selector are still in transit.
+
+Check each domain's published key with:
+
+```sh
+opendkim-testkey -d "$domain" -s "$selector" -k "$key_dir/$selector.private" -vvv
+```
+
 ### Add a mail domain
 
 Add the domain and mailboxes in PostfixAdmin. Configure its MX, SPF, DKIM, and

@@ -402,7 +402,11 @@ commit it. Provisioning installs it as
 Publish the generated TXT record at `<selector>._domainkey.<domain>`. In a DNS
 provider's value field, use the generated `v=DKIM1; ... p=...` value rather than
 the surrounding zone-file syntax. This setup shares one signing key across
-`DKIM_DOMAINS`, so publish the matching public key for every signing domain.
+`DKIM_DOMAINS`, which accepts a comma-separated list such as
+`example.com,example.net`. Publish the matching public key at
+`<selector>._domainkey` in each domain's DNS zone. The `$domain` variable passed
+to `opendkim-genkey -d` above is a single domain; the comma-separated list belongs
+in the Postfix service's `DKIM_DOMAINS` setting.
 
 For rotation, publish the new records and allow DNS propagation before deploying
 the new secret and matching `DKIM_SELECTOR`. The current selector in Compose is

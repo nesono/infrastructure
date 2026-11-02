@@ -166,11 +166,7 @@ the secret files or generated SQL configuration containing passwords.
 
 ## Operate on the server
 
-Connect using the inventory's SSH account:
-
-```sh
-ssh root@5.9.123.102
-```
+The server-side commands below assume you are logged in as root.
 
 For the interactive commands below, define this shell helper on the server:
 
@@ -216,8 +212,8 @@ health-check output before assuming the whole deployment failed.
 Inspect and edit the installed schedule on the server:
 
 ```sh
-sudo crontab -l
-sudo crontab -e
+crontab -l
+crontab -e
 timedatectl
 ```
 
@@ -309,7 +305,7 @@ ansible-playbook -i production/hosts green_nesono.yml --tags backup_script
 Run it on the server in a persistent terminal such as tmux:
 
 ```sh
-sudo /usr/local/sbin/backup.sh
+/usr/local/sbin/backup.sh
 ```
 
 The script stops currently running services except Borg, stopping applications

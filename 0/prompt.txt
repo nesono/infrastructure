@@ -1,0 +1,17 @@
+Is the crontab installed now through ansible?
+
+---
+
+What's the current diff between the installed and the new crontab?
+
+---
+
+Ok, please use Ansible to install the crontab. I think it's ok to use the new onw.
+
+---
+
+Ok, please use Ansible to install the crontab. I think it's ok to use the new one
+
+---
+
+You apply the crontab now, right?

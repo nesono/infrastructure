@@ -1,0 +1,13 @@
+Why did you remove the cronjob for NextCloud?
+
+---
+
+What does the `flock` mean in the crontab?
+
+---
+
+Wait, so there is a chance that the backup will not run every day at 3am?
+
+---
+
+Can't we implement it in a way that we wait with backup until the other jobs are done?

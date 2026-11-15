@@ -2,7 +2,7 @@
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-# Skip service jobs while a cold backup holds the shared lock.
+# Skip service jobs while a cold backup holds the exclusive lock.
 */5 * * * * flock -s -n /run/lock/compose-backup.lock docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_nesono_com php -f /var/www/html/cron.php
 */5 * * * * flock -s -n /run/lock/compose-backup.lock docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_noerpel_net php -f /var/www/html/cron.php
 5 4 * * Sun flock -s -n /run/lock/compose-backup.lock docker compose -f /svc/volumes/docker-compose/docker-compose.yaml restart dovecot

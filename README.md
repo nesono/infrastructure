@@ -225,9 +225,11 @@ containers rather than reload certificates.
 
 The corrected reference is [production/root.crontab](production/root.crontab).
 It preserves the installed schedules and mail-container restarts, adds `-T`
-and uses `www-data` with absolute Nextcloud script paths. Service commands take shared nonblocking locks
-on the same file as the cold-backup script, which takes an exclusive lock. Jobs skip a run rather
-than operate on services during a backup. In particular, a skipped Sunday
+and uses `www-data` with absolute Nextcloud script paths. Service commands take
+shared nonblocking locks on the same file as the cold-backup script. The backup
+waits for an exclusive lock until running jobs finish, then stops services;
+lock contention does not make it skip the backup. It may start after 03:00.
+Service jobs skip a run while the backup holds the lock. In particular, a skipped Sunday
 update or index job waits until its next scheduled run unless run manually.
 The Borgmatic config file on disk is commented out, but its active container
 crontab still contained the old live job on 2026-11-15. Restart `borg-backup`

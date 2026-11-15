@@ -1,0 +1,13 @@
+Please separate the codex/herdr/entire changes from the backup changes - and check if they make sense at all
+
+---
+
+I am running ansible with the tags provision,hot_compose and it just changed the mail_spool directory. Why is that?
+
+---
+
+No, I had to include provision since it touched the borgmatic config. But the mail_spool shouldn't have been touched. What would be the config that we should use then? Why was it change?
+
+---
+
+Ok, I have installed a new crontab. Please double check if everything is correct and create a PR for me

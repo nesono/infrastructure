@@ -259,8 +259,9 @@ These lines belong in root's user crontab, so they have no separate username
 field. They are not installed by Ansible. The interactive `dc` helper is not
 available to cron.
 
-Borgmatic has a separate in-container schedule, described below. Avoid
-overlapping image updates, deployments, and cold backups.
+The former Borgmatic in-container schedule is disabled in this checkout, as
+described below. Cold backups can be scheduled separately in root's host
+crontab. Avoid overlapping image updates, deployments, and cold backups.
 
 ## Backups
 
@@ -274,11 +275,13 @@ The backup covers the mounted volume tree, subject to its configured
 crontab, or `/var/docker_compose_secrets`. Keep separate recoverable copies of
 those settings and credentials.
 
-### Scheduled live backup
+### Disabled live-backup schedule
 
-[Borgmatic's crontab](roles/compose/files/borgmatic/crontab.txt) runs daily at
-03:00 in the backup container, which is configured with `TZ=UTC`.
-This is a live file backup: it does not stop applications or databases.
+[Borgmatic's crontab](roles/compose/files/borgmatic/crontab.txt) has its former
+daily 03:00 UTC live-backup job commented out. Deploy the updated file with
+Ansible and restart `borg-backup` to reload its schedule. Until that change is
+deployed, the server may still run the live backup, which does not stop
+applications or databases.
 
 From the server shell, list archives or run the configured backup:
 
@@ -294,7 +297,7 @@ dc exec borg-backup sh
 export BORG_PASSPHRASE="$(cat "$BORG_PASSPHRASE_FILE")"
 ```
 
-### Manual cold backup
+### Cold backups
 
 Install or update the script from the controller:
 
@@ -302,7 +305,7 @@ Install or update the script from the controller:
 ansible-playbook -i production/hosts green_nesono.yml --tags backup_script
 ```
 
-Run it on the server in a persistent terminal such as tmux:
+Run it as root on the server, keeping the SSH connection open until it finishes:
 
 ```sh
 /usr/local/sbin/backup.sh
@@ -313,8 +316,26 @@ before databases. It aborts if a database was forcibly killed, creates an
 archive, and restarts the services that were previously running. Websites,
 cloud services, and mail access are unavailable throughout the archive creation.
 
-Do not deploy or run service-management commands during the backup, and avoid
-the scheduled live backup. Pruning and checks stay with the scheduled job.
+To run daily at 03:00 host local time (Europe/Berlin), add this optional entry
+with `sudo crontab -e`:
+
+```cron
+0 3 * * * /usr/local/sbin/backup.sh >> /var/log/compose-backup.log 2>&1
+```
+
+This entry is not installed by Ansible. Disable the old container schedule
+before enabling it. Do not deploy or run service-management commands during
+the backup.
+
+The cold-backup script only creates archives. Disabling the old scheduled job
+also disables its pruning, compaction, and checks; schedule those separately
+without overlapping the cold backup. For a manual maintenance run after the
+services have restarted:
+
+```sh
+dc exec -T borg-backup sh -ec 'export BORG_PASSPHRASE="$(cat "$BORG_PASSPHRASE_FILE")"; exec borgmatic prune compact check'
+```
+
 Restore database files with compatible database image versions and test the
 restore procedure.
 

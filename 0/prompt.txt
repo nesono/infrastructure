@@ -1,0 +1,21 @@
+How can I change from the plain borgmatic backup to backing up with the bash / zsh script that first turns off the services, then backs up and then brings back the services?
+
+---
+
+Is tmux installed on the server?
+
+---
+
+I think we can actually try it manually already, no need to use tmux. The backups don't take that long imho
+
+---
+
+As for disabling the existing live backup, please change the borgmatic crontab file on this host. I will use Ansible then to deploy the file to the green server.
+
+---
+
+Did you also update the README.md? I think it has a section on crontab entries
+
+---
+
+Please create a PR with the changes

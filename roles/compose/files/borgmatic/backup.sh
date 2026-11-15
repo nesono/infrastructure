@@ -9,7 +9,8 @@ databases=()
 restart_needed=false
 
 exec 9>/run/lock/compose-backup.lock
-flock -n 9 || { echo 'Another cold backup is running.' >&2; exit 1; }
+echo 'Waiting for running service jobs or another cold backup to finish...'
+flock -x 9
 
 restart_services() {
     echo 'Restarting previously running services...'

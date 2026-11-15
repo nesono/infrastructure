@@ -217,42 +217,31 @@ crontab -e
 timedatectl
 ```
 
-The host runs in `Europe/Berlin`. Its root crontab was checked on 2026-11-01
-and schedules the following jobs in host local time (CET/CEST):
+The host runs in `Europe/Berlin`. Root's crontab was checked on 2026-11-15.
+It now uses Compose service names and schedules daily cold backups at 03:00.
+However, its Nextcloud commands omit `-T`, and the index-maintenance commands
+also omit the web-server user. The installed Sunday mail jobs restart the
+containers rather than reload certificates.
 
-| Schedule | Installed job |
-| --- | --- |
-| Every five minutes | Background jobs for both Nextcloud instances |
-| Sunday 04:05 | Reload Dovecot and Postfix certificates |
-| Sunday 05:05 | Pull and apply Compose images |
-| Sunday 07:05 | Add missing database indices for both Nextcloud instances |
+The corrected reference is [production/root.crontab](production/root.crontab).
+It preserves the installed schedules and mail-container restarts, adds `-T`
+and uses `www-data` with absolute Nextcloud script paths. Service commands take shared nonblocking locks
+on the same file as the cold-backup script, which takes an exclusive lock. Jobs skip a run rather
+than operate on services during a backup. In particular, a skipped Sunday
+update or index job waits until its next scheduled run unless run manually.
+The Borgmatic config file on disk is commented out, but its active container
+crontab still contained the old live job on 2026-11-15. Restart `borg-backup`
+and verify with `dc exec -T borg-backup crontab -l` before relying on the
+new schedule alone.
 
-The installed Nextcloud background jobs and certificate reloads still select
-containers using old dot-style name filters. All four filters currently match
-zero containers: the Nextcloud and Dovecot names end in `-1`, and Postfix is
-named `postfix`. Those four scheduled commands therefore do not perform their
-intended work.
+**These corrections have not been installed on the server.** Review the file
+and install it as root with `crontab /path/to/root.crontab`; that replaces the
+entire root crontab, so preserve any additional host-specific jobs first.
 
-The following is a proposed replacement for those seven installed job lines,
-keeping their existing schedule but using Compose service names. It also runs
-Nextcloud maintenance as `www-data` and disables TTY allocation for cron.
-**These replacement commands have not been installed on the server.**
+The reference includes the following cold-backup entry:
 
 ```cron
-# Nextcloud background jobs, every five minutes, as the web-server user.
-*/5 * * * * docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_nesono_com php -f /var/www/html/cron.php
-*/5 * * * * docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_noerpel_net php -f /var/www/html/cron.php
-
-# Reload mail TLS certificates on Sunday.
-5 4 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T dovecot doveadm reload
-5 4 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T postfix postfix reload
-
-# Pull and apply updated images on Sunday.
-5 5 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml up -d --pull always
-
-# Nextcloud index maintenance on Sunday.
-5 7 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_nesono_com php occ db:add-missing-indices
-5 7 * * Sun docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_noerpel_net php occ db:add-missing-indices
+0 3 * * * /usr/local/sbin/backup.sh >> /var/log/compose-backup.log 2>&1
 ```
 
 These lines belong in root's user crontab, so they have no separate username

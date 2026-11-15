@@ -47,7 +47,7 @@ custom Postfix image and Dovecot userdb configuration.
 
 Host-local settings also matter: root's crontab, SSH access, host mail
 notifications, and the installed operating system are not fully described by
-the Compose file. The root crontab is maintained manually, not by this playbook.
+the Compose file. Root's host crontab is managed separately by `host_crontab.yml`.
 
 ## Bootstrap a Hetzner server with installimage
 
@@ -219,8 +219,7 @@ timedatectl
 
 The host runs in `Europe/Berlin`. Root's crontab was checked on 2026-11-15.
 It now uses Compose service names and schedules daily cold backups at 03:00.
-However, its Nextcloud commands omit `-T`, and the index-maintenance commands
-also omit the web-server user. The installed Sunday mail jobs restart the
+The installed Nextcloud commands now use `-T` and run as `www-data`. The installed Sunday mail jobs restart the
 containers rather than reload certificates.
 
 The corrected reference is [production/root.crontab](production/root.crontab).
@@ -236,9 +235,17 @@ crontab still contained the old live job on 2026-11-15. Restart `borg-backup`
 and verify with `dc exec -T borg-backup crontab -l` before relying on the
 new schedule alone.
 
-**These corrections have not been installed on the server.** Review the file
-and install it as root with `crontab /path/to/root.crontab`; that replaces the
-entire root crontab, so preserve any additional host-specific jobs first.
+The corrected host crontab and waiting backup script were installed with Ansible
+on 2026-11-15. To apply future changes together:
+
+```sh
+ansible-playbook -i production/hosts host_crontab.yml
+```
+
+This dedicated playbook replaces root's entire crontab with the reference file
+and preserves the previous contents at `/root/crontab.before-ansible` (with
+Ansible backups on subsequent replacements). Keep additional host-specific jobs
+in the reference before deploying.
 
 The reference includes the following cold-backup entry:
 
@@ -247,7 +254,7 @@ The reference includes the following cold-backup entry:
 ```
 
 These lines belong in root's user crontab, so they have no separate username
-field. They are not installed by Ansible. The interactive `dc` helper is not
+field. They are installed by `host_crontab.yml`. The interactive `dc` helper is not
 available to cron.
 
 The former Borgmatic in-container schedule is disabled in this checkout, as
@@ -314,7 +321,7 @@ with `sudo crontab -e`:
 0 3 * * * /usr/local/sbin/backup.sh >> /var/log/compose-backup.log 2>&1
 ```
 
-This entry is not installed by Ansible. Disable the old container schedule
+This entry is installed by `host_crontab.yml`. Disable the old container schedule
 before enabling it. Do not deploy or run service-management commands during
 the backup.
 

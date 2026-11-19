@@ -1,0 +1,28 @@
+name: pyinfra Docker pilot
+
+on:
+  pull_request:
+    paths:
+      - "pyinfra/**"
+      - "tests/pyinfra/**"
+      - ".github/workflows/pyinfra.yml"
+  push:
+    branches: [main]
+    paths:
+      - "pyinfra/**"
+      - "tests/pyinfra/**"
+      - ".github/workflows/pyinfra.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  docker-role:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - run: pip install -r pyinfra/requirements.txt
+      - run: bash tests/pyinfra/docker-role.sh

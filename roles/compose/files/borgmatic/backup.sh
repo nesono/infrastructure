@@ -1,16 +1,8 @@
 #!/usr/bin/env bash
 # Run on the production host. All services except Borg are offline during backup.
-set -euo pipefail
+set -uo pipefail
 
 compose=(docker compose -f /svc/volumes/docker-compose/docker-compose.yaml)
-services=()
-applications=()
-databases=()
-restart_needed=false
-
-exec 9>/run/lock/compose-backup.lock
-echo 'Waiting for running service jobs or another cold backup to finish...'
-flock -x 9
 
 restart_services() {
     echo 'Restarting previously running services...'
@@ -28,55 +20,98 @@ cleanup() {
     fi
     exit "$result"
 }
-trap cleanup EXIT
-trap 'exit 130' INT
-trap 'exit 143' TERM
 
-# Verify Borg's existing passphrase file before interrupting services.
-"${compose[@]}" exec -T borg-backup sh -ec 'test -r "$BORG_PASSPHRASE_FILE"'
-running=$("${compose[@]}" ps --status running --services)
-while IFS= read -r service; do
-    [[ -n "$service" && "$service" != borg-backup ]] || continue
-    services+=("$service")
-    # Keep this classification in sync when adding a database service.
-    case "$service" in
-        mysql_*|mariadb_*|pgsql_*|redis_*) databases+=("$service") ;;
-        *) applications+=("$service") ;;
-    esac
-done <<< "$running"
-[[ ${#services[@]} -gt 0 ]] || { echo 'No running services to back up.' >&2; exit 1; }
+run_backup() {
+    services=()
+    applications=()
+    databases=()
+    restart_needed=false
 
-restart_needed=true
-echo 'Stopping applications, then databases...'
-if [[ ${#applications[@]} -gt 0 ]]; then
-    "${compose[@]}" stop --timeout 120 "${applications[@]}"
-fi
-if [[ ${#databases[@]} -gt 0 ]]; then
-    "${compose[@]}" stop --timeout 120 "${databases[@]}"
-fi
+    exec 9>/run/lock/compose-backup.lock
+    echo 'Waiting for running service jobs or another cold backup to finish...'
+    flock -x 9
 
-# Do not archive a database that was killed after its shutdown timeout.
-containers=$("${compose[@]}" ps --all --quiet "${services[@]}")
-[[ -n "$containers" ]] || { echo 'Stopped containers not found.' >&2; exit 1; }
-while IFS= read -r container; do
-    state=$(docker inspect --format '{{.State.Running}} {{.State.ExitCode}} {{.State.OOMKilled}} {{index .Config.Labels "com.docker.compose.service"}}' "$container")
-    read -r active status oom service <<< "$state"
-    if [[ "$active" != false || "$status" == 137 || "$oom" != false ]]; then
-        echo "Container $container did not stop safely ($state); aborting backup." >&2
-        exit 1
+    trap cleanup EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+
+    # Verify Borg's existing passphrase file before interrupting services.
+    "${compose[@]}" exec -T borg-backup sh -ec 'test -r "$BORG_PASSPHRASE_FILE"'
+    running=$("${compose[@]}" ps --status running --services)
+    while IFS= read -r service; do
+        [[ -n "$service" && "$service" != borg-backup ]] || continue
+        services+=("$service")
+        # Keep this classification in sync when adding a database service.
+        case "$service" in
+            mysql_*|mariadb_*|pgsql_*|redis_*) databases+=("$service") ;;
+            *) applications+=("$service") ;;
+        esac
+    done <<< "$running"
+    [[ ${#services[@]} -gt 0 ]] || { echo 'No running services to back up.' >&2; exit 1; }
+
+    restart_needed=true
+    echo 'Stopping applications, then databases...'
+    if [[ ${#applications[@]} -gt 0 ]]; then
+        "${compose[@]}" stop --timeout 120 "${applications[@]}"
     fi
-    case "$service" in
-        mysql_*|mariadb_*|pgsql_*|redis_*)
-            [[ "$status" == 0 ]] || { echo "$service exited with $status; aborting backup." >&2; exit 1; } ;;
-    esac
-done <<< "$containers"
+    if [[ ${#databases[@]} -gt 0 ]]; then
+        "${compose[@]}" stop --timeout 120 "${databases[@]}"
+    fi
 
-echo 'Creating Borg archive...'
-"${compose[@]}" exec -T borg-backup sh -ec '
-    BORG_PASSPHRASE=$(cat "$BORG_PASSPHRASE_FILE")
-    export BORG_PASSPHRASE
-    exec borgmatic create --verbosity 1 --stats
-'
-restart_services
-restart_needed=false
-echo 'Backup completed; services restarted.'
+    # Do not archive a database that was killed after its shutdown timeout.
+    containers=$("${compose[@]}" ps --all --quiet "${services[@]}")
+    [[ -n "$containers" ]] || { echo 'Stopped containers not found.' >&2; exit 1; }
+    while IFS= read -r container; do
+        state=$(docker inspect --format '{{.State.Running}} {{.State.ExitCode}} {{.State.OOMKilled}} {{index .Config.Labels "com.docker.compose.service"}}' "$container")
+        read -r active status oom service <<< "$state"
+        if [[ "$active" != false || "$status" == 137 || "$oom" != false ]]; then
+            echo "Container $container did not stop safely ($state); aborting backup." >&2
+            exit 1
+        fi
+        case "$service" in
+            mysql_*|mariadb_*|pgsql_*|redis_*)
+                [[ "$status" == 0 ]] || { echo "$service exited with $status; aborting backup." >&2; exit 1; } ;;
+        esac
+    done <<< "$containers"
+
+    echo 'Creating Borg archive...'
+    "${compose[@]}" exec -T borg-backup sh -ec '
+        BORG_PASSPHRASE=$(cat "$BORG_PASSPHRASE_FILE")
+        export BORG_PASSPHRASE
+        exec borgmatic create --verbosity 1 --stats
+    '
+    restart_services
+    restart_needed=false
+    echo 'Backup completed; services restarted.'
+}
+
+report=$(mktemp) || exit 1
+trap 'rm -f -- "$report"' EXIT
+
+# Keep errexit in the backup subprocess and collect both pipeline statuses.
+(
+    trap - EXIT
+    set -e
+    run_backup
+) 2>&1 | tee "$report"
+read -r backup_status report_status <<< "${PIPESTATUS[*]}"
+
+subject='Borgmatic cold backup: SUCCESS'
+if (( backup_status != 0 || report_status != 0 )); then
+    subject='Borgmatic cold backup: FAILED'
+fi
+
+if ! "${compose[@]}" exec -T borg-backup sh -ec '
+    {
+        printf "From: %s\nTo: %s\nSubject: %s\n\n" "$MAIL_FROM" "$MAIL_TO" "$1"
+        cat
+    } | sendmail -t
+' sh "$subject" < "$report"; then
+    echo 'Could not send cold-backup report.' >&2
+    report_status=1
+fi
+
+if (( backup_status != 0 )); then
+    exit "$backup_status"
+fi
+exit "$report_status"

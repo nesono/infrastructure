@@ -313,6 +313,10 @@ The script stops currently running services except Borg, stopping applications
 before databases. It aborts if a database was forcibly killed, creates an
 archive, and restarts the services that were previously running. Websites,
 cloud services, and mail access are unavailable throughout the archive creation.
+After the restart attempt, the script emails the full run output using the
+`borg-backup` container's configured mail relay and recipient. The subject
+reports success or failure, and scheduled runs also write their output to
+`/var/log/compose-backup.log`.
 
 To run daily at 03:00 host local time (Europe/Berlin), add this optional entry
 with `sudo crontab -e`:

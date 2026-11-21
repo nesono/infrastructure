@@ -1,0 +1,33 @@
+We have changed the trigger for borgbackups earlier using a shell script to shut down compose first, do the backup, and start compose again. I wanted to make sure that we don't have changes in files and that the backup is consistent.
+Now I see messages like these and wonder why any file is changing during backup:
+
+Starting a backup job.
+/mnt/source/cloud_nesono_data/audit.log: file changed while we backed it up
+/mnt/source/mariadb_cloud_nesono_data/ib_logfile0: file changed while we backed it up
+------------------------------------------------------------------------------
+
+This is as part of the borgmatic backup
+
+---
+
+Where are the changes to the repo here?
+
+---
+
+How do I reload it?
+
+---
+
+Will I get any more emails now? Since you said the backup was running twice, and I only received one message a day
+
+---
+
+I would like to get an email, though, since I want to observe the output every day
+
+---
+
+ansible-lint fails. Please create a new PR for me with the changes
+
+---
+
+Hm, I think I usually prefer prek to pre-commit

@@ -1,0 +1,43 @@
+{
+  "cli_version": "0.13.1",
+  "checkpoint_id": "01M7YDV9VKH6T7BXJR26NVWFC3",
+  "session_id": "01a1fcd0-f2f0-7f91-b062-2df468887e74",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-21T06:49:07.710597Z",
+  "branch": "cold-backup-email",
+  "checkpoints_count": 5,
+  "save_step_count": 1,
+  "files_touched": [
+    "README.md",
+    "roles/compose/files/borgmatic/backup.sh"
+  ],
+  "agent": "Codex",
+  "model": "gpt-6.2-sol",
+  "turn_id": "f61442df4356",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 31194,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 959232,
+    "output_tokens": 5454,
+    "api_call_count": 28,
+    "subagent_tokens_complete": true
+  },
+  "redaction": {
+    "replacements": 0,
+    "layers": {
+      "betterleaks": 0,
+      "connection_string": 0,
+      "credential_key": 0,
+      "credential_value": 0,
+      "credentialed_uri": 0,
+      "entropy": 0,
+      "key_context": 0,
+      "provider_token": 0,
+      "shell_stdin": 0
+    }
+  },
+  "session_metrics": {
+    "turn_count": 5
+  }
+}

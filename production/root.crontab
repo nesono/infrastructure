@@ -2,14 +2,13 @@
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-# Skip service jobs while a cold backup holds the exclusive lock.
+# Skip service jobs while nightly maintenance holds the exclusive lock.
 */5 * * * * flock -s -n /run/lock/compose-backup.lock docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_nesono_com php -f /var/www/html/cron.php
 */5 * * * * flock -s -n /run/lock/compose-backup.lock docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_noerpel_net php -f /var/www/html/cron.php
 5 4 * * Sun flock -s -n /run/lock/compose-backup.lock docker compose -f /svc/volumes/docker-compose/docker-compose.yaml restart dovecot
 5 4 * * Sun flock -s -n /run/lock/compose-backup.lock docker compose -f /svc/volumes/docker-compose/docker-compose.yaml restart postfix
-5 5 * * Sun flock -s -n /run/lock/compose-backup.lock docker compose -f /svc/volumes/docker-compose/docker-compose.yaml up -d --pull always
 5 7 * * Sun flock -s -n /run/lock/compose-backup.lock docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_nesono_com php /var/www/html/occ db:add-missing-indices
 5 7 * * Sun flock -s -n /run/lock/compose-backup.lock docker compose -f /svc/volumes/docker-compose/docker-compose.yaml exec -T --user www-data cloud_noerpel_net php /var/www/html/occ db:add-missing-indices
 
-# The backup script acquires the lock itself; do not wrap it in flock.
-0 3 * * * /usr/local/sbin/backup.sh >> /var/log/compose-backup.log 2>&1
+# The maintenance script acquires the lock itself; do not wrap it in flock.
+0 3 * * * /usr/local/sbin/nightly-maintenance.sh >> /var/log/compose-backup.log 2>&1

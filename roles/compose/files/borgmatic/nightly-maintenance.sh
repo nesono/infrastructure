@@ -12,6 +12,10 @@ restart_services() {
 cleanup() {
     result=$?
     trap - EXIT INT TERM
+    if [[ -n "$pull_pid" ]]; then
+        kill "$pull_pid" 2>/dev/null || true
+        wait "$pull_pid" || true
+    fi
     if $restart_needed; then
         if ! restart_services; then
             echo 'Restart failed; check docker compose ps and restore services manually.' >&2
@@ -21,14 +25,15 @@ cleanup() {
     exit "$result"
 }
 
-run_backup() {
+run_maintenance() {
     services=()
     applications=()
     databases=()
     restart_needed=false
+    pull_pid=
 
     exec 9>/run/lock/compose-backup.lock
-    echo 'Waiting for running service jobs or another cold backup to finish...'
+    echo 'Waiting for running service jobs or another maintenance run to finish...'
     flock -x 9
 
     trap cleanup EXIT
@@ -74,31 +79,45 @@ run_backup() {
         esac
     done <<< "$containers"
 
+    echo 'Pulling Compose images in parallel with the Borg backup...'
+    "${compose[@]}" pull --policy always &
+    pull_pid=$!
+
     echo 'Creating Borg archive...'
     "${compose[@]}" exec -T borg-backup sh -ec '
         BORG_PASSPHRASE=$(cat "$BORG_PASSPHRASE_FILE")
         export BORG_PASSPHRASE
         exec borgmatic create --verbosity 1 --stats
     '
-    restart_services
+    echo 'Borg archive created; waiting for image pulls to finish...'
+    if wait "$pull_pid"; then
+        pull_pid=
+    else
+        pull_pid=
+        echo 'Image pull failed; starting existing containers without applying image updates.' >&2
+        exit 1
+    fi
+
+    echo 'Starting previously running services with their updated images...'
+    "${compose[@]}" up --detach --wait --wait-timeout 180 --no-deps --pull never "${services[@]}" borg-backup
     restart_needed=false
-    echo 'Backup completed; services restarted.'
+    echo 'Nightly maintenance completed; services are running.'
 }
 
 report=$(mktemp) || exit 1
 trap 'rm -f -- "$report"' EXIT
 
-# Keep errexit in the backup subprocess and collect both pipeline statuses.
+# Keep errexit in the maintenance subprocess and collect both pipeline statuses.
 (
     trap - EXIT
     set -e
-    run_backup
+    run_maintenance
 ) 2>&1 | tee "$report"
-read -r backup_status report_status <<< "${PIPESTATUS[*]}"
+read -r maintenance_status report_status <<< "${PIPESTATUS[*]}"
 
-subject='Borgmatic cold backup: SUCCESS'
-if (( backup_status != 0 || report_status != 0 )); then
-    subject='Borgmatic cold backup: FAILED'
+subject='Nightly maintenance: SUCCESS'
+if (( maintenance_status != 0 || report_status != 0 )); then
+    subject='Nightly maintenance: FAILED'
 fi
 
 if ! "${compose[@]}" exec -T borg-backup sh -ec '
@@ -107,11 +126,11 @@ if ! "${compose[@]}" exec -T borg-backup sh -ec '
         cat
     } | sendmail -t
 ' sh "$subject" < "$report"; then
-    echo 'Could not send cold-backup report.' >&2
+    echo 'Could not send nightly maintenance report.' >&2
     report_status=1
 fi
 
-if (( backup_status != 0 )); then
-    exit "$backup_status"
+if (( maintenance_status != 0 )); then
+    exit "$maintenance_status"
 fi
 exit "$report_status"

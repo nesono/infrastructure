@@ -357,7 +357,7 @@
     owner: 0
     group: 0
     mode: "0750"
-  tags: [hot_compose, backup_script, nightly_maintenance_script]
+  tags: [hot_compose]
 
 - name: Copy Borgmatic config files
   ansible.builtin.copy:

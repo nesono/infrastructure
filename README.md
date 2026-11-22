@@ -144,7 +144,6 @@ update command.
 | --- | --- |
 | `hot_compose` | Routine configuration and Compose deployment |
 | `provision` | Initial directories, secret copies, and selected configuration; does not include all deployment tasks |
-| `nightly_maintenance_script` | Install or update the nightly maintenance script |
 | `compose` | The entire Compose role, including provisioning tasks |
 
 The `common` and `docker` roles configure the host and Docker installation.

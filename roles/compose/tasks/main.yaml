@@ -350,14 +350,14 @@
   community.crypto.openssh_keypair:
     path: /svc/volumes/borgmatic/keys/id_ssh_rsa
 
-- name: Copy cold backup script
+- name: Copy nightly maintenance script
   ansible.builtin.copy:
-    src: borgmatic/backup.sh
-    dest: /usr/local/sbin/backup.sh
+    src: borgmatic/nightly-maintenance.sh
+    dest: /usr/local/sbin/nightly-maintenance.sh
     owner: 0
     group: 0
     mode: "0750"
-  tags: [hot_compose, backup_script]
+  tags: [hot_compose, backup_script, nightly_maintenance_script]
 
 - name: Copy Borgmatic config files
   ansible.builtin.copy:

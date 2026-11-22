@@ -1,2 +1,2 @@
-# Live backup disabled; cold backups run via /usr/local/sbin/backup.sh on the host.
+# Live backup disabled; cold backups run via /usr/local/sbin/nightly-maintenance.sh on the host.
 # 0 3 * * * export BORG_PASSPHRASE=$(cat $BORG_PASSPHRASE_FILE) && export MAIL_USER=$(cat $BORG_MAIL_USER_FILE) && export MAIL_PASSWORD=$(cat $BORG_MAIL_PASSWORD_FILE) && /scripts/run.sh 2>&1

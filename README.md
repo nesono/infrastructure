@@ -38,7 +38,7 @@ milter service: the milters run in the custom Postfix image.
 | `/svc/volumes/php/security.ini` | PHP settings shared by PostfixAdmin, Roundcube, and WordPress |
 | `/svc/volumes/acme/certs/` | Managed TLS certificates |
 | `/var/docker_compose_secrets/` | Secret files mounted into containers under `/run/secrets/` |
-| `/usr/local/sbin/backup.sh` | Optional manual cold-backup command installed by Ansible |
+| `/usr/local/sbin/nightly-maintenance.sh` | Host command for cold backups and Compose image updates |
 
 Named Compose volumes mostly bind to directories under `/svc/volumes`.
 Changing or recreating a container is separate from deleting its persistent
@@ -144,7 +144,7 @@ update command.
 | --- | --- |
 | `hot_compose` | Routine configuration and Compose deployment |
 | `provision` | Initial directories, secret copies, and selected configuration; does not include all deployment tasks |
-| `backup_script` | Install or update the manual cold-backup script |
+| `nightly_maintenance_script` | Install or update the nightly maintenance script |
 | `compose` | The entire Compose role, including provisioning tasks |
 
 The `common` and `docker` roles configure the host and Docker installation.
@@ -218,18 +218,19 @@ timedatectl
 ```
 
 The host runs in `Europe/Berlin`. Root's crontab was checked on 2026-11-15.
-It now uses Compose service names and schedules daily cold backups at 03:00.
+The reference schedules nightly maintenance at 03:00, including the cold
+backup and Compose image updates.
 The installed Nextcloud commands now use `-T` and run as `www-data`. The installed Sunday mail jobs restart the
 containers rather than reload certificates.
 
 The corrected reference is [production/root.crontab](production/root.crontab).
 It preserves the installed schedules and mail-container restarts, adds `-T`
 and uses `www-data` with absolute Nextcloud script paths. Service commands take
-shared nonblocking locks on the same file as the cold-backup script. The backup
+shared nonblocking locks on the same file as the nightly maintenance script. It
 waits for an exclusive lock until running jobs finish, then stops services;
 lock contention does not make it skip the backup. It may start after 03:00.
-Service jobs skip a run while the backup holds the lock. In particular, a skipped Sunday
-update or index job waits until its next scheduled run unless run manually.
+Service jobs skip a run while maintenance holds the lock. A skipped Sunday index
+job waits until its next scheduled run unless run manually.
 The Borgmatic config file on disk is commented out, but its active container
 crontab still contained the old live job on 2026-11-15. Restart `borg-backup`
 and verify with `dc exec -T borg-backup crontab -l` before relying on the
@@ -247,10 +248,10 @@ and preserves the previous contents at `/root/crontab.before-ansible` (with
 Ansible backups on subsequent replacements). Keep additional host-specific jobs
 in the reference before deploying.
 
-The reference includes the following cold-backup entry:
+The reference includes the following nightly maintenance entry:
 
 ```cron
-0 3 * * * /usr/local/sbin/backup.sh >> /var/log/compose-backup.log 2>&1
+0 3 * * * /usr/local/sbin/nightly-maintenance.sh >> /var/log/compose-backup.log 2>&1
 ```
 
 These lines belong in root's user crontab, so they have no separate username
@@ -258,8 +259,8 @@ field. They are installed by `host_crontab.yml`. The interactive `dc` helper is 
 available to cron.
 
 The former Borgmatic in-container schedule is disabled in this checkout, as
-described below. Cold backups can be scheduled separately in root's host
-crontab. Avoid overlapping image updates, deployments, and cold backups.
+described below. Avoid running deployments or manual service-management commands
+during nightly maintenance.
 
 ## Backups
 
@@ -295,44 +296,39 @@ dc exec borg-backup sh
 export BORG_PASSPHRASE="$(cat "$BORG_PASSPHRASE_FILE")"
 ```
 
-### Cold backups
+### Nightly maintenance
 
 Install or update the script from the controller:
 
 ```sh
-ansible-playbook -i production/hosts green_nesono.yml --tags backup_script
+ansible-playbook -i production/hosts host_crontab.yml
 ```
 
 Run it as root on the server, keeping the SSH connection open until it finishes:
 
 ```sh
-/usr/local/sbin/backup.sh
+/usr/local/sbin/nightly-maintenance.sh
 ```
 
 The script stops currently running services except Borg, stopping applications
-before databases. It aborts if a database was forcibly killed, creates an
-archive, and restarts the services that were previously running. Websites,
-cloud services, and mail access are unavailable throughout the archive creation.
+before databases. It aborts if a database was forcibly killed. Compose pulls all
+images while Borg creates the archive. The pull writes to Docker's image store
+while the stopped applications and databases leave their volumes idle. After
+both operations succeed, Compose applies the images as it brings previously
+running services back up. If the backup or pull fails, the script attempts to
+start the existing containers. Websites, cloud services, and mail remain offline
+until services restart.
 After the restart attempt, the script emails the full run output using the
 `borg-backup` container's configured mail relay and recipient. The subject
 reports success or failure, and scheduled runs also write their output to
 `/var/log/compose-backup.log`.
 
-To run daily at 03:00 host local time (Europe/Berlin), add this optional entry
-with `sudo crontab -e`:
+The host playbook installs the nightly schedule and removes the old Sunday image
+update entry and retired backup script. Disable the old Borgmatic container
+schedule before enabling the host job.
 
-```cron
-0 3 * * * /usr/local/sbin/backup.sh >> /var/log/compose-backup.log 2>&1
-```
-
-This entry is installed by `host_crontab.yml`. Disable the old container schedule
-before enabling it. Do not deploy or run service-management commands during
-the backup.
-
-The cold-backup script only creates archives. Disabling the old scheduled job
-also disables its pruning, compaction, and checks; schedule those separately
-without overlapping the cold backup. For a manual maintenance run after the
-services have restarted:
+Schedule Borg pruning, compaction, and checks separately from nightly
+maintenance. To run them manually after services have restarted:
 
 ```sh
 dc exec -T borg-backup sh -ec 'export BORG_PASSPHRASE="$(cat "$BORG_PASSPHRASE_FILE")"; exec borgmatic prune compact check'

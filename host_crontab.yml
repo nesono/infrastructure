@@ -1,10 +1,10 @@
-- name: Install root's host schedule and cold-backup script
+- name: Install root's host schedule and nightly maintenance script
   hosts: green
   tasks:
-    - name: Install cold-backup script
+    - name: Install nightly maintenance script
       ansible.builtin.copy:
-        src: roles/compose/files/borgmatic/backup.sh
-        dest: /usr/local/sbin/backup.sh
+        src: roles/compose/files/borgmatic/nightly-maintenance.sh
+        dest: /usr/local/sbin/nightly-maintenance.sh
         owner: root
         group: root
         mode: "0750"
@@ -39,3 +39,8 @@
       ansible.builtin.command: crontab -u root /usr/local/share/infrastructure-root.crontab
       when: installed_root_crontab.stdout != lookup('ansible.builtin.file', 'production/root.crontab')
       changed_when: true
+
+    - name: Remove retired backup script after migrating the schedule
+      ansible.builtin.file:
+        path: /usr/local/sbin/backup.sh
+        state: absent
